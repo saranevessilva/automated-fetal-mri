@@ -27,7 +27,7 @@ import mrd2dicom
 
 class Server:
     """
-    Something something docstring.
+    Something docstring.
     """
 
     def __init__(self, address, port, savedata, savedataFolder, multiprocessing):
@@ -142,6 +142,7 @@ class Server:
                 try:
                     for msg in connection:
                         if msg is None:
+                            break
                 finally:
                     connection.send_close()
             else:
