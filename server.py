@@ -10,9 +10,9 @@ import importlib
 import os
 import simplefft
 import invertcontrast
-import analyzeflow
+# import analyzeflow
 import diffusion
-import dynamicME
+# import dynamicME
 import autoplan_fetal_cardiac_landmarks
 import autoplan_fetal_cardiac_landmarks_cpu
 import automated_volumetry
@@ -120,9 +120,6 @@ class Server:
             elif config == "autoplan_fetal_head_landmarks_offline":
                 logging.info("Starting autoplan_fetal_head_landmarks_offline processing based on config")
                 autoplan_fetal_head_landmarks_offline.process(connection, config, metadata)
-            elif config == "analyzeflow":
-                logging.info("Starting analyzeflow processing based on config")
-                analyzeflow.process(connection, config, metadata)
             elif config == "diffusion":
                 logging.info("Starting diffusion processing based on config")
                 diffusion.process(connection, config, metadata)
