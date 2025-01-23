@@ -43,7 +43,6 @@ date_path = datetime.today().strftime("%Y-%m-%d")
 debugFolder = "/home/sn21/data/t2-stacks/" + date_path
 
 
-
 def process(connection, config, metadata):
     logging.info("Config: \n%s", config)
 

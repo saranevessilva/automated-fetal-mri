@@ -14,7 +14,7 @@ import constants
 from time import perf_counter
 
 # import numpy as np
-import gadgetron
+# import gadgetron
 import ismrmrd
 import logging
 import time

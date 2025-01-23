@@ -10,20 +10,15 @@ import importlib
 import os
 import simplefft
 import invertcontrast
-# import analyzeflow
-# import diffusion
-# import dynamicME
 import autoplan_fetal_cardiac_landmarks
-import autoplan_fetal_cardiac_landmarks_cpu
 import automated_volumetry
-import automated_volumetry_offline
 import autoplan_fetal_sagittal_landmarks
 import autoplan_fetal_head_landmarks
-import autoplan_fetal_head_landmarks_offline
 import automated_svr_launch
 import automated_pull_svr_brain
 import automated_pull_svr_body
 import mrd2dicom
+
 
 class Server:
     """
@@ -102,24 +97,15 @@ class Server:
             elif config == "autoplan_fetal_cardiac_landmarks":
                 logging.info("Starting autoplan_fetal_cardiac_landmarks processing based on config")
                 autoplan_fetal_cardiac_landmarks.process(connection, config, metadata)
-            elif config == "autoplan_fetal_cardiac_landmarks_cpu":
-                logging.info("Starting autoplan_fetal_cardiac_landmarks_cpu processing based on config")
-                autoplan_fetal_cardiac_landmarks_cpu.process(connection, config, metadata)
             elif config == "automated_volumetry":
                 logging.info("Starting automated_volumetry processing based on config")
                 automated_volumetry.process(connection, config, metadata)
-            elif config == "automated_volumetry_offline":
-                logging.info("Starting automated_volumetry processing based on config")
-                automated_volumetry_offline.process(connection, config, metadata)
             elif config == "autoplan_fetal_sagittal_landmarks":
                 logging.info("Starting autoplan_fetal_sagittal_landmarks processing based on config")
                 autoplan_fetal_sagittal_landmarks.process(connection, config, metadata)
             elif config == "autoplan_fetal_head_landmarks":
                 logging.info("Starting autoplan_fetal_head_landmarks processing based on config")
                 autoplan_fetal_head_landmarks.process(connection, config, metadata)
-            elif config == "autoplan_fetal_head_landmarks_offline":
-                logging.info("Starting autoplan_fetal_head_landmarks_offline processing based on config")
-                autoplan_fetal_head_landmarks_offline.process(connection, config, metadata)
             elif config == "automated_svr_launch":
                 logging.info("Starting automated_svr_launch processing based on config")
                 automated_svr_launch.process(connection, config, metadata)
