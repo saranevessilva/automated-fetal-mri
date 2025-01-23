@@ -34,10 +34,12 @@ RUN cd /usr/local/lib && tar -czvf libismrmrd.tar.gz libismrmrd*
 # ----- Start another clean build without all of the build dependencies of siemens_to_ismrmrd -----
 FROM python:3.10.2-slim
 
-LABEL org.opencontainers.image.description="Python MRD Image Reconstruction and Analysis Server"
-LABEL org.opencontainers.image.url="https://github.com/kspaceKelvin/python-ismrmrd-server"
+# LABEL org.opencontainers.image.description="Python MRD Image Reconstruction and Analysis Server"
+LABEL org.opencontainers.image.description="Scanner-based automated tools for acquisition and proessing of fetal MRI scans"
+# LABEL org.opencontainers.image.url="https://github.com/kspaceKelvin/python-ismrmrd-server"
 LABEL org.opencontainers.image.url="https://github.com/saranevessilva/automated-fetal-mri"
-LABEL org.opencontainers.image.authors="Kelvin Chow (kelvin.chow@siemens-healthineers.com)"
+# LABEL org.opencontainers.image.authors="Kelvin Chow (kelvin.chow@siemens-healthineers.com)"
+LABEL org.opencontainers.image.authors="Sara Neves Silva (sara.neves_silva@kcl.ac.uk)"
 
 # Copy ISMRMRD files from last stage
 COPY --from=mrd_converter /usr/local/include/ismrmrd        /usr/local/include/ismrmrd/
@@ -67,6 +69,7 @@ RUN  cd /opt/code \
 RUN pip3 install --no-cache-dir matplotlib pydicom pynetdicom
 
 COPY python-ismrmrd-server  /opt/code/python-ismrmrd-server
+COPY automated-fetal-mri  /opt/code/automated-fetal-mri
 
 # Ensure startup scripts have Unix (LF) line endings, which may not be true
 # if the git repo is cloned in Windows
@@ -76,7 +79,8 @@ RUN apt-get install -y dos2unix \
 
 # Ensure startup scripts are marked as executable, which may be lost if files
 # are copied in Windows
-RUN find /opt/code/python-ismrmrd-server -name *.sh -exec chmod +x {} \;
+# RUN find /opt/code/python-ismrmrd-server -name *.sh -exec chmod +x {} \;
+RUN find /opt/code/automated-fetal-mri -name *.sh -exec chmod +x {} \;
 
 # Cleanup files not required after installation
 RUN  apt-get remove git -y \
@@ -85,7 +89,8 @@ RUN  apt-get remove git -y \
      && rm -rf /root/.cache/pip
 
 # Set the starting directory so that code can use relative paths
-WORKDIR /opt/code/python-ismrmrd-server
+# WORKDIR /opt/code/python-ismrmrd-server
+WORKDIR /opt/code/automated-fetal-mri
 
 # CMD [ "python3", "/opt/code/python-ismrmrd-server/main.py", "-v", "-H=0.0.0.0", "-p=9002", "-l=/tmp/python-ismrmrd-server.log"]
 
@@ -103,4 +108,4 @@ RUN chmod +x entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
 
 # Existing CMD remains as is to start your Python server
-CMD ["python3", "/opt/code/python-ismrmrd-server/main.py", "-v", "-H=0.0.0.0", "-p=9002", "-l=/tmp/python-ismrmrd-server.log"]
+CMD ["python3", "/opt/code/automated-fetal-mri/main.py", "-v", "-H=0.0.0.0", "-p=9002", "-l=/tmp/python-ismrmrd-server.log"]
