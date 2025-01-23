@@ -47,7 +47,7 @@ COPY --from=mrd_converter /usr/local/bin/siemens_to_ismrmrd /usr/local/bin/sieme
 
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y libxslt1.1 libhdf5-103 git && \
-    pip3 install --no-cache-dir h5py ismrmrd==1.13.1 matplotlib pydicom pynetdicom
+    pip3 install --no-cache-dir h5py ismrmrd==1.13.1 matplotlib pydicom pynetdicom SimpleITK nibabel
 
 # Clone additional repositories
 RUN mkdir -p /opt/code && \
