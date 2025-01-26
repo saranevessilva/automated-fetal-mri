@@ -84,7 +84,8 @@ warnings.filterwarnings("ignore")
 date_path = datetime.today().strftime("%Y-%m-%d")
 # debugFolder = "/home/sn21/data/t2-stacks/" + date_path
 # Folder for debug output files
-debugFolder = "/tmp/share/debug"
+debugFolder = "/home/data/t2-stacks/" + date_path
+# debugFolder = "/tmp/share/debug"
 
 
 def load_and_sort_image(nifti_file, new_thickness):
