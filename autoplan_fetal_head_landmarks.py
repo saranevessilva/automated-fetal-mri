@@ -62,7 +62,8 @@ from src.boundingbox import calculate_expanded_bounding_box, apply_bounding_box
 from numpy.fft import fftshift, ifftshift, fftn, ifftn
 
 # Folder for debug output files
-debugFolder = "/tmp/share/debug"
+# debugFolder = "/tmp/share/debug"
+debugFolder = "/home/data/eagle/"
 
 
 def adjust_contrast(image_array, mid_intensity, target_y):
@@ -285,7 +286,7 @@ def process_raw(group, connection, config, metadata):
     data = np.flip(data, (1, 2))
 
     logging.debug("Raw data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "raw.npy", data)
+    # np.save(debugFolder + "/" + "raw.npy", data)
 
     # Remove readout oversampling
     data = fft.ifft(data, axis=2)
@@ -293,7 +294,7 @@ def process_raw(group, connection, config, metadata):
     data = fft.fft(data, axis=2)
 
     logging.debug("Raw data is size after readout oversampling removal %s" % (data.shape,))
-    np.save(debugFolder + "/" + "rawNoOS.npy", data)
+    # np.save(debugFolder + "/" + "rawNoOS.npy", data)
 
     # Fourier Transform
     data = fft.fftshift(data, axes=(1, 2))
@@ -308,7 +309,7 @@ def process_raw(group, connection, config, metadata):
     data = np.sqrt(data)
 
     logging.debug("Image data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "img.npy", data)
+    # np.save(debugFolder + "/" + "img.npy", data)
 
     # Normalize and convert to int16
     data *= 32767 / data.max()
@@ -324,7 +325,7 @@ def process_raw(group, connection, config, metadata):
     data = data[offset:offset + metadata.encoding[0].reconSpace.matrixSize.y, :]
 
     logging.debug("Image without oversampling is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "imgCrop.npy", data)
+    # np.save(debugFolder + "/" + "imgCrop.npy", data)
 
     # Measure processing time
     toc = perf_counter()
@@ -443,7 +444,7 @@ def process_image(images, connection, config, metadata, im, state):
         logging.debug("IceMiniHead[0]: %s", base64.b64decode(meta[0]['IceMiniHead']).decode('utf-8'))
 
     logging.debug("Original image data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "imgOrig.npy", data)
+    # np.save(debugFolder + "/" + "imgOrig.npy", data)
 
     # Normalize and convert to int16
     data = data.astype(np.float64)
@@ -455,7 +456,7 @@ def process_image(images, connection, config, metadata, im, state):
     # data = 32767-data
     data = np.abs(data)
     data = data.astype(np.int16)
-    np.save(debugFolder + "/" + "imgInverted.npy", data)
+    # np.save(debugFolder + "/" + "imgInverted.npy", data)
 
     currentSeries = 0
 
@@ -512,11 +513,10 @@ def process_image(images, connection, config, metadata, im, state):
     print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
     # Define the path where the results will be saved
-    fetalbody_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
-                      + date_path)
+    fetalbody_path = debugFolder + date_path
 
-    file_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "-"
-                 + timestamp + "-centreofmass.txt")
+    # file_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "-"
+    #              + timestamp + "-centreofmass.txt")
 
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(fetalbody_path):
@@ -526,63 +526,53 @@ def process_image(images, connection, config, metadata, im, state):
     if contrast == 1:
         im[:, :, slice] = np.squeeze(data)
 
-        # # TESTING!
-        #
-        # # Define the paths
-        # path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
-        #         "2025-01-14/10-37-05-gadgetron-fetal-brain-localisation-mask_img-0.nii.gz")
-        #
-        # # Read the NIfTI files
-        # image = sitk.ReadImage(path)
-        # im = sitk.GetArrayFromImage(image)
-
     if slice == nslices-1 and contrast == 1:
-        fetal_im_sitk = im
+        # fetal_im_sitk = im
 
-        from scipy.ndimage import affine_transform
-
-        # Define the new affine matrix for the transformation
-        affine = np.array([
-            [0.0, -1.0, 0.0, 0.0],  # srow_x
-            [-1.0, 0.0, 0.0, 0.0],  # srow_y
-            [0.0, 0.0, 1.0, 0.0],  # srow_z
-            [0.0, 0.0, 0.0, 1.0]  # Homogeneous coordinate
-        ])
-
-        # Extract the 3x3 affine transformation matrix for spatial dimensions
-        affine_ = affine[:3, :3]
-
-        # Offset can be derived from the last column of the original 4x4 matrix
-        offset = affine[:3, 3]
-
-        # Apply the affine transformation to the image data
-        fetal_im_sitk = affine_transform(
-            fetal_im_sitk,
-            matrix=affine_,
-            offset=offset,
-            output_shape=fetal_im_sitk.shape,  # Preserve the original shape
-            order=1,  # Linear interpolation; use 0 for nearest-neighbor if preferred
-            mode='constant',  # Handle values outside boundaries, 'nearest' can be used if preferred
-            cval=0.0  # Fill value for points outside boundaries if mode='constant'
-        )
-
-        fetal_im_sitk = sitk.GetImageFromArray(fetal_im_sitk)
-        print("Data", im.shape)
-        voxel_sizes = (pixdim_z, pixdim_y, pixdim_x)  # Define the desired voxel sizes in millimeters
-        srows = srow_x[0], srow_x[1], srow_x[2], srow_y[0], srow_y[1], srow_y[2], srow_z[0], srow_z[1], srow_z[2]
-        print("VOXEL SIZE", voxel_sizes)
-        fetal_im_sitk.SetSpacing(voxel_sizes)
-        fetal_im_sitk.SetDirection(srows)
-        print("New spacing has been set!")
-        fetal_im = sitk.GetArrayFromImage(fetal_im_sitk)
-
-        fetal_im_sitk = sitk.PermuteAxes(fetal_im_sitk, [1, 2, 0])
-        print("Size after transposition:", fetal_im_sitk.GetSize())
-
-        sitk.WriteImage(fetal_im_sitk,
-                        fetalbody_path + "/" + timestamp + "-output.nii.gz")
-
-        print("This is the shape", fetal_im.shape)
+        # from scipy.ndimage import affine_transform
+        #
+        # # Define the new affine matrix for the transformation
+        # affine = np.array([
+        #     [0.0, -1.0, 0.0, 0.0],  # srow_x
+        #     [-1.0, 0.0, 0.0, 0.0],  # srow_y
+        #     [0.0, 0.0, 1.0, 0.0],  # srow_z
+        #     [0.0, 0.0, 0.0, 1.0]  # Homogeneous coordinate
+        # ])
+        #
+        # # Extract the 3x3 affine transformation matrix for spatial dimensions
+        # affine_ = affine[:3, :3]
+        #
+        # # Offset can be derived from the last column of the original 4x4 matrix
+        # offset = affine[:3, 3]
+        #
+        # # Apply the affine transformation to the image data
+        # fetal_im_sitk = affine_transform(
+        #     fetal_im_sitk,
+        #     matrix=affine_,
+        #     offset=offset,
+        #     output_shape=fetal_im_sitk.shape,  # Preserve the original shape
+        #     order=1,  # Linear interpolation; use 0 for nearest-neighbor if preferred
+        #     mode='constant',  # Handle values outside boundaries, 'nearest' can be used if preferred
+        #     cval=0.0  # Fill value for points outside boundaries if mode='constant'
+        # )
+        #
+        # fetal_im_sitk = sitk.GetImageFromArray(fetal_im_sitk)
+        # print("Data", im.shape)
+        # voxel_sizes = (pixdim_z, pixdim_y, pixdim_x)  # Define the desired voxel sizes in millimeters
+        # srows = srow_x[0], srow_x[1], srow_x[2], srow_y[0], srow_y[1], srow_y[2], srow_z[0], srow_z[1], srow_z[2]
+        # print("VOXEL SIZE", voxel_sizes)
+        # fetal_im_sitk.SetSpacing(voxel_sizes)
+        # fetal_im_sitk.SetDirection(srows)
+        # print("New spacing has been set!")
+        # fetal_im = sitk.GetArrayFromImage(fetal_im_sitk)
+        #
+        # fetal_im_sitk = sitk.PermuteAxes(fetal_im_sitk, [1, 2, 0])
+        # print("Size after transposition:", fetal_im_sitk.GetSize())
+        #
+        # sitk.WriteImage(fetal_im_sitk,
+        #                 fetalbody_path + "/" + timestamp + "-output.nii.gz")
+        #
+        # print("This is the shape", fetal_im.shape)
 
         # fetal_im_ = fetal_im[:, :, 1::2]
         # fetal_im_ = fetal_im[..., 0]  # for contrast = 1 & offline testing
@@ -625,7 +615,7 @@ def process_image(images, connection, config, metadata, im, state):
                                               run_csv=
                                               'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
                                               # run_input=im_corr2ab,
-                                              run_input=fetal_im,
+                                              run_input=im,
                                               results_dir='/home/sn21/miniconda3/envs/gadgetron/share'
                                                           '/gadgetron/python/results/',
                                               exp_name='Loc_3D',
