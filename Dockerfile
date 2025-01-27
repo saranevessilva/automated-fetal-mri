@@ -30,6 +30,9 @@ RUN cd /opt/code && \
     make -j$(nproc) && \
     make install
 
+# Create ISMRMRD archive
+RUN cd /usr/local/lib && tar -czvf libismrmrd.tar.gz libismrmrd*
+
 # Use Docker-in-Docker image
 FROM docker:latest
 
@@ -47,9 +50,6 @@ RUN dockerd &
 
 # Pull the image
 RUN docker pull fetalsvrtk/svrtk:general_auto_amd
-
-# Create ISMRMRD archive
-RUN cd /usr/local/lib && tar -czvf libismrmrd.tar.gz libismrmrd*
 
 # Stage 2: Final Image
 FROM python:3.10.2-slim
