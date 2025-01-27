@@ -59,7 +59,7 @@ python3 /home/auto-proc-svrtk/scripts/auto-reporting-brain-volumetry-html.py Fet
 /home/data/t2-stacks/"{path}"/grid-reo-DSVR-output-body.nii.gz  \ 
 /home/data/t2-stacks/"{path}"/grid-reo-DSVR-output-body-mask-lung-lobes-5.nii.gz \
  /home/data/t2-stacks/"{path}"/lung-volumetry-report.html ; \
-chmod 777 /home/data/t2-stacks/"{path}"/lung-volumetry-report.html ; ''''
+chmod 777 /home/data/t2-stacks/"{path}"/lung-volumetry-report.html ; '''
 
 # Record existing files at startup
 existing_files = set()

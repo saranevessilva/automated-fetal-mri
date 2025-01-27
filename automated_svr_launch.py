@@ -548,11 +548,7 @@ def process_image(images, connection, config, metadata):
     /bin/MIRTK/build/lib/tools/convert-image /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz \
     /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz -short ; \
     chmod 1777 /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz ; \
-<<<<<<< HEAD
     bash /home/2auto-proc-svrtk/scripts/auto-body-055t-reconstruction.sh /home/data/{date_path}/dicoms \
-=======
-    bash /home/auto-proc-svrtk/scripts/auto-body-055t-reconstruction.sh /home/data/{date_path}/dicoms \
->>>>>>> 82b3fe6737c36995b34af0549977af179a5d007b
     /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
     chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
     /bin/MIRTK/build/lib/tools/pad-3d /home/data/{date_path}/{date_path}-result/reo-DSVR-output-body.nii.gz /home/ref.nii.gz 256 1 ; \
