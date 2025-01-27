@@ -109,14 +109,11 @@ RUN mkdir -p /opt/code && \
     cd /opt/code/ismrmrd-python-tools && \
     pip3 install --no-cache-dir .
 
-# Copy the .Xauthority file from the host system into the container during build
-COPY /home/sn21/.Xauthority /home/.Xauthority
-
 # Set correct permissions to access the file
-RUN chmod 600 /home/.Xauthority
+RUN chmod 600 /opt/code/automated-fetal-mri/.Xauthority
 
 # Optionally, you can set environment variables if required
-ENV XAUTHORITY=/home/.Xauthority
+ENV XAUTHORITY=/opt/code/automated-fetal-mri/.Xauthority
 
 ENV DISPLAY=:0
 
