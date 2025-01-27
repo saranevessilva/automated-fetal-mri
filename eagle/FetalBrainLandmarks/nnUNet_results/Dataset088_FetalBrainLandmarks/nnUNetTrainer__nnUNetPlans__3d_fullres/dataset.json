@@ -1,0 +1,14 @@
+{
+    "channel_names": {
+        "0": "landmarks"
+    },
+    "labels": {
+        "background": 0,
+        "eyes": 1,
+        "nose": 2,
+        "cereb": 3,
+        "lobes": 4
+    },
+    "numTraining": 2340,
+    "file_ending": ".nii.gz"
+}
