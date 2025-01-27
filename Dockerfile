@@ -30,6 +30,22 @@ RUN cd /opt/code && \
     make -j$(nproc) && \
     make install
 
+# Use Docker-in-Docker image
+FROM docker:latest
+
+# Install dependencies
+RUN apk add --no-cache \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg2 \
+    lsb-release \
+    sudo
+
+# Enable Docker daemon
+RUN dockerd &
+
+# Pull the image
 RUN docker pull fetalsvrtk/svrtk:general_auto_amd
 
 # Create ISMRMRD archive
