@@ -30,8 +30,6 @@ RUN cd /opt/code && \
     make -j$(nproc) && \
     make install
 
-<<<<<<< HEAD
-# Pull the fetalsvrtk image
 RUN docker pull fetalsvrtk/svrtk:general_auto_amd
 
 =======
