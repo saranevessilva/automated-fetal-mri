@@ -102,7 +102,8 @@ import skimage.io as sio
 from numpy import pi, sin, cos
 
 # Folder for debug output files
-debugFolder = "/tmp/share/debug"
+# debugFolder = "/tmp/share/debug"
+debugFolder = "/home/data/volumetry/"
 
 
 def centile_graphs(roi):
@@ -603,7 +604,7 @@ def process_raw(group, connection, config, metadata):
     data = np.flip(data, (1, 2))
 
     logging.debug("Raw data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "raw.npy", data)
+    # np.save(debugFolder + "/" + "raw.npy", data)
 
     # Remove readout oversampling
     data = fft.ifft(data, axis=2)
@@ -611,7 +612,7 @@ def process_raw(group, connection, config, metadata):
     data = fft.fft(data, axis=2)
 
     logging.debug("Raw data is size after readout oversampling removal %s" % (data.shape,))
-    np.save(debugFolder + "/" + "rawNoOS.npy", data)
+    # np.save(debugFolder + "/" + "rawNoOS.npy", data)
 
     # Fourier Transform
     data = fft.fftshift(data, axes=(1, 2))
@@ -626,7 +627,7 @@ def process_raw(group, connection, config, metadata):
     data = np.sqrt(data)
 
     logging.debug("Image data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "img.npy", data)
+    # np.save(debugFolder + "/" + "img.npy", data)
 
     # Normalize and convert to int16
     data *= 32767 / data.max()
@@ -642,7 +643,7 @@ def process_raw(group, connection, config, metadata):
     data = data[offset:offset + metadata.encoding[0].reconSpace.matrixSize.y, :]
 
     logging.debug("Image without oversampling is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "imgCrop.npy", data)
+    # np.save(debugFolder + "/" + "imgCrop.npy", data)
 
     # Measure processing time
     toc = perf_counter()
@@ -742,28 +743,13 @@ def process_image(images, connection, config, metadata):
     # data = 32767-data
     data = np.abs(data)
     data = data.astype(np.int16)
-    np.save(debugFolder + "/" + "imgInverted.npy", data)
+    # np.save(debugFolder + "/" + "imgInverted.npy", data)
 
     currentSeries = 0
 
     nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
 
     im = np.squeeze(data)
-
-    # im = nib.load("/home/sn21/landmark-data/Volumetry/nnUNet_raw/Dataset084_Volumetry/newpred/Volumetry_002_0000.nii.gz")
-    # im = im.get_fdata()
-
-    # im_path = \
-    #     ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
-    #      "cardiac/2024-05-28/12-30-27-output.nii.gz")  # testing only! Sara!
-    #
-    # im = nib.load(im_path)
-    # im = im.get_fdata()
-
-    # slice_fov = 0
-    # min_slice_pos = 0
-    # first_slice = 1
-
     print("Image Shape:", im.shape)
 
     position = imheader.position
@@ -808,8 +794,7 @@ def process_image(images, connection, config, metadata):
     print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
     # Define the path where the results will be saved
-    volumetry_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/volumetry/"
-                      + date_path)
+    volumetry_path = debugFolder + date_path
 
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(volumetry_path):
@@ -860,19 +845,17 @@ def process_image(images, connection, config, metadata):
     # sitk.WriteImage(im, path)
 
     # Run prediction with nnUNet
-    # Set the DISPLAY and XAUTHORITY environment variables
-    os.environ['DISPLAY'] = ':1'  # Replace with your X11 display, e.g., ':1.0'
-    os.environ["XAUTHORITY"] = '/home/sn21/.Xauthority'
-
+    os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
+    os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
     # Record the start time
     start_time = time.time()
 
     # timestamp = "18-14-01"
 
     # Define the terminal command for prediction
-    terminal_command = (("export nnUNet_raw='/home/sn21/landmark-data/Volumetry/nnUNet_raw'; export "
-                         "nnUNet_preprocessed='/home/sn21/landmark-data/Volumetry/nnUNet_preprocessed'; "
-                         "export nnUNet_results='/home/sn21/landmark-data/Volumetry/nnUNet_results'; "
+    terminal_command = (("export nnUNet_raw='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_raw'; export "
+                         "nnUNet_preprocessed='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_preprocessed'; "
+                         "export nnUNet_results='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_results'; "
                          "conda activate gadgetron; nnUNetv2_predict -i ") + volumetry_path + "/"
                         + timestamp + "-nnUNet_seg-volumetry/ -o " + volumetry_path + "/" + timestamp
                         + "-nnUNet_pred-volumetry/ -d 084 -c 3d_fullres -f 1")
@@ -892,8 +875,6 @@ def process_image(images, connection, config, metadata):
     segmentation_filename = os.path.join(volumetry_path, timestamp + "-nnUNet_pred-volumetry",
                                          "Volumetry_001.nii.gz")
 
-    # segmentation_filename = "/home/sn21/landmark-data/Volumetry/nnUNet_raw/Dataset084_Volumetry/newpred/Volumetry_002.nii.gz"
-
     # Get the current date and time
     current_datetime = datetime.now()
 
@@ -901,9 +882,8 @@ def process_image(images, connection, config, metadata):
     date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
 
     # Define the file name with the formatted date and time
-    text_file_1 = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/volumetry/" +
-                   date_path + "/" + timestamp + "-volumetry.txt")
-    text_file = "/home/sn21/freemax-transfer/Sara/landmarks-interface-autoplan/" + timestamp + "-volumetry.txt"
+    text_file_1 = (debugFolder + date_path + "/" + timestamp + "-volumetry.txt")
+    # text_file = "/home/sn21/freemax-transfer/Sara/landmarks-interface-autoplan/" + timestamp + "-volumetry.txt"
 
     file_ga = "/home/sn21/freemax-transfer/Sara/volumetry-ga-interface/ga.txt"
 
@@ -921,7 +901,6 @@ def process_image(images, connection, config, metadata):
     # load .nii images in NiBabel format
 
     img_name = volumetry_path + "/" + timestamp + "-nnUNet_seg-volumetry/Volumetry_001_0000.nii.gz"
-    # img_name = "/home/sn21/landmark-data/Volumetry/nnUNet_raw/Dataset084_Volumetry/newpred/Volumetry_002_0000.nii.gz"
 
     lab_name = segmentation_filename
 

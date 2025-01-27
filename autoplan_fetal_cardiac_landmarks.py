@@ -58,7 +58,7 @@ from src.boundingbox import calculate_expanded_bounding_box, apply_bounding_box
 from numpy.fft import fftshift, ifftshift, fftn, ifftn
 
 # Folder for debug output files
-debugFolder = "/tmp/share/debug"
+debugFolder = "/home/data/owl/"
 
 
 def adjust_contrast(image_array, mid_intensity, target_y):
@@ -289,7 +289,7 @@ def process_raw(group, connection, config, metadata):
     data = np.flip(data, (1, 2))
 
     logging.debug("Raw data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "raw.npy", data)
+    # np.save(debugFolder + "/" + "raw.npy", data)
 
     # Remove readout oversampling
     data = fft.ifft(data, axis=2)
@@ -297,7 +297,7 @@ def process_raw(group, connection, config, metadata):
     data = fft.fft(data, axis=2)
 
     logging.debug("Raw data is size after readout oversampling removal %s" % (data.shape,))
-    np.save(debugFolder + "/" + "rawNoOS.npy", data)
+    # np.save(debugFolder + "/" + "rawNoOS.npy", data)
 
     # Fourier Transform
     data = fft.fftshift(data, axes=(1, 2))
@@ -312,7 +312,7 @@ def process_raw(group, connection, config, metadata):
     data = np.sqrt(data)
 
     logging.debug("Image data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "img.npy", data)
+    # np.save(debugFolder + "/" + "img.npy", data)
 
     # Normalize and convert to int16
     data *= 32767 / data.max()
@@ -328,7 +328,7 @@ def process_raw(group, connection, config, metadata):
     data = data[offset:offset + metadata.encoding[0].reconSpace.matrixSize.y, :]
 
     logging.debug("Image without oversampling is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "imgCrop.npy", data)
+    # np.save(debugFolder + "/" + "imgCrop.npy", data)
 
     # Measure processing time
     toc = perf_counter()
@@ -415,7 +415,7 @@ def process_image(images, connection, config, metadata):
         logging.debug("IceMiniHead[0]: %s", base64.b64decode(meta[0]['IceMiniHead']).decode('utf-8'))
 
     logging.debug("Original image data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "imgOrig.npy", data)
+    # np.save(debugFolder + "/" + "imgOrig.npy", data)
 
     # Normalize and convert to int16
     data = data.astype(np.float64)
@@ -427,25 +427,13 @@ def process_image(images, connection, config, metadata):
     # data = 32767-data
     data = np.abs(data)
     data = data.astype(np.int16)
-    np.save(debugFolder + "/" + "imgInverted.npy", data)
+    # np.save(debugFolder + "/" + "imgInverted.npy", data)
 
     currentSeries = 0
 
     nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
 
     im = np.squeeze(data)
-
-    # im_path = \
-    #     ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
-    #      "cardiac/2024-05-28/12-30-27-output.nii.gz")  # testing only! Sara!
-    #
-    # im = nib.load(im_path)
-    # im = im.get_fdata()
-
-    # slice_fov = 0
-    # min_slice_pos = 0
-    # first_slice = 1
-
     print("Image Shape:", im.shape)
 
     position = imheader.position
@@ -490,8 +478,7 @@ def process_image(images, connection, config, metadata):
     print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
     # Define the path where the results will be saved
-    fetalbody_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/cardiac/"
-                      + date_path)
+    fetalbody_path = (debugFolder + date_path)
 
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(fetalbody_path):
@@ -540,15 +527,18 @@ def process_image(images, connection, config, metadata):
     print("The images have been saved!")
     # sitk.WriteImage(im, path)
 
+    os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
+    os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
+
     # Record the start time
     start_time = time.time()
 
     # timestamp = "18-14-01"
 
     # Define the terminal command for prediction
-    terminal_command = (("export nnUNet_raw='/home/sn21/landmark-data/FetalBody/nnUNet_raw'; export "
-                         "nnUNet_preprocessed='/home/sn21/landmark-data/FetalBody/nnUNet_preprocessed'; "
-                         "export nnUNet_results='/home/sn21/landmark-data/FetalBody/nnUNet_results'; "
+    terminal_command = (("export nnUNet_raw='/opt/code/automated-fetal-mri/owl/FetalBody/nnUNet_raw'; export "
+                         "nnUNet_preprocessed='/opt/code/automated-fetal-mri/owl/FetalBody/nnUNet_preprocessed'; "
+                         "export nnUNet_results='/opt/code/automated-fetal-mri/owl/FetalBody/nnUNet_results'; "
                          "conda activate gadgetron; nnUNetv2_predict -i ") + fetalbody_path + "/"
                         + timestamp + "-nnUNet_seg-fetalbody/ -o " + fetalbody_path + "/" + timestamp
                         + "-nnUNet_pred-fetalbody/ -d 081 -c 3d_fullres -f 1")
@@ -637,8 +627,7 @@ def process_image(images, connection, config, metadata):
     print("..................................................................................")
     print("Starting landmark detection...")
 
-    landmarks_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/cardiac/"
-                      + date_path)
+    landmarks_path = debugFolder + date_path
     os.mkdir(fetalbody_path + "/" + timestamp + "-nnUNet_seg-landmarks/")
     os.mkdir(fetalbody_path + "/" + timestamp + "-nnUNet_pred-landmarks/")
 
@@ -651,10 +640,10 @@ def process_image(images, connection, config, metadata):
 
     start_time = time.time()
     # new network
-    terminal_command = (("export nnUNet_raw='/home/sn21/landmark-data/FetalCardiacLandmarks/nnUNet_raw'; "
-                         "export nnUNet_preprocessed='/home/sn21/landmark-data/FetalCardiacLandmarks"
+    terminal_command = (("export nnUNet_raw='/opt/code/automated-fetal-mri/owl/FetalCardiacLandmarks/nnUNet_raw'; "
+                         "export nnUNet_preprocessed='/opt/code/automated-fetal-mri/owl/FetalCardiacLandmarks"
                          "/nnUNet_preprocessed' ; export "
-                         "nnUNet_results='/home/sn21/landmark-data/FetalCardiacLandmarks/nnUNet_results' ; "
+                         "nnUNet_results='/opt/code/automated-fetal-mri/owl/FetalCardiacLandmarks/nnUNet_results' ; "
                          "conda activate gadgetron ; nnUNetv2_predict -i ") + landmarks_path + "/" +
                         timestamp + "-nnUNet_seg-landmarks/ -o " + landmarks_path + "/" + timestamp +
                         "-nnUNet_pred-landmarks/ -d 083 -c 3d_fullres -f 1")
@@ -796,9 +785,8 @@ def process_image(images, connection, config, metadata):
     date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
 
     # Define the file name with the formatted date and time
-    text_file_1 = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/cardiac/" +
-                   date_path + "/" + timestamp + "-com_cardiac.txt")
-    text_file = "/home/sn21/freemax-transfer/Sara/landmarks-interface-autoplan/sara_cardiac.dvs"
+    text_file_1 = (fetalbody_path + timestamp + "-com_cardiac.txt")
+    text_file = "/home/data/owl/" + "sara_cardiac.dvs"
 
     # # Get the dimensions of the cropped image
     # fetal_im_sitk = sitk.GetArrayFromImage(fetal_im_sitk)
