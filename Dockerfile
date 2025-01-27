@@ -118,7 +118,7 @@ RUN chmod 600 /home/.Xauthority
 # Optionally, you can set environment variables if required
 ENV XAUTHORITY=/home/.Xauthority
 
-ENV DISPLAY=:0  # Adjust according to your needs
+ENV DISPLAY=:0
 
 # Set working directory
 WORKDIR /opt/code/automated-fetal-mri
