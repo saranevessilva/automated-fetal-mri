@@ -32,8 +32,6 @@ RUN cd /opt/code && \
 
 RUN docker pull fetalsvrtk/svrtk:general_auto_amd
 
-=======
->>>>>>> 82b3fe6737c36995b34af0549977af179a5d007b
 # Create ISMRMRD archive
 RUN cd /usr/local/lib && tar -czvf libismrmrd.tar.gz libismrmrd*
 
