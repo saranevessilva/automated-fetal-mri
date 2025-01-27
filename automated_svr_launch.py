@@ -533,9 +533,10 @@ def process_image(images, connection, config, metadata):
 
     print("Launching docker now...")
 
+    # Run Prediction with nnUNet
     # Set the DISPLAY and XAUTHORITY environment variables
-    os.environ['DISPLAY'] = ':1'  # Replace with your X11 display, e.g., ':1.0'
-    os.environ['XAUTHORITY'] = '/home/sn21/.Xauthority'
+    os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
+    os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
 
     command = f'''docker run --rm --mount type=bind,source=/home/sdata/t2-stacks,target=/home/data \
     fetalsvrtk/svrtk:general_auto_amd sh -c 'bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \

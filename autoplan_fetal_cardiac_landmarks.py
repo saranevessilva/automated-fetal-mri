@@ -540,11 +540,6 @@ def process_image(images, connection, config, metadata):
     print("The images have been saved!")
     # sitk.WriteImage(im, path)
 
-    # Run prediction with nnUNet
-    # Set the DISPLAY and XAUTHORITY environment variables
-    os.environ['DISPLAY'] = ':1'  # Replace with your X11 display, e.g., ':1.0'
-    os.environ["XAUTHORITY"] = '/home/sn21/.Xauthority'
-
     # Record the start time
     start_time = time.time()
 

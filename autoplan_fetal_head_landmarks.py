@@ -718,8 +718,8 @@ def process_image(images, connection, config, metadata, im, state):
 
         # Run Prediction with nnUNet
         # Set the DISPLAY and XAUTHORITY environment variables
-        os.environ['DISPLAY'] = ':1'  # Replace with your X11 display, e.g., ':1.0'
-        os.environ["XAUTHORITY"] = '/home/sn21/.Xauthority'
+        os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
+        os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
 
         start_time = time.time()
 
