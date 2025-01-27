@@ -353,7 +353,7 @@ def process_raw(group, connection, config, metadata):
     data = np.flip(data, (1, 2))
 
     logging.debug("Raw data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "raw.npy", data)
+    # np.save(debugFolder + "/" + "raw.npy", data)
 
     # Remove readout oversampling
     data = fft.ifft(data, axis=2)
@@ -361,7 +361,7 @@ def process_raw(group, connection, config, metadata):
     data = fft.fft(data, axis=2)
 
     logging.debug("Raw data is size after readout oversampling removal %s" % (data.shape,))
-    np.save(debugFolder + "/" + "rawNoOS.npy", data)
+    # np.save(debugFolder + "/" + "rawNoOS.npy", data)
 
     # Fourier Transform
     data = fft.fftshift(data, axes=(1, 2))
@@ -376,7 +376,7 @@ def process_raw(group, connection, config, metadata):
     data = np.sqrt(data)
 
     logging.debug("Image data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "img.npy", data)
+    # np.save(debugFolder + "/" + "img.npy", data)
 
     # Normalize and convert to int16
     data *= 32767 / data.max()
@@ -392,7 +392,7 @@ def process_raw(group, connection, config, metadata):
     data = data[offset:offset + metadata.encoding[0].reconSpace.matrixSize.y, :]
 
     logging.debug("Image without oversampling is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "imgCrop.npy", data)
+    # np.save(debugFolder + "/" + "imgCrop.npy", data)
 
     # Measure processing time
     toc = perf_counter()
@@ -494,7 +494,8 @@ def process_image(images, connection, config, metadata):
 
     slice = imheader.slice
 
-    svr_path = ("/home/sn21/data/t2-stacks/" + date_path)
+    # svr_path = ("/home/sn21/data/t2-stacks/" + date_path)
+    svr_path = debugFolder
 
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(svr_path):
@@ -536,7 +537,7 @@ def process_image(images, connection, config, metadata):
     os.environ['DISPLAY'] = ':1'  # Replace with your X11 display, e.g., ':1.0'
     os.environ['XAUTHORITY'] = '/home/sn21/.Xauthority'
 
-    command = f'''docker run --rm --mount type=bind,source=/home/sn21/data/t2-stacks,target=/home/data \
+    command = f'''docker run --rm --mount type=bind,source=/home/sdata/t2-stacks,target=/home/data \
     fetalsvrtk/svrtk:general_auto_amd sh -c 'bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \
     /home/data/{date_path}/dicoms /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
     chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
