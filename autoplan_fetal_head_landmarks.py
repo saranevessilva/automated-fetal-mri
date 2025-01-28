@@ -63,7 +63,8 @@ from src.boundingbox import calculate_expanded_bounding_box, apply_bounding_box
 from numpy.fft import fftshift, ifftshift, fftn, ifftn
 
 # Folder for debug output files
-debugFolder = "/tmp/share/debug"
+# debugFolder = "/tmp/share/debug"
+debugFolder = "/home/data/eagle/"
 
 
 def adjust_contrast(image_array, mid_intensity, target_y):
@@ -286,7 +287,7 @@ def process_raw(group, connection, config, metadata):
     data = np.flip(data, (1, 2))
 
     logging.debug("Raw data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "raw.npy", data)
+    # np.save(debugFolder + "/" + "raw.npy", data)
 
     # Remove readout oversampling
     data = fft.ifft(data, axis=2)
@@ -294,7 +295,7 @@ def process_raw(group, connection, config, metadata):
     data = fft.fft(data, axis=2)
 
     logging.debug("Raw data is size after readout oversampling removal %s" % (data.shape,))
-    np.save(debugFolder + "/" + "rawNoOS.npy", data)
+    # np.save(debugFolder + "/" + "rawNoOS.npy", data)
 
     # Fourier Transform
     data = fft.fftshift(data, axes=(1, 2))
@@ -309,7 +310,7 @@ def process_raw(group, connection, config, metadata):
     data = np.sqrt(data)
 
     logging.debug("Image data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "img.npy", data)
+    # np.save(debugFolder + "/" + "img.npy", data)
 
     # Normalize and convert to int16
     data *= 32767 / data.max()
@@ -325,7 +326,7 @@ def process_raw(group, connection, config, metadata):
     data = data[offset:offset + metadata.encoding[0].reconSpace.matrixSize.y, :]
 
     logging.debug("Image without oversampling is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "imgCrop.npy", data)
+    # np.save(debugFolder + "/" + "imgCrop.npy", data)
 
     # Measure processing time
     toc = perf_counter()
@@ -444,7 +445,7 @@ def process_image(images, connection, config, metadata, im, state):
         logging.debug("IceMiniHead[0]: %s", base64.b64decode(meta[0]['IceMiniHead']).decode('utf-8'))
 
     logging.debug("Original image data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "imgOrig.npy", data)
+    # np.save(debugFolder + "/" + "imgOrig.npy", data)
 
     # Normalize and convert to int16
     data = data.astype(np.float64)
@@ -456,7 +457,7 @@ def process_image(images, connection, config, metadata, im, state):
     # data = 32767-data
     data = np.abs(data)
     data = data.astype(np.int16)
-    np.save(debugFolder + "/" + "imgInverted.npy", data)
+    # np.save(debugFolder + "/" + "imgInverted.npy", data)
 
     currentSeries = 0
 
@@ -513,11 +514,10 @@ def process_image(images, connection, config, metadata, im, state):
     print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
     # Define the path where the results will be saved
-    fetalbody_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
-                      + date_path)
+    fetalbody_path = debugFolder + date_path
 
-    file_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "-"
-                 + timestamp + "-centreofmass.txt")
+    # file_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "-"
+    #              + timestamp + "-centreofmass.txt")
 
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(fetalbody_path):
@@ -573,12 +573,9 @@ def process_image(images, connection, config, metadata, im, state):
                                               training=False,
                                               testing=False,
                                               running=True,
-                                              root_dir='/home/sn21/miniconda3/envs/gadgetron/share/gadgetron'
-                                                       '/python',
-                                              csv_dir='/home/sn21/miniconda3/envs/gadgetron/share/gadgetron'
-                                                      '/python/files/',
-                                              checkpoint_dir='/home/sn21/miniconda3/envs/gadgetron/share'
-                                                             '/gadgetron/python/checkpoints/2022-12-16-newest/',
+                                              root_dir='/opt/code/automated-fetal-mri/eagle',
+                                              csv_dir='/opt/code/automated-fetal-mri/eagle/files/',
+                                              checkpoint_dir='/opt/code/automated-fetal-mri/eagle/checkpoints/',
                                               # change to -breech or -young if needed!
                                               train_csv=
                                               'data_localisation_1-label-brain_uterus_train-2022-11-23.csv',
@@ -590,8 +587,7 @@ def process_image(images, connection, config, metadata, im, state):
                                               'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
                                               # run_input=im_corr2ab,
                                               run_input=im_,
-                                              results_dir='/home/sn21/miniconda3/envs/gadgetron/share'
-                                                          '/gadgetron/python/results/',
+                                              results_dir='/home/data/eagle/' + date_path,
                                               exp_name='Loc_3D',
                                               task_net='unet_3D',
                                               n_classes=N_classes)
@@ -626,19 +622,19 @@ def process_image(images, connection, config, metadata, im, state):
             zcm = model.z_cm
             logging.info("Motion parameters stored!")
 
-            text = str('CoM: ')
-            append_new_line(file_path, text)
-            text = str(xcm)
-            append_new_line(file_path, text)
-            text = str(ycm)
-            append_new_line(file_path, text)
-            text = str(zcm)
-            append_new_line(file_path, text)
-            text = str('---------------------------------------------------')
-            append_new_line(file_path, text)
-
-            print("centre-of-mass coordinates: ", xcm, ycm, zcm)
-            print("Localisation completed.")
+            # text = str('CoM: ')
+            # append_new_line(file_path, text)
+            # text = str(xcm)
+            # append_new_line(file_path, text)
+            # text = str(ycm)
+            # append_new_line(file_path, text)
+            # text = str(zcm)
+            # append_new_line(file_path, text)
+            # text = str('---------------------------------------------------')
+            # append_new_line(file_path, text)
+            #
+            # print("centre-of-mass coordinates: ", xcm, ycm, zcm)
+            # print("Localisation completed.")
 
         segmentation_volume = model.seg_pr
         image_volume = model.img_gt
@@ -654,7 +650,7 @@ def process_image(images, connection, config, metadata, im, state):
         new_directory_seg = fetalbody_path + "/" + timestamp + "-nnUNet_seg/"
         new_directory_pred = fetalbody_path + "/" + timestamp + "-nnUNet_pred/"
 
-        box_path = args.results_dir + date_path
+        box_path = args.results_dir
 
         # Check if the directory already exists
         if not os.path.exists(new_directory_seg):
@@ -674,23 +670,22 @@ def process_image(images, connection, config, metadata, im, state):
 
         box_im = nib.Nifti1Image(box, np.eye(4))
         nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
-        path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "/"
+        path = (fetalbody_path + "/"
                 + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
         im_ = nib.Nifti1Image(im_, np.eye(4))
         nib.save(im_, path)
 
         # Run Prediction with nnUNet
         # Set the DISPLAY and XAUTHORITY environment variables
-        os.environ['DISPLAY'] = ':1'  # Replace with your X11 display, e.g., ':1.0'
-        os.environ["XAUTHORITY"] = '/home/sn21/.Xauthority'
+        os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
+        os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
 
         start_time = time.time()
 
-        command = (("export nnUNet_raw='/home/sn21/landmark-data/FetalBrainLandmarks/nnUNet_raw'; "
-                    "export"
-                    "nnUNet_preprocessed='/home/sn21/landmark-data/FetalBrainLandmarks"
+        command = (("export nnUNet_raw='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_raw'; export"
+                    "nnUNet_preprocessed='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks"
                     "/nnUNet_preprocessed' ; export "
-                    "nnUNet_results='/home/sn21/landmark-data/FetalBrainLandmarks/nnUNet_results' ; "
+                    "nnUNet_results='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results' ; "
                     "conda activate gadgetron ; nnUNetv2_predict -i ") + box_path + "/" +
                    timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
                    "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1")
@@ -779,8 +774,8 @@ def process_image(images, connection, config, metadata, im, state):
             date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
 
             # Define the file name with the formatted date and time
-            text_file_1 = args.results_dir + date_path + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
-            text_file = "/home/sn21/freemax-transfer/Sara/landmarks-interface-autoplan/sara.dvs"
+            text_file_1 = args.results_dir + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
+            text_file = "/home/data/eagle/sara.dvs"
 
             cm_brain = model.x_cm, model.y_cm, model.z_cm
             # print("BRAIN", cm_brain)
