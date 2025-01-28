@@ -13,8 +13,9 @@ import mrdhelper
 import constants
 from time import perf_counter
 from scipy.ndimage import label, center_of_mass
+from scipy.ndimage import affine_transform
 
-# import gadgetron
+import gadgetron
 import ismrmrd
 import logging
 import time
@@ -62,8 +63,7 @@ from src.boundingbox import calculate_expanded_bounding_box, apply_bounding_box
 from numpy.fft import fftshift, ifftshift, fftn, ifftn
 
 # Folder for debug output files
-# debugFolder = "/tmp/share/debug"
-debugFolder = "/home/data/eagle/"
+debugFolder = "/tmp/share/debug"
 
 
 def adjust_contrast(image_array, mid_intensity, target_y):
@@ -213,7 +213,7 @@ def process(connection, config, metadata):
             else:
                 logging.error("Unsupported data type %s", type(item).__name__)
 
-        # Extract raw ECG waveform data. Basic sorting to make sure that data 
+        # Extract raw ECG waveform data. Basic sorting to make sure that data
         # is time-ordered, but no additional checking for missing data.
         # ecgData has shape (5 x timepoints)
         if len(waveformGroup) > 0:
@@ -221,7 +221,7 @@ def process(connection, config, metadata):
             ecgData = [item.data for item in waveformGroup if item.waveform_id == 0]
             ecgData = np.concatenate(ecgData, 1)
 
-        # Process any remaining groups of raw or image data.  This can 
+        # Process any remaining groups of raw or image data.  This can
         # happen if the trigger condition for these groups are not met.
         # This is also a fallback for handling image data, as the last
         # image in a series is typically not separately flagged.
@@ -286,7 +286,7 @@ def process_raw(group, connection, config, metadata):
     data = np.flip(data, (1, 2))
 
     logging.debug("Raw data is size %s" % (data.shape,))
-    # np.save(debugFolder + "/" + "raw.npy", data)
+    np.save(debugFolder + "/" + "raw.npy", data)
 
     # Remove readout oversampling
     data = fft.ifft(data, axis=2)
@@ -294,7 +294,7 @@ def process_raw(group, connection, config, metadata):
     data = fft.fft(data, axis=2)
 
     logging.debug("Raw data is size after readout oversampling removal %s" % (data.shape,))
-    # np.save(debugFolder + "/" + "rawNoOS.npy", data)
+    np.save(debugFolder + "/" + "rawNoOS.npy", data)
 
     # Fourier Transform
     data = fft.fftshift(data, axes=(1, 2))
@@ -309,7 +309,7 @@ def process_raw(group, connection, config, metadata):
     data = np.sqrt(data)
 
     logging.debug("Image data is size %s" % (data.shape,))
-    # np.save(debugFolder + "/" + "img.npy", data)
+    np.save(debugFolder + "/" + "img.npy", data)
 
     # Normalize and convert to int16
     data *= 32767 / data.max()
@@ -325,7 +325,7 @@ def process_raw(group, connection, config, metadata):
     data = data[offset:offset + metadata.encoding[0].reconSpace.matrixSize.y, :]
 
     logging.debug("Image without oversampling is size %s" % (data.shape,))
-    # np.save(debugFolder + "/" + "imgCrop.npy", data)
+    np.save(debugFolder + "/" + "imgCrop.npy", data)
 
     # Measure processing time
     toc = perf_counter()
@@ -444,7 +444,7 @@ def process_image(images, connection, config, metadata, im, state):
         logging.debug("IceMiniHead[0]: %s", base64.b64decode(meta[0]['IceMiniHead']).decode('utf-8'))
 
     logging.debug("Original image data is size %s" % (data.shape,))
-    # np.save(debugFolder + "/" + "imgOrig.npy", data)
+    np.save(debugFolder + "/" + "imgOrig.npy", data)
 
     # Normalize and convert to int16
     data = data.astype(np.float64)
@@ -456,7 +456,7 @@ def process_image(images, connection, config, metadata, im, state):
     # data = 32767-data
     data = np.abs(data)
     data = data.astype(np.int16)
-    # np.save(debugFolder + "/" + "imgInverted.npy", data)
+    np.save(debugFolder + "/" + "imgInverted.npy", data)
 
     currentSeries = 0
 
@@ -513,10 +513,11 @@ def process_image(images, connection, config, metadata, im, state):
     print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
     # Define the path where the results will be saved
-    fetalbody_path = debugFolder + date_path
+    fetalbody_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
+                      + date_path)
 
-    # file_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "-"
-    #              + timestamp + "-centreofmass.txt")
+    file_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "-"
+                 + timestamp + "-centreofmass.txt")
 
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(fetalbody_path):
@@ -526,56 +527,29 @@ def process_image(images, connection, config, metadata, im, state):
     if contrast == 1:
         im[:, :, slice] = np.squeeze(data)
 
+        # # TESTING!
+        #
+        # # Define the paths
+        # path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
+        #         "2025-01-14/10-37-05-gadgetron-fetal-brain-localisation-mask_img-0.nii.gz")
+        #
+        # # Read the NIfTI files
+        # image = sitk.ReadImage(path)
+        # im = sitk.GetArrayFromImage(image)
+
     if slice == nslices-1 and contrast == 1:
-        # fetal_im_sitk = im
 
-        # from scipy.ndimage import affine_transform
-        #
-        # # Define the new affine matrix for the transformation
-        # affine = np.array([
-        #     [0.0, -1.0, 0.0, 0.0],  # srow_x
-        #     [-1.0, 0.0, 0.0, 0.0],  # srow_y
-        #     [0.0, 0.0, 1.0, 0.0],  # srow_z
-        #     [0.0, 0.0, 0.0, 1.0]  # Homogeneous coordinate
-        # ])
-        #
-        # # Extract the 3x3 affine transformation matrix for spatial dimensions
-        # affine_ = affine[:3, :3]
-        #
-        # # Offset can be derived from the last column of the original 4x4 matrix
-        # offset = affine[:3, 3]
-        #
-        # # Apply the affine transformation to the image data
-        # fetal_im_sitk = affine_transform(
-        #     fetal_im_sitk,
-        #     matrix=affine_,
-        #     offset=offset,
-        #     output_shape=fetal_im_sitk.shape,  # Preserve the original shape
-        #     order=1,  # Linear interpolation; use 0 for nearest-neighbor if preferred
-        #     mode='constant',  # Handle values outside boundaries, 'nearest' can be used if preferred
-        #     cval=0.0  # Fill value for points outside boundaries if mode='constant'
-        # )
-        #
-        # fetal_im_sitk = sitk.GetImageFromArray(fetal_im_sitk)
-        # print("Data", im.shape)
-        # voxel_sizes = (pixdim_z, pixdim_y, pixdim_x)  # Define the desired voxel sizes in millimeters
-        # srows = srow_x[0], srow_x[1], srow_x[2], srow_y[0], srow_y[1], srow_y[2], srow_z[0], srow_z[1], srow_z[2]
-        # print("VOXEL SIZE", voxel_sizes)
-        # fetal_im_sitk.SetSpacing(voxel_sizes)
-        # fetal_im_sitk.SetDirection(srows)
-        # print("New spacing has been set!")
-        # fetal_im = sitk.GetArrayFromImage(fetal_im_sitk)
-        #
-        # fetal_im_sitk = sitk.PermuteAxes(fetal_im_sitk, [1, 2, 0])
-        # print("Size after transposition:", fetal_im_sitk.GetSize())
-        #
-        # sitk.WriteImage(fetal_im_sitk,
-        #                 fetalbody_path + "/" + timestamp + "-output.nii.gz")
-        #
-        # print("This is the shape", fetal_im.shape)
+        # Define a 180-degree rotation matrix
+        rotation_matrix = np.array([[-1, 0, 0],
+                                    [0, -1, 0],
+                                    [0, 0, 1]])  # Include the homogeneous transformation part if needed.
 
-        # fetal_im_ = fetal_im[:, :, 1::2]
-        # fetal_im_ = fetal_im[..., 0]  # for contrast = 1 & offline testing
+        # Perform the transformation using scipy's affine_transform
+        center = (np.array(im.shape) - 1) / 2
+        shift = center - np.dot(rotation_matrix, center)
+
+        # Apply the affine transformation
+        im_ = affine_transform(im, rotation_matrix, offset=shift)
 
         print("..................................................................................")
         print("This is the echo-time we're looking at: ", 1)
@@ -599,9 +573,12 @@ def process_image(images, connection, config, metadata, im, state):
                                               training=False,
                                               testing=False,
                                               running=True,
-                                              root_dir='/opt/code/automated-fetal-mri/eagle',
-                                              csv_dir='/opt/code/automated-fetal-mri/eagle/files/',
-                                              checkpoint_dir='/opt/code/automated-fetal-mri/eagle/checkpoints/',
+                                              root_dir='/home/sn21/miniconda3/envs/gadgetron/share/gadgetron'
+                                                       '/python',
+                                              csv_dir='/home/sn21/miniconda3/envs/gadgetron/share/gadgetron'
+                                                      '/python/files/',
+                                              checkpoint_dir='/home/sn21/miniconda3/envs/gadgetron/share'
+                                                             '/gadgetron/python/checkpoints/2022-12-16-newest/',
                                               # change to -breech or -young if needed!
                                               train_csv=
                                               'data_localisation_1-label-brain_uterus_train-2022-11-23.csv',
@@ -612,8 +589,9 @@ def process_image(images, connection, config, metadata, im, state):
                                               run_csv=
                                               'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
                                               # run_input=im_corr2ab,
-                                              run_input=im,
-                                              results_dir='/home/data/eagle/' + date_path,
+                                              run_input=im_,
+                                              results_dir='/home/sn21/miniconda3/envs/gadgetron/share'
+                                                          '/gadgetron/python/results/',
                                               exp_name='Loc_3D',
                                               task_net='unet_3D',
                                               n_classes=N_classes)
@@ -630,6 +608,7 @@ def process_image(images, connection, config, metadata, im, state):
 
         if args.running:
             print("Running")
+            # print("im shape ", im_corr2ab.shape)
             logging.info("Starting localization...")
             model = md.LocalisationNetwork3DMultipleLabels(args)
             # Run inference
@@ -647,44 +626,25 @@ def process_image(images, connection, config, metadata, im, state):
             zcm = model.z_cm
             logging.info("Motion parameters stored!")
 
-            # text = str('CoM: ')
-            # append_new_line(file_path, text)
-            # text = str(xcm)
-            # append_new_line(file_path, text)
-            # text = str(ycm)
-            # append_new_line(file_path, text)
-            # text = str(zcm)
-            # append_new_line(file_path, text)
-            # text = str('---------------------------------------------------')
-            # append_new_line(file_path, text)
-            #
-            # print("centre-of-mass coordinates: ", xcm, ycm, zcm)
-            # print("Localisation completed.")
+            text = str('CoM: ')
+            append_new_line(file_path, text)
+            text = str(xcm)
+            append_new_line(file_path, text)
+            text = str(ycm)
+            append_new_line(file_path, text)
+            text = str(zcm)
+            append_new_line(file_path, text)
+            text = str('---------------------------------------------------')
+            append_new_line(file_path, text)
+
+            print("centre-of-mass coordinates: ", xcm, ycm, zcm)
+            print("Localisation completed.")
 
         segmentation_volume = model.seg_pr
         image_volume = model.img_gt
 
         segmentation_volume = segmentation_volume.astype(np.float32)
         image_volume = image_volume.astype(np.float32)
-
-        # # TESTING!
-        #
-        # # Define the paths
-        # path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
-        #         "2025-01-14/10-37-05-gadgetron-fetal-brain-localisation-mask_img-0.nii.gz")
-        #
-        # path_ = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
-        #          "2025-01-14/10-37-05-gadgetron-fetal-brain-localisation-mask_seg_pr-0.nii.gz")
-        #
-        # # Read the NIfTI files
-        # image = sitk.ReadImage(path)
-        # segmentation = sitk.ReadImage(path_)
-        #
-        # # Convert the images to arrays
-        # image_volume = sitk.GetArrayFromImage(image)
-        # segmentation_volume = sitk.GetArrayFromImage(segmentation)
-        #
-        # # # # # # # # #
 
         box, expansion_factor, center, offset, side_length, mask, vol, crop = (apply_bounding_box
                                                                                (segmentation_volume,
@@ -694,7 +654,7 @@ def process_image(images, connection, config, metadata, im, state):
         new_directory_seg = fetalbody_path + "/" + timestamp + "-nnUNet_seg/"
         new_directory_pred = fetalbody_path + "/" + timestamp + "-nnUNet_pred/"
 
-        box_path = args.results_dir
+        box_path = args.results_dir + date_path
 
         # Check if the directory already exists
         if not os.path.exists(new_directory_seg):
@@ -714,27 +674,23 @@ def process_image(images, connection, config, metadata, im, state):
 
         box_im = nib.Nifti1Image(box, np.eye(4))
         nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
-        im_ = nib.Nifti1Image(im, np.eye(4))
+        path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "/"
+                + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
+        im_ = nib.Nifti1Image(im_, np.eye(4))
+        nib.save(im_, path)
 
         # Run Prediction with nnUNet
         # Set the DISPLAY and XAUTHORITY environment variables
-        os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
-        os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
+        os.environ['DISPLAY'] = ':1'  # Replace with your X11 display, e.g., ':1.0'
+        os.environ["XAUTHORITY"] = '/home/sn21/.Xauthority'
 
         start_time = time.time()
 
-        # command = (("export nnUNet_raw='/home/sn21/landmark-data/Landmarks/nnUNet_raw'; export"
-        #                      "nnUNet_preprocessed='/home/sn21/landmark-data/Landmarks"
-        #                      "/nnUNet_preprocessed' ; export "
-        #                      "nnUNet_results='/home/sn21/landmark-data/Landmarks/nnUNet_results' ; "
-        #                      "conda activate gadgetron ; nnUNetv2_predict -i ") + box_path + "/" +
-        #                     timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
-        #                     "-nnUNet_pred/ -d 080 -c 3d_fullres -f 1")
-
-        command = (("export nnUNet_raw='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_raw'; export"
-                    "nnUNet_preprocessed='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks"
+        command = (("export nnUNet_raw='/home/sn21/landmark-data/FetalBrainLandmarks/nnUNet_raw'; "
+                    "export"
+                    "nnUNet_preprocessed='/home/sn21/landmark-data/FetalBrainLandmarks"
                     "/nnUNet_preprocessed' ; export "
-                    "nnUNet_results='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results' ; "
+                    "nnUNet_results='/home/sn21/landmark-data/FetalBrainLandmarks/nnUNet_results' ; "
                     "conda activate gadgetron ; nnUNetv2_predict -i ") + box_path + "/" +
                    timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
                    "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1")
@@ -810,17 +766,11 @@ def process_image(images, connection, config, metadata, im, state):
             cm_lobe_1 = center_of_mass(lobe_1)
             cm_lobe_2 = center_of_mass(lobe_2)
 
-            cm_eye_1 = cm_eye_1[2], cm_eye_1[1], cm_eye_1[0]
-            cm_eye_2 = cm_eye_2[2], cm_eye_2[1], cm_eye_2[0]
-            cm_cereb = cm_cereb[2], cm_cereb[1], cm_cereb[0]
-            cm_nose = cm_nose[2], cm_nose[1], cm_nose[0]
-            cm_lobe_1 = cm_lobe_1[2], cm_lobe_1[1], cm_lobe_1[0]
-            cm_lobe_2 = cm_lobe_2[2], cm_lobe_2[1], cm_lobe_2[0]
-
             print("Landmarks:", cm_eye_1, cm_eye_2, cm_cereb, cm_nose, cm_lobe_1, cm_lobe_2)
 
             # cm_mid_eyes = tuple((cm_eye_1 + cm_eye_2) / 2.0)  # this is the anterior landmark
             cm_mid_eyes = tuple((e1 + e2) / 2.0 for e1, e2 in zip(cm_eye_1, cm_eye_2))
+            # cm_mid_eyes = np.dot(rotation_matrix, cm_mid_eyes)
 
             # Get the current date and time
             current_datetime = datetime.now()
@@ -829,8 +779,8 @@ def process_image(images, connection, config, metadata, im, state):
             date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
 
             # Define the file name with the formatted date and time
-            text_file_1 = args.results_dir + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
-            text_file = "/home/data/eagle/sara.dvs"
+            text_file_1 = args.results_dir + date_path + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
+            text_file = "/home/sn21/freemax-transfer/Sara/landmarks-interface-autoplan/sara.dvs"
 
             cm_brain = model.x_cm, model.y_cm, model.z_cm
             # print("BRAIN", cm_brain)
@@ -869,6 +819,14 @@ def process_image(images, connection, config, metadata, im, state):
             cropped_mid_eyes_x = cm_mid_eyes[0] / scaling_factor
             cropped_mid_eyes_y = cm_mid_eyes[1] / scaling_factor
             cropped_mid_eyes_z = cm_mid_eyes[2] / scaling_factor
+
+            print("SCALED EYE 1", cropped_eye_1_x, cropped_eye_1_y, cropped_eye_1_z)
+            print("SCALED EYE 2", cropped_eye_2_x, cropped_eye_2_y, cropped_eye_2_z)
+            print("SCALED CEREB", cropped_cereb_x, cropped_cereb_y, cropped_cereb_z)
+            print("SCALED LOBE 1", cropped_lobe_1_x, cropped_lobe_1_y, cropped_lobe_1_z)
+            print("SCALED LOBE 2", cropped_lobe_2_x, cropped_lobe_2_y, cropped_lobe_2_z)
+            print("SCALED NOSE", cropped_nose_x, cropped_nose_y, cropped_nose_z)
+            print("SCALED MID EYES VOXEL", cropped_mid_eyes_x, cropped_mid_eyes_y, cropped_mid_eyes_z)
 
             # Calculate the center of mass in the original 128x128x128 matrix
             cm_eye_1 = (
@@ -909,17 +867,27 @@ def process_image(images, connection, config, metadata, im, state):
                 int(center[2] - side_length // 2) + cropped_mid_eyes_z
             )
 
+            print("EYE 1", cm_eye_1)
+            print("EYE 2", cm_eye_2)
+            print("CEREB", cm_cereb)
+            print("LOBE 1", cm_lobe_1)
+            print("LOBE 2", cm_lobe_2)
+            print("NOSE", cm_nose)
+            print("BRAIN", cm_brain)
+            print("MID EYES VOXEL", cm_mid_eyes)
+
             # Dimensions of the padded 128x128x128 image
             padded_dimensions = vol.shape
 
             # Original dimensions of the image (128x128x60)
-            original_dimensions = im.shape
+            original_dimensions = im_.shape
 
             # Calculate the padding in each dimension
             padding = ((padded_dimensions[0] - original_dimensions[0]) // 2,
                        (padded_dimensions[1] - original_dimensions[1]) // 2,
                        (padded_dimensions[2] - original_dimensions[2]) // 2)
 
+            print("padding", padding)
             # Calculate equivalent coordinates in the original 128x128x60 image
             cm_eye_1 = (
                 cm_eye_1[0] - padding[0],
@@ -1008,7 +976,7 @@ def process_image(images, connection, config, metadata, im, state):
 
             # lowerleftcorner = ((np.int(enc.encodedSpace.fieldOfView_mm.x/2),
             #                     np.int(enc.encodedSpace.fieldOfView_mm.y/2), np.int(min_slice_pos)))
-            centreofimageposition = ((np.float64(metadata.encoding[0].encodedSpace.fieldOfView_mm.x) / 2,
+            centreofimageposition = ((np.float64(metadata.encoding[0].encodedSpace.fieldOfView_mm.x) / 4,
                                       np.float64(metadata.encoding[0].encodedSpace.fieldOfView_mm.y) / 2,
                                       np.float64(nslices * pixdim_z) / 2))
 
