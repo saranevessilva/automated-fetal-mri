@@ -12,7 +12,7 @@ fi
 DOCKER_NAME=${1}
 CHROOT_FILE=${2}
 EXPORT_FILE=docker-export.tar
-BUFFER_MB=${3:-50}
+BUFFER_MB=${3:-1500}  # Default to 1500MB buffer space if not provided
 
 # Create a Docker container and export to a .tar file
 echo ------------------------------------------------------------
@@ -28,11 +28,21 @@ docker create --name tmpimage ${DOCKER_NAME}
 docker export -o ${EXPORT_FILE} tmpimage
 docker rm tmpimage
 
-# Run a privileged Docker to create the chroot file 
+# Run a privileged Docker to create the chroot file
 docker run -it --rm          \
            --privileged=true \
            -v $(pwd):/share  \
            ubuntu            \
            /bin/bash -c "sed -i -e 's/\r//g' /share/docker_tar_to_chroot.sh && /share/docker_tar_to_chroot.sh /share/${EXPORT_FILE} /share/${CHROOT_FILE} ${BUFFER_MB}"
 
+# Add buffer space to the chroot image
+echo ------------------------------------------------------------
+echo Adding ${BUFFER_MB}MB of buffer space to the chroot image
+echo ------------------------------------------------------------
+dd if=/dev/zero of=${CHROOT_FILE}_buffer bs=1M count=${BUFFER_MB}
+cat ${CHROOT_FILE}_buffer >> ${CHROOT_FILE}
+rm ${CHROOT_FILE}_buffer
+
+# Clean up exported tar file
 rm ${EXPORT_FILE}
+
