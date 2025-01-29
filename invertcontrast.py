@@ -12,6 +12,7 @@ import re
 import mrdhelper
 import constants
 from time import perf_counter
+import nibabel as nib
 
 # Folder for debug output files
 debugFolder = "/tmp/share/debug"
