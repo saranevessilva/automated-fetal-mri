@@ -66,9 +66,6 @@ RUN cd /usr/local/lib && tar -zxvf libismrmrd.tar.gz && rm libismrmrd.tar.gz && 
 # Copy siemens_to_ismrmrd
 COPY --from=mrd_converter /usr/local/bin/siemens_to_ismrmrd /usr/local/bin/siemens_to_ismrmrd
 
-COPY requirements.txt /opt/code/automated-fetal-mri/
-RUN pip install --no-cache-dir -r /opt/code/automated-fetal-mri/requirements.txt
-
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
     libxslt1.1 \
@@ -105,11 +102,10 @@ RUN apt-get update && apt-get install -y binutils file vim && rm -rf /var/lib/ap
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /root/.cache/pip
 
-# Clone additional repositories (ensure directories don't conflict)
+# Clone additional repositories
 RUN mkdir -p /opt/code && \
     cd /opt/code && \
     git clone https://github.com/kspacekelvin/python-ismrmrd-server.git && \
-    rm -rf /opt/code/automated-fetal-mri && \
     git clone https://github.com/saranevessilva/automated-fetal-mri.git && \
     git clone https://github.com/ismrmrd/ismrmrd-python-tools.git && \
     cd /opt/code/ismrmrd-python-tools && \
@@ -128,6 +124,10 @@ WORKDIR /opt/code/automated-fetal-mri
 
 # Entry point
 COPY "entrypoint.sh" /usr/local/bin/entrypoint.sh
+
+# RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# CMD ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
 
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
 
