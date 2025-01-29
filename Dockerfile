@@ -33,6 +33,24 @@ RUN cd /opt/code && \
 # Create ISMRMRD archive
 RUN cd /usr/local/lib && tar -czvf libismrmrd.tar.gz libismrmrd*
 
+# Use Docker-in-Docker image
+FROM docker:latest
+
+# Install dependencies
+RUN apk add --no-cache \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg2 \
+    lsb-release \
+    sudo
+
+# Enable Docker daemon
+RUN dockerd &
+
+# Pull the image
+RUN docker pull fetalsvrtk/svrtk:general_auto_amd
+
 # Stage 2: Final Image
 FROM python:3.10.2-slim
 LABEL org.opencontainers.image.description="Automated fetal MRI tools"
@@ -48,8 +66,8 @@ RUN cd /usr/local/lib && tar -zxvf libismrmrd.tar.gz && rm libismrmrd.tar.gz && 
 # Copy siemens_to_ismrmrd
 COPY --from=mrd_converter /usr/local/bin/siemens_to_ismrmrd /usr/local/bin/siemens_to_ismrmrd
 
-COPY requirements_chroot.txt /opt/code/automated-fetal-mri/
-RUN pip install --no-cache-dir -r /opt/code/automated-fetal-mri/requirements_chroot.txt
+COPY requirements.txt /opt/code/automated-fetal-mri/
+RUN pip install --no-cache-dir -r /opt/code/automated-fetal-mri/requirements.txt
 
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -87,10 +105,11 @@ RUN apt-get update && apt-get install -y binutils file vim && rm -rf /var/lib/ap
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /root/.cache/pip
 
-# Clone additional repositories
+# Clone additional repositories (ensure directories don't conflict)
 RUN mkdir -p /opt/code && \
     cd /opt/code && \
     git clone https://github.com/kspacekelvin/python-ismrmrd-server.git && \
+    rm -rf /opt/code/automated-fetal-mri && \
     git clone https://github.com/saranevessilva/automated-fetal-mri.git && \
     git clone https://github.com/ismrmrd/ismrmrd-python-tools.git && \
     cd /opt/code/ismrmrd-python-tools && \
@@ -109,8 +128,6 @@ WORKDIR /opt/code/automated-fetal-mri
 
 # Entry point
 COPY "entrypoint.sh" /usr/local/bin/entrypoint.sh
-
-RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
 
