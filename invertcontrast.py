@@ -299,7 +299,11 @@ def process_image(images, connection, config, metadata):
     # data = 32767-data
     data = np.abs(data)
     data = data.astype(np.int16)
-    np.save(debugFolder + "/" + "imgInverted.npy", data)
+    np.save(debugFolder + "/" + "imgInverted_TEST.npy", data)
+
+    im = np.squeeze(data)
+    im = nib.Nifti1Image(im, np.eye(4))
+    nib.save(im, debugFolder + "/" + "im.nii.gz")
 
     currentSeries = 0
 

@@ -96,7 +96,7 @@ RUN pip3 install --no-cache-dir \
     matplotlib==3.8.2 \
     pydicom==3.0.1
 
-RUN apt-get update && apt-get install -y binutils file && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y binutils file vim && rm -rf /var/lib/apt/lists/*
 
 # Cleanup files not required after installation
 RUN apt-get clean && \
