@@ -96,6 +96,8 @@ RUN pip3 install --no-cache-dir \
     matplotlib==3.8.2 \
     pydicom==3.0.1
 
+RUN apt-get update && apt-get install -y binutils file && rm -rf /var/lib/apt/lists/*
+
 # Cleanup files not required after installation
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /root/.cache/pip
@@ -123,9 +125,11 @@ WORKDIR /opt/code/automated-fetal-mri
 # Entry point
 COPY "entrypoint.sh" /usr/local/bin/entrypoint.sh
 
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# RUN chmod +x /usr/local/bin/entrypoint.sh
 
-CMD ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
+# CMD ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
+
+ENTRYPOINT ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
 
 CMD ["python3", "main.py", "-v", "-H=0.0.0.0", "-p=9002", "-l=/tmp/python-ismrmrd-server.log"]
 
