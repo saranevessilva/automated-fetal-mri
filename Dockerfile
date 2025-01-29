@@ -127,18 +127,5 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 CMD ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
 
-
-CMD ["/bin/bash", "-c", "
-    DATE=$(date +%Y-%m-%d);
-    for dir in /home/data/t2-stacks /home/data/eagle /home/data/owl /home/data/rat; do
-        TARGET_DIR=\"$dir/$DATE\";
-        if [ ! -d \"$TARGET_DIR\" ]; then
-            mkdir -p \"$TARGET_DIR\";
-            echo \"Created folder: $TARGET_DIR\";
-        else
-            echo \"Folder already exists: $TARGET_DIR\";
-        fi;
-    done;
-
 CMD ["python3", "main.py", "-v", "-H=0.0.0.0", "-p=9002", "-l=/tmp/python-ismrmrd-server.log"]
 
