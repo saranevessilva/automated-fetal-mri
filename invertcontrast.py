@@ -522,7 +522,7 @@ def process_image(images, connection, config, metadata):
                                           running=True,
                                           root_dir='/opt/code/automated-fetal-mri/eagle',
                                           csv_dir='/opt/code/automated-fetal-mri/eagle/files/',
-                                          checkpoint_dir='/opt/code/automated-fetal-mri/eagle/checkpoints/',
+                                          checkpoint_dir=debugFolder + '/',
                                           # change to -breech or -young if needed!
                                           train_csv=
                                           'data_localisation_1-label-brain_uterus_train-2022-11-23.csv',
@@ -534,12 +534,16 @@ def process_image(images, connection, config, metadata):
                                           'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
                                           # run_input=im_corr2ab,
                                           run_input=im_,
-                                          results_dir=debugFolder,
+                                          results_dir=debugFolder + '/',
                                           exp_name='Loc_3D',
                                           task_net='unet_3D',
                                           n_classes=N_classes)
 
     args.gpu_ids = [0]
+
+    print("root_dir", root_dir)
+    print("csv_dir", csv_dir)
+    print("checkpoint_dir", checkpoint_dir)
 
     # RUN with empty masks - to generate new ones (practical application)
 
