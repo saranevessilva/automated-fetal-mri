@@ -574,9 +574,11 @@ def process_image(images, connection, config, metadata):
         segmentation_volume = segmentation_volume.astype(np.float32)
         image_volume = image_volume.astype(np.float32)
 
-        box, expansion_factor, center, offset, side_length, mask, vol, crop = (apply_bounding_box
-                                                                               (segmentation_volume,
-                                                                                image_volume))
+        # box, expansion_factor, center, offset, side_length, mask, vol, crop = (apply_bounding_box
+        #                                                                        (segmentation_volume,
+        #                                                                         image_volume))
+
+        box = im_  # brain segmentation not working
 
         # Define the path you want to create
         new_directory_seg = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_seg/"
