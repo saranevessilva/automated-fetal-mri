@@ -16,18 +16,17 @@ from datetime import datetime
 import nibabel as nib
 import SimpleITK as sitk
 import logging
+import sys
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# Reset and configure logging
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
 
-try:
-    print("Starting script...", flush=True)
-    logging.info("Processing...")
-    # Main logic here...
-    print("Script completed successfully!", flush=True)
-except Exception as e:
-    print(f"ERROR: {e}", flush=True)
-    logging.error(f"Script failed: {e}")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
 # Folder for debug output files
 debugFolder = "/tmp/share/debug"
@@ -274,6 +273,7 @@ def process_raw(group, connection, config, metadata):
 
 
 def process_image(images, connection, config, metadata):
+
     if len(images) == 0:
         return []
 
@@ -404,8 +404,21 @@ def process_image(images, connection, config, metadata):
     nib.save(im, debugFolder + "/"
             + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
 
-    print("Checkpoint reached after saving NIfTI file", flush=True)
-    logging.info("Checkpoint reached after saving NIfTI file")
+    try:
+        print("Checkpoint reached after saving NIfTI file", flush=True)
+        logging.info("Checkpoint reached after saving NIfTI file")
+        sys.stdout.flush()  # Ensure logs are immediately written
+
+        # print("..................................................................................")
+        # print("This is the echo-time we're looking at: ", 1)
+        #
+        # logging.info("Initializing localization network...")
+        # sys.stdout.flush()  # Flush again
+
+    except Exception as e:
+        print(f"ERROR: {e}", flush=True)
+        logging.error(f"Script failed: {e}")
+        sys.stdout.flush()
 
     import src.utils as utils
     from src.utils import ArgumentsTrainTestLocalisation, plot_losses_train
@@ -430,13 +443,21 @@ def process_image(images, connection, config, metadata):
         nib.save(im, debugFolder + "/"
                  + timestamp + "-gadgetron-fetal-brain-localisation-img_rot.nii.gz")
 
-        print("Checkpoint reached after saving NIfTI file", flush=True)
-        logging.info("Checkpoint reached after saving rotated NIfTI file")
+        try:
+            print("Checkpoint reached after saving NIfTI file", flush=True)
+            logging.info("Checkpoint reached after saving NIfTI file")
+            sys.stdout.flush()  # Ensure logs are immediately written
 
-        print("..................................................................................")
-        print("This is the echo-time we're looking at: ", 1)
+            print("..................................................................................")
+            print("This is the echo-time we're looking at: ", 1)
 
-        logging.info("Initializing localization network...")
+            logging.info("Initializing localization network...")
+            sys.stdout.flush()  # Flush again
+
+        except Exception as e:
+            print(f"ERROR: {e}", flush=True)
+            logging.error(f"Script failed: {e}")
+            sys.stdout.flush()
 
         N_epochs = 100
         I_size = 128
