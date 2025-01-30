@@ -77,32 +77,15 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     git && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Copy requirements.txt and install Python dependencies
 COPY requirements.txt /tmp/
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Use a lightweight CUDA runtime image
-FROM nvidia/cuda:11.3.1-runtime-ubuntu20.04 
-
-# Install dependencies in a single step
-RUN apt-get update && \
-    apt-get install -y --allow-change-held-packages --no-install-recommends \
-    curl python3-pip python3-dev libcudnn8 libnccl2 libnccl-dev && \
-    rm -rf /var/lib/apt/lists/*
+# Install Python dependencies and check if installation succeeds
+RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
+    pip freeze
 
 # Install PyTorch with CUDA support (1.10.0 with CUDA 11.3)
-RUN pip install --index-url https://download.pytorch.org/whl/cu113 torch==1.10.0
-
-# Set the default Python version to Python 3
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1    
-
-RUN apt-get update && apt-get install -y binutils file vim && rm -rf /var/lib/apt/lists/*
-
-# Cleanup files not required after installation
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /root/.cache/pip
-
-# Install dependencies including git
-RUN apt-get update && apt-get install -y --no-install-recommends git
+RUN pip install torch==2.0.1 && pip install torchvision==0.15.2
 
 # Clone additional repositories
 RUN mkdir -p /opt/code && \
@@ -111,13 +94,15 @@ RUN mkdir -p /opt/code && \
     git clone https://github.com/saranevessilva/automated-fetal-mri.git && \
     git clone https://github.com/ismrmrd/ismrmrd-python-tools.git && \
     cd /opt/code/ismrmrd-python-tools && \
-    pip3 install --no-cache-dir .
+    pip3 install --no-cache-dir . && \
+    pip freeze
 
 # Set correct permissions to access the file
 RUN chmod 600 /opt/code/automated-fetal-mri/.Xauthority
 
 # Optionally, you can set environment variables if required
 ENV XAUTHORITY=/opt/code/automated-fetal-mri/.Xauthority
+
 ENV DISPLAY=:0
 
 # Set working directory
@@ -125,10 +110,7 @@ WORKDIR /opt/code/automated-fetal-mri
 
 # Entry point
 COPY "entrypoint.sh" /usr/local/bin/entrypoint.sh
-
-# RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# CMD ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
 
