@@ -15,6 +15,19 @@ from time import perf_counter
 from datetime import datetime
 import nibabel as nib
 import SimpleITK as sitk
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+try:
+    print("Starting script...", flush=True)
+    logging.info("Processing...")
+    # Main logic here...
+    print("Script completed successfully!", flush=True)
+except Exception as e:
+    print(f"ERROR: {e}", flush=True)
+    logging.error(f"Script failed: {e}")
 
 # Folder for debug output files
 debugFolder = "/tmp/share/debug"
