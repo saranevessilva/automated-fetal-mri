@@ -77,48 +77,20 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     git && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip3 install --no-cache-dir \
-    h5py \
-    ismrmrd==1.13.1 \
-    pynetdicom \
-    SimpleITK==2.4.1 \
-    nibabel==5.3.2 \
-    scipy==1.10.1 \
-    scikit-image==0.21.0 \
-    torch==2.0.1 \
-    torchvision==0.15.2 \
-    pandas==2.2.3 \
-    torchio==0.20.3 \
-    plotly==5.24.1 \
-    nilearn==0.11.1 \
-    monai==1.4.0 \
-    matplotlib==3.8.2 \
-    pydicom==3.0.1
-    
-# Use a base image that supports Python and has CUDA (e.g., a Debian-based image with CUDA support)
-FROM nvidia/cuda:11.3.0-base-ubuntu20.04
+COPY requirements.txt /tmp/
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Set up the environment for the container
-RUN apt-get update && apt-get install -y \
-    curl \
-    python3-pip \
-    python3-dev \
-    && apt-get clean
+# Use a lightweight CUDA runtime image
+FROM nvidia/cuda:11.3.1-runtime-ubuntu20.04 
 
-# Add the NVIDIA package repository key and the CUDA repository
-RUN curl -s -L https://developer.download.nvidia.com/compute/cuda/repos/debian9/x86_64/7fa2af80.pub | tee /etc/apt/trusted.gpg.d/nvidia.asc
-
-# Add the CUDA repository for Debian-based systems
-RUN echo "deb http://developer.download.nvidia.com/compute/cuda/repos/debian9/x86_64 /" | tee /etc/apt/sources.list.d/cuda.list
-
-# Update and install CUDA
-RUN apt-get update && apt-get install -y \
-    cuda-toolkit-11-3 \
-    && apt-get clean
+# Install dependencies in a single step
+RUN apt-get update && \
+    apt-get install -y --allow-change-held-packages --no-install-recommends \
+    curl python3-pip python3-dev libcudnn8 libnccl2 libnccl-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install PyTorch with CUDA support (1.10.0 with CUDA 11.3)
-RUN pip install torch==1.10.0+cu113
+RUN pip install --index-url https://download.pytorch.org/whl/cu113 torch==1.10.0
 
 # Set the default Python version to Python 3
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1    
@@ -128,6 +100,9 @@ RUN apt-get update && apt-get install -y binutils file vim && rm -rf /var/lib/ap
 # Cleanup files not required after installation
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /root/.cache/pip
+
+# Install dependencies including git
+RUN apt-get update && apt-get install -y --no-install-recommends git
 
 # Clone additional repositories
 RUN mkdir -p /opt/code && \
@@ -143,7 +118,6 @@ RUN chmod 600 /opt/code/automated-fetal-mri/.Xauthority
 
 # Optionally, you can set environment variables if required
 ENV XAUTHORITY=/opt/code/automated-fetal-mri/.Xauthority
-
 ENV DISPLAY=:0
 
 # Set working directory
