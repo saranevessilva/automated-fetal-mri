@@ -20,6 +20,11 @@ import sys
 from scipy.ndimage import label, center_of_mass
 from scipy.ndimage import affine_transform
 
+import src.utils as utils
+from src.utils import ArgumentsTrainTestLocalisation, plot_losses_train
+from src import networks as md
+from src.boundingbox import calculate_expanded_bounding_box, apply_bounding_box
+
 # Reset and configure logging
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
@@ -427,11 +432,6 @@ def process_image(images, connection, config, metadata):
         logging.error(f"Script failed: {e}")
         sys.stdout.flush()
 
-    import src.utils as utils
-    from src.utils import ArgumentsTrainTestLocalisation, plot_losses_train
-    from src import networks as md
-    from src.boundingbox import calculate_expanded_bounding_box, apply_bounding_box
-
     # if slice == nslices - 1 and contrast == 1:
 
     # Define a 180-degree rotation matrix
@@ -440,11 +440,11 @@ def process_image(images, connection, config, metadata):
                                 [0, 0, 1]])  # Include the homogeneous transformation part if needed.
 
     # Perform the transformation using scipy's affine_transform
-    center = (np.array(im.shape) - 1) / 2
+    center = (np.array(im_.shape) - 1) / 2
     shift = center - np.dot(rotation_matrix, center)
 
     # Apply the affine transformation
-    im_ = affine_transform(im, rotation_matrix, offset=shift)
+    im_ = affine_transform(im_, rotation_matrix, offset=shift)
 
     im = nib.Nifti1Image(im_, np.eye(4))
     nib.save(im, debugFolder + "/"
