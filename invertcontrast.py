@@ -391,6 +391,9 @@ def process_image(images, connection, config, metadata):
     nib.save(im, debugFolder + "/"
             + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
 
+    print("Checkpoint reached after saving NIfTI file", flush=True)
+    logging.info("Checkpoint reached after saving NIfTI file")
+
     import src.utils as utils
     from src.utils import ArgumentsTrainTestLocalisation, plot_losses_train
     from src import networks as md
@@ -409,6 +412,13 @@ def process_image(images, connection, config, metadata):
 
         # Apply the affine transformation
         im_ = affine_transform(im, rotation_matrix, offset=shift)
+
+        im = nib.Nifti1Image(im_, np.eye(4))
+        nib.save(im, debugFolder + "/"
+                 + timestamp + "-gadgetron-fetal-brain-localisation-img_rot.nii.gz")
+
+        print("Checkpoint reached after saving NIfTI file", flush=True)
+        logging.info("Checkpoint reached after saving rotated NIfTI file")
 
         print("..................................................................................")
         print("This is the echo-time we're looking at: ", 1)
