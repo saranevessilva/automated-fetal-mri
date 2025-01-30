@@ -541,10 +541,6 @@ def process_image(images, connection, config, metadata):
 
     args.gpu_ids = [0]
 
-    print("root_dir", root_dir)
-    print("csv_dir", csv_dir)
-    print("checkpoint_dir", checkpoint_dir)
-
     # RUN with empty masks - to generate new ones (practical application)
 
     if args.running:
