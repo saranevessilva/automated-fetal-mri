@@ -522,7 +522,7 @@ def process_image(images, connection, config, metadata):
                                           running=True,
                                           root_dir='/opt/code/automated-fetal-mri/eagle',
                                           csv_dir='/opt/code/automated-fetal-mri/eagle/files/',
-                                          checkpoint_dir=debugFolder + '/',
+                                          checkpoint_dir=debugFolder + '/checkpoints',
                                           # change to -breech or -young if needed!
                                           train_csv=
                                           'data_localisation_1-label-brain_uterus_train-2022-11-23.csv',
