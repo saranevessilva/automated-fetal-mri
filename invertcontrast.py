@@ -30,6 +30,11 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 
+try:
+    from scipy.ndimage import affine_transform
+except ImportError:
+    print("Error: scipy is not installed or affine_transform is not available")
+
 # Folder for debug output files
 debugFolder = "/tmp/share/debug"
 
