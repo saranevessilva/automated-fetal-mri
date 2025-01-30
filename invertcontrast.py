@@ -543,6 +543,11 @@ def process_image(images, connection, config, metadata):
 
     # RUN with empty masks - to generate new ones (practical application)
 
+    print("args.root_dir", args.root_dir)
+    print("args.csv_dir", args.csv_dir)
+    print("args.checkpoint_dir", args.checkpoint_dir)
+    print("args.results_dir", args.results_dir)
+
     if args.running:
         print("Running")
         # print("im shape ", im_corr2ab.shape)
