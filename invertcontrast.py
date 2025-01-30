@@ -534,7 +534,7 @@ def process_image(images, connection, config, metadata):
                                           'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
                                           # run_input=im_corr2ab,
                                           run_input=im_,
-                                          results_dir=debugFolder + '/',
+                                          results_dir=debugFolder + '/' + date_path,
                                           exp_name='Loc_3D',
                                           task_net='unet_3D',
                                           n_classes=N_classes)
@@ -567,6 +567,75 @@ def process_image(images, connection, config, metadata):
         ycm = model.y_cm
         zcm = model.z_cm
         logging.info("Motion parameters stored!")
+
+        segmentation_volume = model.seg_pr
+        image_volume = model.img_gt
+
+        segmentation_volume = segmentation_volume.astype(np.float32)
+        image_volume = image_volume.astype(np.float32)
+
+        box, expansion_factor, center, offset, side_length, mask, vol, crop = (apply_bounding_box
+                                                                               (segmentation_volume,
+                                                                                image_volume))
+
+        # Define the path you want to create
+        new_directory_seg = debugFolder + date_path + "/" + timestamp + "-nnUNet_seg/"
+        new_directory_pred = debugFolder + date_path + "/" + timestamp + "-nnUNet_pred/"
+
+        box_path = args.results_dir
+
+        # Check if the directory already exists
+        if not os.path.exists(new_directory_seg):
+            # If it doesn't exist, create it
+            os.mkdir(new_directory_seg)
+        else:
+            # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+            print("Directory already exists:", new_directory_seg)
+
+        # Check if the directory already exists
+        if not os.path.exists(new_directory_pred):
+            # If it doesn't exist, create it
+            os.mkdir(new_directory_pred)
+        else:
+            # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+            print("Directory already exists:", new_directory_pred)
+
+        box_im = nib.Nifti1Image(box, np.eye(4))
+        nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
+        path = (fetalbody_path + "/"
+                + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
+        im_ = nib.Nifti1Image(im_, np.eye(4))
+        nib.save(im_, path)
+
+        # Run Prediction with nnUNet
+        # Set the DISPLAY and XAUTHORITY environment variables
+        os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
+        os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
+
+        start_time = time.time()
+
+        command = (("export nnUNet_raw='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_raw'; export"
+                    "nnUNet_preprocessed='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks"
+                    "/nnUNet_preprocessed' ; export "
+                    "nnUNet_results='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results' ; "
+                    "conda activate gadgetron ; nnUNetv2_predict -i ") + box_path + "/" +
+                   timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
+                   "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1")
+
+        subprocess.run(command, shell=True)
+        # Record the end time
+        end_time = time.time()
+
+        # Calculate the elapsed time
+        elapsed_time = end_time - start_time
+        print(f"Elapsed Time for Landmark Detection: {elapsed_time} seconds")
+
+        # Define the path where NIfTI images are located
+        l_path = os.path.join(box_path, timestamp + "-nnUNet_pred")
+
+        # Use glob to find NIfTI files in the directory
+        landmarks_paths = glob.glob(os.path.join(l_path, "*.nii.gz"))
+        print(landmarks_paths)
 
     currentSeries = 0
 
