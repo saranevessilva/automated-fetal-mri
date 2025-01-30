@@ -534,7 +534,7 @@ def process_image(images, connection, config, metadata):
                                           'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
                                           # run_input=im_corr2ab,
                                           run_input=im_,
-                                          results_dir=debugFolder + "/" + date_path,
+                                          results_dir=debugFolder,
                                           exp_name='Loc_3D',
                                           task_net='unet_3D',
                                           n_classes=N_classes)
