@@ -87,6 +87,11 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
 # Install PyTorch with CUDA support (1.10.0 with CUDA 11.3)
 RUN pip install torch==2.0.1 && pip install torchvision==0.15.2
 
+# Clone nnUNet repository and install nnUNet
+RUN git clone https://github.com/MIC-DKFZ/nnUNet.git /opt/code/nnUNet && \
+    cd /opt/code/nnUNet && \
+    pip install -e .
+
 # Clone additional repositories
 RUN mkdir -p /opt/code && \
     cd /opt/code && \
