@@ -585,6 +585,7 @@ def process_image(images, connection, config, metadata):
         new_directory_pred = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_pred/"
 
         box_path = args.results_dir + "/" + date_path
+        print("box_path", box_path)
 
         # Check if the directory already exists
         if not os.path.exists(new_directory_seg):
@@ -598,6 +599,14 @@ def process_image(images, connection, config, metadata):
         if not os.path.exists(new_directory_pred):
             # If it doesn't exist, create it
             os.mkdir(new_directory_pred)
+        else:
+            # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+            print("Directory already exists:", new_directory_pred)
+
+        # Check if the directory already exists
+        if not os.path.exists(box_path):
+            # If it doesn't exist, create it
+            os.mkdir(box_path)
         else:
             # If it already exists, handle it accordingly (maybe log a message or take alternative action)
             print("Directory already exists:", new_directory_pred)
