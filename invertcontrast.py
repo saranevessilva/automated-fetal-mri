@@ -534,7 +534,7 @@ def process_image(images, connection, config, metadata):
                                           'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
                                           # run_input=im_corr2ab,
                                           run_input=im_,
-                                          results_dir=debugFolder + '/' + date_path,
+                                          results_dir=debugFolder + '/',
                                           exp_name='Loc_3D',
                                           task_net='unet_3D',
                                           n_classes=N_classes)
@@ -579,8 +579,8 @@ def process_image(images, connection, config, metadata):
                                                                                 image_volume))
 
         # Define the path you want to create
-        new_directory_seg = debugFolder + date_path + "/" + timestamp + "-nnUNet_seg/"
-        new_directory_pred = debugFolder + date_path + "/" + timestamp + "-nnUNet_pred/"
+        new_directory_seg = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_seg/"
+        new_directory_pred = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_pred/"
 
         box_path = args.results_dir
 

@@ -14,6 +14,8 @@ from csv import writer
 import time
 from datetime import datetime
 
+debugFolder = "/tmp/share/debug"
+
 
 def calculate_expanded_bounding_box(segmentation, expansion_factor):
     # Find indices of nonzero elements in the segmentation
@@ -63,7 +65,7 @@ def apply_bounding_box(segmentation, image):
     date_path = datetime.today().strftime("%Y-%m-%d")
     timestamp = f"{datetime.today().strftime('%H-%M-%S')}"
 
-    path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "/" + timestamp
+    path = (debugFolder + "/" + date_path + "/" + timestamp
             + "-gadgetron-fetal-brain-localisation-mask_34x34x34.nii.gz")
     # nib.save(nib.Nifti1Image(cropped_image, np.eye(4)), path)
     nib.save(nib.Nifti1Image(cropped_image.astype(np.float32), np.eye(4)), path)
@@ -77,7 +79,7 @@ def apply_bounding_box(segmentation, image):
 
     print("Original Lower Left Corner:", original_lower_left_corner)
 
-    path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "/" + timestamp
+    path = (debugFolder + "/" + date_path + "/" + timestamp
             + "-gadgetron-fetal-brain-localisation-mask_cropped.nii.gz")
     # nib.save(nib.Nifti1Image(cropped_image, np.eye(4)), path)
     nib.save(nib.Nifti1Image(cropped_image.astype(np.float32), np.eye(4)), path)
@@ -115,7 +117,7 @@ def apply_bounding_box(segmentation, image):
     # # Assign the values from the smaller array to the corresponding location in the larger array
     # image_volume[mask] = cropped
 
-    path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "/"
+    path = (debugFolder + "/" + date_path + "/"
             + timestamp + "-gadgetron-fetal-brain-localisation-img_new.nii.gz")
     img_new = nib.Nifti1Image(mask, np.eye(4))
     nib.save(nib.Nifti1Image(mask, np.eye(4)), path)
@@ -151,7 +153,7 @@ def apply_bounding_box(segmentation, image):
     # Perform the linear scaling
     expanded = (expanded - current_min) * ((new_max - new_min) / (current_max - current_min)) + new_min
 
-    path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "/"
+    path = (debugFolder + "/" + date_path + "/"
             + timestamp + "-gadgetron-fetal-brain-localisation-img_cropped.nii.gz")
     img_expanded = nib.Nifti1Image(expanded, np.eye(4))
     nib.save(nib.Nifti1Image(expanded, np.eye(4)), path)
