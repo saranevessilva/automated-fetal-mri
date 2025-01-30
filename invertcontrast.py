@@ -17,6 +17,8 @@ import nibabel as nib
 import SimpleITK as sitk
 import logging
 import sys
+from scipy.ndimage import label, center_of_mass
+from scipy.ndimage import affine_transform
 
 # Reset and configure logging
 for handler in logging.root.handlers[:]:
