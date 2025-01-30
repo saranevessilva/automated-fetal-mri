@@ -584,7 +584,7 @@ def process_image(images, connection, config, metadata):
         new_directory_seg = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_seg/"
         new_directory_pred = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_pred/"
 
-        box_path = args.results_dir
+        box_path = args.results_dir + "/" + date_path
 
         # Check if the directory already exists
         if not os.path.exists(new_directory_seg):
