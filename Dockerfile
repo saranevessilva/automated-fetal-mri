@@ -95,6 +95,33 @@ RUN pip3 install --no-cache-dir \
     monai==1.4.0 \
     matplotlib==3.8.2 \
     pydicom==3.0.1
+    
+# Use a base image that supports Python and has CUDA (e.g., a Debian-based image with CUDA support)
+FROM nvidia/cuda:11.3.0-base-ubuntu20.04
+
+# Set up the environment for the container
+RUN apt-get update && apt-get install -y \
+    curl \
+    python3-pip \
+    python3-dev \
+    && apt-get clean
+
+# Add the NVIDIA package repository key and the CUDA repository
+RUN curl -s -L https://developer.download.nvidia.com/compute/cuda/repos/debian9/x86_64/7fa2af80.pub | tee /etc/apt/trusted.gpg.d/nvidia.asc
+
+# Add the CUDA repository for Debian-based systems
+RUN echo "deb http://developer.download.nvidia.com/compute/cuda/repos/debian9/x86_64 /" | tee /etc/apt/sources.list.d/cuda.list
+
+# Update and install CUDA
+RUN apt-get update && apt-get install -y \
+    cuda-toolkit-11-3 \
+    && apt-get clean
+
+# Install PyTorch with CUDA support (1.10.0 with CUDA 11.3)
+RUN pip install torch==1.10.0+cu113
+
+# Set the default Python version to Python 3
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1    
 
 RUN apt-get update && apt-get install -y binutils file vim && rm -rf /var/lib/apt/lists/*
 
