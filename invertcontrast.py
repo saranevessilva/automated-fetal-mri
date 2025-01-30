@@ -425,99 +425,99 @@ def process_image(images, connection, config, metadata):
     from src import networks as md
     from src.boundingbox import calculate_expanded_bounding_box, apply_bounding_box
 
-    if slice == nslices - 1 and contrast == 1:
+    # if slice == nslices - 1 and contrast == 1:
 
-        # Define a 180-degree rotation matrix
-        rotation_matrix = np.array([[-1, 0, 0],
-                                    [0, -1, 0],
-                                    [0, 0, 1]])  # Include the homogeneous transformation part if needed.
+    # Define a 180-degree rotation matrix
+    rotation_matrix = np.array([[-1, 0, 0],
+                                [0, -1, 0],
+                                [0, 0, 1]])  # Include the homogeneous transformation part if needed.
 
-        # Perform the transformation using scipy's affine_transform
-        center = (np.array(im.shape) - 1) / 2
-        shift = center - np.dot(rotation_matrix, center)
+    # Perform the transformation using scipy's affine_transform
+    center = (np.array(im.shape) - 1) / 2
+    shift = center - np.dot(rotation_matrix, center)
 
-        # Apply the affine transformation
-        im_ = affine_transform(im, rotation_matrix, offset=shift)
+    # Apply the affine transformation
+    im_ = affine_transform(im, rotation_matrix, offset=shift)
 
-        im = nib.Nifti1Image(im_, np.eye(4))
-        nib.save(im, debugFolder + "/"
-                 + timestamp + "-gadgetron-fetal-brain-localisation-img_rot.nii.gz")
+    im = nib.Nifti1Image(im_, np.eye(4))
+    nib.save(im, debugFolder + "/"
+             + timestamp + "-gadgetron-fetal-brain-localisation-img_rot.nii.gz")
 
-        try:
-            print("Checkpoint reached after saving NIfTI file", flush=True)
-            logging.info("Checkpoint reached after saving NIfTI file")
-            sys.stdout.flush()  # Ensure logs are immediately written
+    try:
+        print("Checkpoint reached after saving NIfTI file", flush=True)
+        logging.info("Checkpoint reached after saving NIfTI file")
+        sys.stdout.flush()  # Ensure logs are immediately written
 
-            print("..................................................................................")
-            print("This is the echo-time we're looking at: ", 1)
+        print("..................................................................................")
+        print("This is the echo-time we're looking at: ", 1)
 
-            logging.info("Initializing localization network...")
-            sys.stdout.flush()  # Flush again
+        logging.info("Initializing localization network...")
+        sys.stdout.flush()  # Flush again
 
-        except Exception as e:
-            print(f"ERROR: {e}", flush=True)
-            logging.error(f"Script failed: {e}")
-            sys.stdout.flush()
+    except Exception as e:
+        print(f"ERROR: {e}", flush=True)
+        logging.error(f"Script failed: {e}")
+        sys.stdout.flush()
 
-        N_epochs = 100
-        I_size = 128
-        N_classes = 2
+    N_epochs = 100
+    I_size = 128
+    N_classes = 2
 
-        # # # Prepare arguments
+    # # # Prepare arguments
 
-        args = ArgumentsTrainTestLocalisation(epochs=N_epochs,
-                                              batch_size=2,
-                                              lr=0.002,
-                                              crop_height=I_size,
-                                              crop_width=I_size,
-                                              crop_depth=I_size,
-                                              validation_steps=8,
-                                              lamda=10,
-                                              training=False,
-                                              testing=False,
-                                              running=True,
-                                              root_dir='/opt/code/automated-fetal-mri/eagle',
-                                              csv_dir='/opt/code/automated-fetal-mri/eagle/files/',
-                                              checkpoint_dir='/opt/code/automated-fetal-mri/eagle/checkpoints/',
-                                              # change to -breech or -young if needed!
-                                              train_csv=
-                                              'data_localisation_1-label-brain_uterus_train-2022-11-23.csv',
-                                              valid_csv=
-                                              'data_localisation_1-label-brain_uterus_valid-2022-11-23.csv',
-                                              test_csv=
-                                              'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
-                                              run_csv=
-                                              'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
-                                              # run_input=im_corr2ab,
-                                              run_input=im_,
-                                              results_dir=debugFolder + "/" + date_path,
-                                              exp_name='Loc_3D',
-                                              task_net='unet_3D',
-                                              n_classes=N_classes)
+    args = ArgumentsTrainTestLocalisation(epochs=N_epochs,
+                                          batch_size=2,
+                                          lr=0.002,
+                                          crop_height=I_size,
+                                          crop_width=I_size,
+                                          crop_depth=I_size,
+                                          validation_steps=8,
+                                          lamda=10,
+                                          training=False,
+                                          testing=False,
+                                          running=True,
+                                          root_dir='/opt/code/automated-fetal-mri/eagle',
+                                          csv_dir='/opt/code/automated-fetal-mri/eagle/files/',
+                                          checkpoint_dir='/opt/code/automated-fetal-mri/eagle/checkpoints/',
+                                          # change to -breech or -young if needed!
+                                          train_csv=
+                                          'data_localisation_1-label-brain_uterus_train-2022-11-23.csv',
+                                          valid_csv=
+                                          'data_localisation_1-label-brain_uterus_valid-2022-11-23.csv',
+                                          test_csv=
+                                          'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
+                                          run_csv=
+                                          'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
+                                          # run_input=im_corr2ab,
+                                          run_input=im_,
+                                          results_dir=debugFolder + "/" + date_path,
+                                          exp_name='Loc_3D',
+                                          task_net='unet_3D',
+                                          n_classes=N_classes)
 
-        args.gpu_ids = [0]
+    args.gpu_ids = [0]
 
-        # RUN with empty masks - to generate new ones (practical application)
+    # RUN with empty masks - to generate new ones (practical application)
 
-        if args.running:
-            print("Running")
-            # print("im shape ", im_corr2ab.shape)
-            logging.info("Starting localization...")
-            model = md.LocalisationNetwork3DMultipleLabels(args)
-            # Run inference
-            ####################
-            model.run(args, 1)  # Changing this to 0 avoids the plotting
-            logging.info("Localization completed!")
+    if args.running:
+        print("Running")
+        # print("im shape ", im_corr2ab.shape)
+        logging.info("Starting localization...")
+        model = md.LocalisationNetwork3DMultipleLabels(args)
+        # Run inference
+        ####################
+        model.run(args, 1)  # Changing this to 0 avoids the plotting
+        logging.info("Localization completed!")
 
-            rotx = 0.0
-            roty = 0.0
-            rotz = 0.0
+        rotx = 0.0
+        roty = 0.0
+        rotz = 0.0
 
-            logging.info("Storing motion parameters into variables...")
-            xcm = model.x_cm
-            ycm = model.y_cm
-            zcm = model.z_cm
-            logging.info("Motion parameters stored!")
+        logging.info("Storing motion parameters into variables...")
+        xcm = model.x_cm
+        ycm = model.y_cm
+        zcm = model.z_cm
+        logging.info("Motion parameters stored!")
 
     currentSeries = 0
 
