@@ -623,17 +623,22 @@ def process_image(images, connection, config, metadata):
         os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
         os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
 
+        # Ensure nnUNet_results is set correctly
+        os.environ['nnUNet_results'] = '/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'
+
         start_time = time.time()
 
-        command = (("export nnUNet_raw='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_raw'; export "
-                    "nnUNet_preprocessed='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_preprocessed"
-                    "'; export"
-                    "nnUNet_results='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'; "
-                    "nnUNetv2_predict -i ") + box_path + "/" +
-                   timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
-                   "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1")
+        command = (
+                "export nnUNet_raw='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_raw'; "
+                "export nnUNet_preprocessed='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks"
+                "/nnUNet_preprocessed';"
+                "export nnUNet_results='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'; "
+                "nnUNetv2_predict -i " + box_path + "/" + timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
+                "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1"
+        )
 
         subprocess.run(command, shell=True)
+
         # Record the end time
         end_time = time.time()
 
