@@ -172,31 +172,19 @@ def main(args):
                     if mrdHead.acquisitionSystemInformation is None:
                         pass
                     else:
-                        # print("---------- Old -------------------------")
-                        # print("mrdHead.acquisitionSystemInformation.systemVendor         : %s" % mrdHead.acquisitionSystemInformation.systemVendor          )
-                        # print("mrdHead.acquisitionSystemInformation.systemModel          : %s" % mrdHead.acquisitionSystemInformation.systemModel           )
-                        # print("mrdHead.acquisitionSystemInformation.systemFieldStrength_T: %s" % mrdHead.acquisitionSystemInformation.systemFieldStrength_T )
-                        # print("mrdHead.acquisitionSystemInformation.institutionName      : %s" % mrdHead.acquisitionSystemInformation.institutionName       )
-                        # print("mrdHead.acquisitionSystemInformation.stationName          : %s" % mrdHead.acquisitionSystemInformation.stationName           )
-
                         if mrdHead.acquisitionSystemInformation.systemVendor          is not None: dicomDset.Manufacturer          = mrdHead.acquisitionSystemInformation.systemVendor
                         if mrdHead.acquisitionSystemInformation.systemModel           is not None: dicomDset.ManufacturerModelName = mrdHead.acquisitionSystemInformation.systemModel
                         if mrdHead.acquisitionSystemInformation.systemFieldStrength_T is not None: dicomDset.MagneticFieldStrength = mrdHead.acquisitionSystemInformation.systemFieldStrength_T
                         if mrdHead.acquisitionSystemInformation.institutionName       is not None: dicomDset.InstitutionName       = mrdHead.acquisitionSystemInformation.institutionName
                         if mrdHead.acquisitionSystemInformation.stationName           is not None: dicomDset.StationName           = mrdHead.acquisitionSystemInformation.stationName
-
-                        # print("---------- New -------------------------")
-                        # print("mrdHead.acquisitionSystemInformation.systemVendor         : %s" % mrdHead.acquisitionSystemInformation.systemVendor          )
-                        # print("mrdHead.acquisitionSystemInformation.systemModel          : %s" % mrdHead.acquisitionSystemInformation.systemModel           )
-                        # print("mrdHead.acquisitionSystemInformation.systemFieldStrength_T: %s" % mrdHead.acquisitionSystemInformation.systemFieldStrength_T )
-                        # print("mrdHead.acquisitionSystemInformation.institutionName      : %s" % mrdHead.acquisitionSystemInformation.institutionName       )
-                        # print("mrdHead.acquisitionSystemInformation.stationName          : %s" % mrdHead.acquisitionSystemInformation.stationName           )
                 except:
                     print("Error setting header information from MRD header's acquisitionSystemInformation section")
 
                 # Set mrdImg pixel data from MRD mrdImg
-                dicomDset.PixelData = np.squeeze(mrdImg.data) # mrdImg.data is [cha z y x] -- squeeze to [y x] for [row col]
+                # dicomDset.PixelData = np.squeeze(mrdImg.data) # mrdImg.data is [cha z y x] -- squeeze to [y x] for [row col]
+                dicomDset.PixelData = np.squeeze(mrdImg.data).astype(np.uint16).tobytes()
                 imag = np.squeeze((mrdImg.data))
+                print("imag", imag.shape)
                 # print("imag dimensions", imag.shape)
                 dicomDset.PixelData = imag.astype(np.uint32)
                 dicomDset.Rows      = mrdImg.data.shape[2]
