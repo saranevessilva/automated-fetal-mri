@@ -141,7 +141,7 @@ def process(connection, config, metadata):
                     logging.info("Processing a group of images because series index changed to %d",
                                  item.image_series_index)
                     currentSeries = item.image_series_index
-                    image = process_image(imgGroup, connection, config, metadata)
+                    image = process_image(imgGroup, connection, config, metadata, state)
                     connection.send_image(image)
                     imgGroup = []
 
@@ -175,6 +175,12 @@ def process(connection, config, metadata):
             ecgData = [item.data for item in waveformGroup if item.waveform_id == 0]
             ecgData = np.concatenate(ecgData, 1)
 
+        state = {
+            "slice_pos": 0,
+            "min_slice_pos": 0,
+            "first_slice": 1
+        }
+
         # Process any remaining groups of raw or image data.  This can
         # happen if the trigger condition for these groups are not met.
         # This is also a fallback for handling image data, as the last
@@ -187,7 +193,7 @@ def process(connection, config, metadata):
 
         if len(imgGroup) > 0:
             logging.info("Processing a group of images (untriggered)")
-            image = process_image(imgGroup, connection, config, metadata)
+            image = process_image(imgGroup, connection, config, metadata, state)
             connection.send_image(image)
             imgGroup = []
 
@@ -318,13 +324,12 @@ def process_raw(group, connection, config, metadata):
         imagesOut.append(tmpImg)
 
     # Call process_image() to invert image contrast
-    imagesOut = process_image(imagesOut, connection, config, metadata)
+    imagesOut = process_image(imagesOut, connection, config, metadata, state)
 
     return imagesOut
 
 
-def process_image(images, connection, config, metadata):
-
+def process_image(images, connection, config, metadata, state):
     if len(images) == 0:
         return []
 
