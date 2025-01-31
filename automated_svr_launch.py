@@ -92,6 +92,7 @@ except ImportError:
 # Folder for debug output files
 debugFolder = "/tmp/share/debug"
 date_path = datetime.today().strftime("%Y-%m-%d")
+os.environ['PATH'] += ':/usr/local/bin'
 
 
 def load_and_sort_image(nifti_file, new_thickness):
@@ -102,7 +103,6 @@ def load_and_sort_image(nifti_file, new_thickness):
     # Retrieve and modify slice thickness (assuming it's the third element in the spacing tuple)
     spacing = list(img.GetSpacing())
     original_thickness = spacing[2]
-    # new_thickness = 4.5
     spacing[2] = new_thickness
     img.SetSpacing(spacing)
 
