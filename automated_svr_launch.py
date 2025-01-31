@@ -518,7 +518,7 @@ def process_image(images, connection, config, metadata, state):
     repetition = imheader.repetition
     print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
-    svr_path = (debugFolder + date_path)
+    svr_path = (debugFolder + "/" + date_path)
 
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(svr_path):

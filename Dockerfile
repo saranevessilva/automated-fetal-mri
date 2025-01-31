@@ -113,6 +113,13 @@ ENV XAUTHORITY=/opt/code/automated-fetal-mri/.Xauthority
 
 ENV DISPLAY=:0
 
+# Set environment variables (optional, but helps avoid interactive prompts)
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update package list and install dependencies
+RUN apt-get update && \
+    apt-get install -y dcm2niix
+
 # Set working directory
 WORKDIR /opt/code/automated-fetal-mri
 RUN git lfs pull
