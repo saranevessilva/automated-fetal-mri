@@ -48,6 +48,8 @@ from ismrmrd.constants import *
 import matplotlib.image
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
+import torch
+import torchvision
 
 import sys
 
@@ -628,17 +630,17 @@ def process_image(images, connection, config, metadata):
 
         start_time = time.time()
 
-        checkpoint_path = ("/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/"
-                           "nnUNet_results/Dataset088_FetalBrainLandmarks/nnUNetTrainer__nnUNetPlans__3d_fullres"
-                           "/fold_1/"
-                           "checkpoint_final.pth")
+        # checkpoint_path = ("/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/"
+        #                    "nnUNet_results/Dataset088_FetalBrainLandmarks/nnUNetTrainer__nnUNetPlans__3d_fullres"
+        #                    "/fold_1/"
+        #                    "checkpoint_final.pth")
 
-        # Attempt to load the checkpoint manually
-        try:
-            checkpoint = torch.load(checkpoint_path)
-            print("Checkpoint loaded successfully.")
-        except Exception as e:
-            print(f"Error loading checkpoint: {e}")
+        # # Attempt to load the checkpoint manually
+        # try:
+        #     checkpoint = torch.load(checkpoint_path)
+        #     print("Checkpoint loaded successfully.")
+        # except Exception as e:
+        #     print(f"Error loading checkpoint: {e}")
 
         command = (
                 "export nnUNet_raw='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_raw'; "
