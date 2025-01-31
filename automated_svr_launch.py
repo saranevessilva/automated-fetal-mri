@@ -179,8 +179,7 @@ def convert_to_nii(folder_path, output_folder):
     # Extract the folder name
     folder_name = os.path.basename(folder_path)
 
-    # Run dcm2nii command and specify the output directory for NIfTI files
-    subprocess.run(['dcm2nii', '-g', 'n', '-o', output_folder, folder_path])
+    subprocess.run(['dcm2niix', '-g', 'n', '-o', output_folder, folder_path])
 
     # Find the generated NIfTI file in the output folder (not within subfolder)
     nifti_files = glob.glob(os.path.join(output_folder, f'{folder_name}*.nii'))

@@ -12,191 +12,10 @@ import re
 import mrdhelper
 import constants
 from time import perf_counter
-
-# import numpy as np
-import ismrmrd
-import logging
-import time
-import io
-import os
-from datetime import datetime
-import subprocess
-import matplotlib
-#
-from scipy.ndimage import map_coordinates
-
-from ismrmrd.meta import Meta
-import itertools
-import ctypes
-# import numpy as np
-import copy
-import glob
-import warnings
-from scipy import ndimage, misc
-from skimage import measure
-from scipy.spatial.distance import euclidean
-
-warnings.simplefilter('default')
-
-from ismrmrd.acquisition import Acquisition
-from ismrmrd.flags import FlagsMixin
-from ismrmrd.equality import EqualityMixin
-from ismrmrd.constants import *
-
-import matplotlib.image
-import matplotlib.pyplot as plt
-from matplotlib.widgets import RectangleSelector
-
-import sys
-
 import nibabel as nib
-import SimpleITK as sitk
-from numpy.fft import fftshift, ifftshift, fftn, ifftn
-
-# standard libraries
-from matplotlib import pyplot as plt
-
-import os
-
-# import numpy as np
-# import matplotlib as plt
-import math
-import scipy
-from skimage import io
-
-from scipy import ndimage
-from skimage.measure import label, regionprops
-import argparse
-from src.mrd2dicom_svr import main
-
-import warnings
-
-warnings.filterwarnings("ignore")
-
-
-# Reset and configure logging
-for handler in logging.root.handlers[:]:
-    logging.root.removeHandler(handler)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
-
-try:
-    from scipy.ndimage import affine_transform
-except ImportError:
-    print("Error: scipy is not installed or affine_transform is not available")
 
 # Folder for debug output files
 debugFolder = "/tmp/share/debug"
-date_path = datetime.today().strftime("%Y-%m-%d")
-
-
-def load_and_sort_image(nifti_file, new_thickness):
-    # Load the NIfTI file
-    img = sitk.ReadImage(nifti_file)
-    data = sitk.GetArrayFromImage(img)
-
-    # Retrieve and modify slice thickness (assuming it's the third element in the spacing tuple)
-    spacing = list(img.GetSpacing())
-    original_thickness = spacing[2]
-    # new_thickness = 4.5
-    spacing[2] = new_thickness
-    img.SetSpacing(spacing)
-
-    # Retrieve the direction (srow equivalent in SimpleITK)
-    direction = np.array(img.GetDirection()).reshape((3, 3))
-
-    # Find the largest value in the direction matrix
-    largest = np.max(np.abs(direction))
-    print("Largest value in direction matrix:", largest)
-
-    # Find the index of the largest value and divide it by 2
-    indices = np.where(np.abs(direction) == largest)
-    direction[indices] = new_thickness
-
-    # Update the direction in the image
-    img.SetDirection(direction.flatten())
-
-    # Log the updated direction
-    print("Updated direction matrix:", direction)
-
-    # Check if slices are interleaved and combine them (example logic)
-    combined = np.zeros_like(data)
-    mid = (data.shape[0] + 1) // 2
-    odd = data[:mid, :, :]  # Odd slices
-    even = data[mid:, :, :]  # Even slices
-    combined[::2, :, :] = odd
-    combined[1::2, :, :] = even
-
-    print("Combined data shape:", combined.shape)
-
-    # Create a new NIfTI image with the updated header and sorted data
-    new_img = sitk.GetImageFromArray(combined)
-    new_img.SetSpacing(spacing)
-    new_img.SetDirection(direction.flatten())
-    new_img.SetOrigin(img.GetOrigin())
-
-    # Save the updated NIfTI file
-    # new_file = nifti_file.replace('.nii.gz', '_sorted.nii.gz').replace('.nii', '_sorted.nii')
-    sitk.WriteImage(new_img, nifti_file)
-    print(f"Sorted NIfTI file saved as: {nifti_file}")
-
-    return new_img
-
-
-def process_folder(folder_path, pixdim_z):
-    # Loop through all files in the folder
-    for nifti_file in os.listdir(folder_path):
-        # Check if the file is a NIfTI file (.nii or .nii.gz)
-        if (nifti_file.endswith('.nii.gz') or nifti_file.endswith('.nii')) and not nifti_file.startswith('o'):
-            nifti_file_path = os.path.join(folder_path, nifti_file)
-            print(f"Processing NIfTI file: {nifti_file_path}")
-            load_and_sort_image(nifti_file_path, pixdim_z)
-
-
-def process_mrd_files(folder_path, in_group=None, out_folder=None):
-    # Iterate through all files in the directory
-    for file_name in os.listdir(folder_path):
-        if file_name.startswith('haste_') and file_name.endswith('.h5'):
-            file_path = os.path.join(folder_path, file_name)
-            print("MRD file:", file_path)
-
-            # Prepare arguments for the main function
-            args = argparse.Namespace(
-                filename=file_path,
-                in_group=in_group,
-                out_folder=out_folder or os.path.join(folder_path, os.path.splitext(file_name)[0])
-            )
-
-            # Call the main function
-            main(args)
-
-
-def convert_to_nii(folder_path, output_folder):
-    # Extract the folder name
-    folder_name = os.path.basename(folder_path)
-
-    # Run dcm2nii command and specify the output directory for NIfTI files
-    subprocess.run(['dcm2nii', '-g', 'n', '-o', output_folder, folder_path])
-
-    # Find the generated NIfTI file in the output folder (not within subfolder)
-    nifti_files = glob.glob(os.path.join(output_folder, f'{folder_name}*.nii'))
-
-    if nifti_files:
-        nifti_file = nifti_files[0]
-
-        # Construct the new NIfTI file path (using folder_name as the name)
-        new_nifti_path = os.path.join(output_folder, f"{folder_name}.nii")
-
-        # Rename the NIfTI file to match the folder name
-        os.rename(nifti_file, new_nifti_path)
-        print(f"NIfTI file renamed to {new_nifti_path}")
-
-    else:
-        print(f"No NIfTI file found in {folder_path}")
 
 
 def process(connection, config, metadata):
@@ -232,13 +51,6 @@ def process(connection, config, metadata):
     waveformGroup = []
     try:
         for item in connection:
-
-            state = {
-                "slice_pos": 0,
-                "min_slice_pos": 0,
-                "first_slice": 1
-            }
-
             # ----------------------------------------------------------
             # Raw k-space data messages
             # ----------------------------------------------------------
@@ -264,7 +76,7 @@ def process(connection, config, metadata):
                     logging.info("Processing a group of images because series index changed to %d",
                                  item.image_series_index)
                     currentSeries = item.image_series_index
-                    image = process_image(imgGroup, connection, config, metadata, state)
+                    image = process_image(imgGroup, connection, config, metadata)
                     connection.send_image(image)
                     imgGroup = []
 
@@ -310,7 +122,7 @@ def process(connection, config, metadata):
 
         if len(imgGroup) > 0:
             logging.info("Processing a group of images (untriggered)")
-            image = process_image(imgGroup, connection, config, metadata, state)
+            image = process_image(imgGroup, connection, config, metadata)
             connection.send_image(image)
             imgGroup = []
 
@@ -441,12 +253,12 @@ def process_raw(group, connection, config, metadata):
         imagesOut.append(tmpImg)
 
     # Call process_image() to invert image contrast
-    imagesOut = process_image(imagesOut, connection, config, metadata, state)
+    imagesOut = process_image(imagesOut, connection, config, metadata)
 
     return imagesOut
 
 
-def process_image(images, connection, config, metadata, state):
+def process_image(images, connection, config, metadata):
     if len(images) == 0:
         return []
 
@@ -458,9 +270,6 @@ def process_image(images, connection, config, metadata, state):
     logging.debug("Processing data with %d images of type %s", len(images),
                   ismrmrd.get_dtype_from_data_type(images[0].data_type))
 
-    # date_path = datetime.today().strftime("%Y-%m-%d")
-    timestamp = f"{datetime.today().strftime('%H-%M-%S')}"
-
     # Note: The MRD Image class stores data as [cha z y x]
 
     # Extract image data into a 5D array of size [img cha z y x]
@@ -468,25 +277,8 @@ def process_image(images, connection, config, metadata, state):
     head = [img.getHead() for img in images]
     meta = [ismrmrd.Meta.deserialize(img.attribute_string) for img in images]
 
-    imheader = head[0]
-
-    nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
-    ncontrasts = metadata.encoding[0].encodingLimits.contrast.maximum + 1
-    nreps = metadata.encoding[0].encodingLimits.repetition.maximum + 1
-    ninstances = nslices * ncontrasts * nreps
-
-    print("Number of echoes =", ncontrasts)
-    print("Number of instances =", ninstances)
-
-    pixdim_x = (metadata.encoding[0].encodedSpace.fieldOfView_mm.x / metadata.encoding[0].encodedSpace.matrixSize.x)
-    pixdim_y = metadata.encoding[0].encodedSpace.fieldOfView_mm.y / metadata.encoding[0].encodedSpace.matrixSize.y
-    pixdim_z = metadata.encoding[0].encodedSpace.fieldOfView_mm.z
-    print("pixdims", pixdim_x, pixdim_y, pixdim_z)
-
     # Reformat data to [y x z cha img], i.e. [row col] for the first two dimensions
     data = data.transpose((3, 4, 2, 1, 0))
-
-    print("Reformatted data", data.shape)
 
     # Display MetaAttributes for first image
     logging.debug("MetaAttributes[0]: %s", ismrmrd.Meta.serialize(meta[0]))
@@ -508,96 +300,13 @@ def process_image(images, connection, config, metadata, state):
     # data = 32767-data
     data = np.abs(data)
     data = data.astype(np.int16)
-    np.save(debugFolder + "/" + "imgInverted.npy", data)
+    np.save(debugFolder + "/" + "imgInverted_TEST.npy", data)
 
     im = np.squeeze(data)
     im = nib.Nifti1Image(im, np.eye(4))
     nib.save(im, debugFolder + "/" + "im.nii.gz")
 
-    slice = imheader.slice
-    contrast = imheader.contrast
-    repetition = imheader.repetition
-    print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
-
-    svr_path = (debugFolder + date_path)
-
-    # Check if the parent directory exists, if not, create it
-    if not os.path.exists(svr_path):
-        os.makedirs(svr_path)
-
-    process_mrd_files(svr_path)  # Conversion of MRD to DICOM happens here
-
-    # Set the base test folder path
-    output_folder = svr_path + "/dicoms"
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    # Iterate over all subdirectories in the test folder
-    for folder_name in os.listdir(svr_path):
-        folder_path = os.path.join(svr_path, folder_name)
-        if os.path.isdir(folder_path):
-            print(f"Processing folder: {folder_path}")
-            convert_to_nii(folder_path, output_folder)
-
-    for file_name in os.listdir(output_folder):
-        file_path = os.path.join(output_folder, file_name)
-
-        # Debugging step: print the file names
-        print(f"Checking file: {file_name}")
-
-        if os.path.isfile(file_path) and file_name.startswith('o'):
-            try:
-                print(f"Deleting file: {file_path}")
-                os.remove(file_path)
-            except Exception as e:
-                print(f"Error deleting file {file_name}: {e}")
-
-    # Process all NIfTI files in the folder
-    process_folder(output_folder, pixdim_z)
-
-    print("Launching docker now...")
-
-    # Set the DISPLAY and XAUTHORITY environment variables
-    os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
-    # os.environ['XAUTHORITY'] = '/home/sn21/.Xauthority'
-    os.environ['XAUTHORITY'] = "/opt/code/automated-fetal-mri/.Xauthority"
-
-    command = f'''docker run --rm --mount type=bind,source=/tmp/share/debug,target=/home/data \
-    fetalsvrtk/svrtk:general_auto_amd sh -c 'bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \
-    /home/data/{date_path}/dicoms /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
-    chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
-    /bin/MIRTK/build/lib/tools/pad-3d /home/data/{date_path}/{date_path}-result/reo-SVR-output-brain.nii.gz /home/ref.nii.gz 160 1 ; \
-    /bin/MIRTK/build/lib/tools/edit-image /home/ref.nii.gz /home/ref.nii.gz -dx 1 -dy 1 -dz 1 ; \
-    /bin/MIRTK/build/lib/tools/transform-image /home/data/{date_path}/{date_path}-result/reo-SVR-output-brain.nii.gz \
-    /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz -target /home/ref.nii.gz -interp BSpline ; \
-    /bin/MIRTK/build/lib/tools/nan /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz 1000000 ; \
-    /bin/MIRTK/build/lib/tools/convert-image /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz \
-    /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz -short ; \
-    chmod 1777 /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz ; \
-    bash /home/auto-proc-svrtk/scripts/auto-body-055t-reconstruction.sh /home/data/{date_path}/dicoms \
-    /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
-    chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
-    /bin/MIRTK/build/lib/tools/pad-3d /home/data/{date_path}/{date_path}-result/reo-DSVR-output-body.nii.gz /home/ref.nii.gz 256 1 ; \
-    /bin/MIRTK/build/lib/tools/edit-image /home/ref.nii.gz /home/ref.nii.gz -dx 1 -dy 1 -dz 1 ; \
-    /bin/MIRTK/build/lib/tools/transform-image /home/data/{date_path}/{date_path}-result/reo-DSVR-output-body.nii.gz \
-    /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz -target /home/ref.nii.gz -interp BSpline ; \
-    /bin/MIRTK/build/lib/tools/nan /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz 1000000 ; \
-    /bin/MIRTK/build/lib/tools/convert-image /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz \
-    /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz -short ; \
-    chmod 1777 /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz ; \
-    suffix=1; \
-    while [ -d "/home/data/{date_path}-$suffix" ]; do suffix=$((suffix+1)); done; \
-    mv /home/data/{date_path} /home/data/{date_path}-$suffix; \
-    mkdir /home/data/{date_path}; \
-    chmod 1777 /home/data/{date_path}; ' '''
-
-    subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', command])
-
-    print()
-    print("--------------------------------------------------------------")
-    print()
-
-    # currentSeries = 0
+    currentSeries = 0
 
     # Re-slice back into 2D images
     imagesOut = [None] * data.shape[-1]
