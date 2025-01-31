@@ -530,7 +530,7 @@ def process_image(images, connection, config, metadata, state):
                                           running=True,
                                           root_dir='/opt/code/automated-fetal-mri/eagle',
                                           csv_dir='/opt/code/automated-fetal-mri/eagle/files/',
-                                          checkpoint_dir=debugFolder + '/checkpoints',
+                                          checkpoint_dir='/opt/code/automated-fetal-mri/eagle/files/checkpoints',
                                           # change to -breech or -young if needed!
                                           train_csv=
                                           'data_localisation_1-label-brain_uterus_train-2022-11-23.csv',
@@ -729,7 +729,7 @@ def process_image(images, connection, config, metadata, state):
             date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
 
             # Define the file name with the formatted date and time
-            text_file_1 = args.results_dir + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
+            text_file_1 = args.results_dir + "/" + date_path + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
             text_file = "/home/data/eagle/sara.dvs"
 
             cm_brain = model.x_cm, model.y_cm, model.z_cm
