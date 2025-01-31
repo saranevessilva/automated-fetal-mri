@@ -92,6 +92,8 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
 #     cd /opt/code/nnUNet && \
 #     pip install -e .
 
+# Install necessary dependencies
+RUN apt update && apt install -y git git-lfs && git lfs install
 
 # Clone additional repositories
 RUN mkdir -p /opt/code && \
@@ -113,6 +115,7 @@ ENV DISPLAY=:0
 
 # Set working directory
 WORKDIR /opt/code/automated-fetal-mri
+RUN git lfs pull
 
 # Entry point
 COPY "entrypoint.sh" /usr/local/bin/entrypoint.sh
