@@ -51,12 +51,6 @@ import sys
 
 import nibabel as nib
 import SimpleITK as sitk
-
-import src.utils as utils
-from src.utils import ArgumentsTrainTestLocalisation, plot_losses_train
-from src import networks as md
-from src.boundingbox import calculate_expanded_bounding_box, apply_bounding_box
-# import numpy as np
 from numpy.fft import fftshift, ifftshift, fftn, ifftn
 
 # standard libraries
@@ -79,13 +73,25 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+
+# Reset and configure logging
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+
+try:
+    from scipy.ndimage import affine_transform
+except ImportError:
+    print("Error: scipy is not installed or affine_transform is not available")
+
 # Folder for debug output files
-# debugFolder = "/tmp/share/debug"
+debugFolder = "/tmp/share/debug"
 date_path = datetime.today().strftime("%Y-%m-%d")
-# debugFolder = "/home/sn21/data/t2-stacks/" + date_path
-# Folder for debug output files
-debugFolder = "/home/data/t2-stacks/" + date_path
-# debugFolder = "/tmp/share/debug"
 
 
 def load_and_sort_image(nifti_file, new_thickness):
@@ -226,6 +232,13 @@ def process(connection, config, metadata):
     waveformGroup = []
     try:
         for item in connection:
+
+            state = {
+                "slice_pos": 0,
+                "min_slice_pos": 0,
+                "first_slice": 1
+            }
+
             # ----------------------------------------------------------
             # Raw k-space data messages
             # ----------------------------------------------------------
@@ -237,8 +250,6 @@ def process(connection, config, metadata):
                         not item.is_flag_set(ismrmrd.ACQ_IS_NAVIGATION_DATA)):
                     acqGroup.append(item)
 
-                # When this criteria is met, run process_raw() on the accumulated
-                # data, which returns images that are sent back to the client.
                 if item.is_flag_set(ismrmrd.ACQ_LAST_IN_SLICE):
                     logging.info("Processing a group of k-space data")
                     image = process_raw(acqGroup, connection, config, metadata)
@@ -253,12 +264,10 @@ def process(connection, config, metadata):
                     logging.info("Processing a group of images because series index changed to %d",
                                  item.image_series_index)
                     currentSeries = item.image_series_index
-                    image = process_image(imgGroup, connection, config, metadata)
+                    image = process_image(imgGroup, connection, config, metadata, state)
                     connection.send_image(image)
                     imgGroup = []
 
-                # Only process magnitude images -- send phase images back without modification (fallback for images
-                # with unknown type)
                 if (item.image_type is ismrmrd.IMTYPE_MAGNITUDE) or (item.image_type == 0):
                     imgGroup.append(item)
                 else:
@@ -301,7 +310,7 @@ def process(connection, config, metadata):
 
         if len(imgGroup) > 0:
             logging.info("Processing a group of images (untriggered)")
-            image = process_image(imgGroup, connection, config, metadata)
+            image = process_image(imgGroup, connection, config, metadata, state)
             connection.send_image(image)
             imgGroup = []
 
@@ -347,13 +356,13 @@ def process_raw(group, connection, config, metadata):
             if (rawHead[phs] is None) or (
                     np.abs(acq.getHead().idx.kspace_encode_step_1 - acq.getHead().idx.user[5]) < np.abs(
                     rawHead[phs].idx.kspace_encode_step_1 - rawHead[phs].idx.user[5])):
-                    rawHead[phs] = acq.getHead()
+                rawHead[phs] = acq.getHead()
 
     # Flip matrix in RO/PE to be consistent with ICE
     data = np.flip(data, (1, 2))
 
     logging.debug("Raw data is size %s" % (data.shape,))
-    # np.save(debugFolder + "/" + "raw.npy", data)
+    np.save(debugFolder + "/" + "raw.npy", data)
 
     # Remove readout oversampling
     data = fft.ifft(data, axis=2)
@@ -361,7 +370,7 @@ def process_raw(group, connection, config, metadata):
     data = fft.fft(data, axis=2)
 
     logging.debug("Raw data is size after readout oversampling removal %s" % (data.shape,))
-    # np.save(debugFolder + "/" + "rawNoOS.npy", data)
+    np.save(debugFolder + "/" + "rawNoOS.npy", data)
 
     # Fourier Transform
     data = fft.fftshift(data, axes=(1, 2))
@@ -376,7 +385,7 @@ def process_raw(group, connection, config, metadata):
     data = np.sqrt(data)
 
     logging.debug("Image data is size %s" % (data.shape,))
-    # np.save(debugFolder + "/" + "img.npy", data)
+    np.save(debugFolder + "/" + "img.npy", data)
 
     # Normalize and convert to int16
     data *= 32767 / data.max()
@@ -392,7 +401,7 @@ def process_raw(group, connection, config, metadata):
     data = data[offset:offset + metadata.encoding[0].reconSpace.matrixSize.y, :]
 
     logging.debug("Image without oversampling is size %s" % (data.shape,))
-    # np.save(debugFolder + "/" + "imgCrop.npy", data)
+    np.save(debugFolder + "/" + "imgCrop.npy", data)
 
     # Measure processing time
     toc = perf_counter()
@@ -432,13 +441,12 @@ def process_raw(group, connection, config, metadata):
         imagesOut.append(tmpImg)
 
     # Call process_image() to invert image contrast
-    imagesOut = process_image(imagesOut, connection, config, metadata)
+    imagesOut = process_image(imagesOut, connection, config, metadata, state)
 
     return imagesOut
 
 
-def process_image(images, connection, config, metadata):
-    # global timestamp
+def process_image(images, connection, config, metadata, state):
     if len(images) == 0:
         return []
 
@@ -462,40 +470,56 @@ def process_image(images, connection, config, metadata):
 
     imheader = head[0]
 
+    nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
+    ncontrasts = metadata.encoding[0].encodingLimits.contrast.maximum + 1
+    nreps = metadata.encoding[0].encodingLimits.repetition.maximum + 1
+    ninstances = nslices * ncontrasts * nreps
+
+    print("Number of echoes =", ncontrasts)
+    print("Number of instances =", ninstances)
+
     pixdim_x = (metadata.encoding[0].encodedSpace.fieldOfView_mm.x / metadata.encoding[0].encodedSpace.matrixSize.x)
     pixdim_y = metadata.encoding[0].encodedSpace.fieldOfView_mm.y / metadata.encoding[0].encodedSpace.matrixSize.y
-    # pixdim_z = metadata.encoding[0].encodedSpace.fieldOfView_mm.z
-    pixdim_z = metadata.encoding[0].reconSpace.fieldOfView_mm.z
+    pixdim_z = metadata.encoding[0].encodedSpace.fieldOfView_mm.z
     print("pixdims", pixdim_x, pixdim_y, pixdim_z)
 
     # Reformat data to [y x z cha img], i.e. [row col] for the first two dimensions
     data = data.transpose((3, 4, 2, 1, 0))
-    print("reformatted data", data.shape)
+
+    print("Reformatted data", data.shape)
 
     # Display MetaAttributes for first image
-    # logging.debug("MetaAttributes[0]: %s", ismrmrd.Meta.serialize(meta[0]))
+    logging.debug("MetaAttributes[0]: %s", ismrmrd.Meta.serialize(meta[0]))
 
     # Optional serialization of ICE MiniHeader
     if 'IceMiniHead' in meta[0]:
         logging.debug("IceMiniHead[0]: %s", base64.b64decode(meta[0]['IceMiniHead']).decode('utf-8'))
 
+    logging.debug("Original image data is size %s" % (data.shape,))
+    np.save(debugFolder + "/" + "imgOrig.npy", data)
+
+    # Normalize and convert to int16
     data = data.astype(np.float64)
-    # data *= 32767/data.max()
+    data *= 32767 / data.max()
     data = np.around(data)
-    # data = data.astype(np.int16)
+    data = data.astype(np.int16)
 
     # Invert image contrast
     # data = 32767-data
     data = np.abs(data)
     data = data.astype(np.int16)
-    currentSeries = 0
+    np.save(debugFolder + "/" + "imgInverted.npy", data)
 
-    nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
+    im = np.squeeze(data)
+    im = nib.Nifti1Image(im, np.eye(4))
+    nib.save(im, debugFolder + "/" + "im.nii.gz")
 
     slice = imheader.slice
+    contrast = imheader.contrast
+    repetition = imheader.repetition
+    print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
-    # svr_path = ("/home/sn21/data/t2-stacks/" + date_path)
-    svr_path = debugFolder
+    svr_path = (debugFolder + date_path)
 
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(svr_path):
@@ -533,12 +557,12 @@ def process_image(images, connection, config, metadata):
 
     print("Launching docker now...")
 
-    # Run Prediction with nnUNet
     # Set the DISPLAY and XAUTHORITY environment variables
     os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
-    os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
+    # os.environ['XAUTHORITY'] = '/home/sn21/.Xauthority'
+    os.environ['XAUTHORITY'] = "/opt/code/automated-fetal-mri/.Xauthority"
 
-    command = f'''docker run --rm --mount type=bind,source=/home/sdata/t2-stacks,target=/home/data \
+    command = f'''docker run --rm --mount type=bind,source=/tmp/share/debug,target=/home/data \
     fetalsvrtk/svrtk:general_auto_amd sh -c 'bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \
     /home/data/{date_path}/dicoms /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
     chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
@@ -550,7 +574,7 @@ def process_image(images, connection, config, metadata):
     /bin/MIRTK/build/lib/tools/convert-image /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz \
     /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz -short ; \
     chmod 1777 /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz ; \
-    bash /home/2auto-proc-svrtk/scripts/auto-body-055t-reconstruction.sh /home/data/{date_path}/dicoms \
+    bash /home/auto-proc-svrtk/scripts/auto-body-055t-reconstruction.sh /home/data/{date_path}/dicoms \
     /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
     chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
     /bin/MIRTK/build/lib/tools/pad-3d /home/data/{date_path}/{date_path}-result/reo-DSVR-output-body.nii.gz /home/ref.nii.gz 256 1 ; \
@@ -573,14 +597,11 @@ def process_image(images, connection, config, metadata):
     print("--------------------------------------------------------------")
     print()
 
-    # INCLUDE THIS SCRIPT IN THE FIRE INITIALIZATION
+    # currentSeries = 0
 
     # Re-slice back into 2D images
     imagesOut = [None] * data.shape[-1]
-
     for iImg in range(data.shape[-1]):
-        # print("iImg", iImg)
-        # print("range", data.shape[-1])
 
         # Create new MRD instance for the inverted image
         # Transpose from convenience shape of [y x z cha] to MRD Image shape of [cha z y x]
