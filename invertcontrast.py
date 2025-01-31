@@ -628,8 +628,6 @@ def process_image(images, connection, config, metadata):
 
         start_time = time.time()
 
-        import torch
-
         checkpoint_path = ("/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/"
                            "nnUNet_results/Dataset088_FetalBrainLandmarks/nnUNetTrainer__nnUNetPlans__3d_fullres"
                            "/fold_1/"

@@ -90,7 +90,6 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
 # # Install a specific version of nnUNet
 # RUN git clone https://github.com/MIC-DKFZ/nnUNet.git /opt/code/nnUNet && \
 #     cd /opt/code/nnUNet && \
-#     git checkout v2.0.0 && \
 #     pip install -e .
 
 
