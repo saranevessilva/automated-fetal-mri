@@ -15,3 +15,7 @@ monai==1.4.0
 matplotlib==3.8.2
 pydicom==3.0.1
 nnunetv2
+nilearn
+img2pdf
+PIL
+PyPDF2

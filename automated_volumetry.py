@@ -103,7 +103,7 @@ from numpy import pi, sin, cos
 
 # Folder for debug output files
 # debugFolder = "/tmp/share/debug"
-debugFolder = "/home/data/volumetry/"
+debugFolder = "/tmp/share/debug"
 
 
 def centile_graphs(roi):
@@ -783,18 +783,13 @@ def process_image(images, connection, config, metadata):
     srow_y = (srow_y[0], srow_y[1], srow_y[2])
     srow_z = (srow_z[0], srow_z[1], srow_z[2])
 
-    # patient_table_position = (imheader.patient_table_position[0], imheader.patient_table_position[1],
-    #                           imheader.patient_table_position[2])
-    # print("position ", position, "read_dir", read_dir, "phase_dir ", phase_dir, "slice_dir ", slice_dir)
-    # print("patient table position", patient_table_position)
-
     slice = imheader.slice
     repetition = imheader.repetition
     contrast = imheader.contrast
     print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
     # Define the path where the results will be saved
-    volumetry_path = debugFolder + date_path
+    volumetry_path = debugFolder + "/" + date_path
 
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(volumetry_path):
@@ -882,7 +877,7 @@ def process_image(images, connection, config, metadata):
     date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
 
     # Define the file name with the formatted date and time
-    text_file_1 = (debugFolder + date_path + "/" + timestamp + "-volumetry.txt")
+    text_file_1 = (debugFolder + "/" + date_path + "/" + timestamp + "-volumetry.txt")
     # text_file = "/home/sn21/freemax-transfer/Sara/landmarks-interface-autoplan/" + timestamp + "-volumetry.txt"
 
     file_ga = "/home/sn21/freemax-transfer/Sara/volumetry-ga-interface/ga.txt"
