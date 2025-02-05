@@ -109,11 +109,6 @@ def process(connection, config, metadata):
     except:
         logging.info("Improperly formatted metadata: \n%s", metadata)
 
-    nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
-    dim_x = metadata.encoding[0].encodedSpace.matrixSize.x // 2  # oversampling
-    dim_y = metadata.encoding[0].encodedSpace.matrixSize.y
-    im = np.zeros((dim_x, dim_y, nslices), dtype=np.int16)
-
     # Continuously parse incoming data parsed from MRD messages
     currentSeries = 0
     acqGroup = []
@@ -153,7 +148,7 @@ def process(connection, config, metadata):
                     logging.info("Processing a group of images because series index changed to %d",
                                  item.image_series_index)
                     currentSeries = item.image_series_index
-                    image = process_image(imgGroup, connection, config, metadata, im, state)
+                    image = process_image(imgGroup, connection, config, metadata, state)
                     connection.send_image(image)
                     imgGroup = []
 
@@ -199,7 +194,7 @@ def process(connection, config, metadata):
 
         if len(imgGroup) > 0:
             logging.info("Processing a group of images (untriggered)")
-            image = process_image(imgGroup, connection, config, metadata, im, state)
+            image = process_image(imgGroup, connection, config, metadata, state)
             connection.send_image(image)
             imgGroup = []
 
@@ -330,12 +325,12 @@ def process_raw(group, connection, config, metadata):
         imagesOut.append(tmpImg)
 
     # Call process_image() to invert image contrast
-    imagesOut = process_image(imagesOut, connection, config, metadata)
+    imagesOut = process_image(imagesOut, connection, config, metadata, state)
 
     return imagesOut
 
 
-def process_image(images, connection, config, metadata, im, state):
+def process_image(images, connection, config, metadata, state):
     if len(images) == 0:
         return []
 
@@ -374,6 +369,7 @@ def process_image(images, connection, config, metadata, im, state):
 
     # Reformat data to [y x z cha img], i.e. [row col] for the first two dimensions
     data = data.transpose((3, 4, 2, 1, 0))
+
     print("Reformatted data", data.shape)
 
     position = imheader.position
@@ -385,20 +381,6 @@ def process_image(images, connection, config, metadata, im, state):
     read_dir = imheader.read_dir
     read_dir = read_dir[0], read_dir[1], read_dir[2]
     print("position ", position, "read_dir", read_dir, "phase_dir ", phase_dir, "slice_dir ", slice_dir)
-
-    # Update state variables directly
-    if state["first_slice"] == 1:
-        state["min_slice_pos"] = position[1]
-        state["first_slice"] = 0
-    else:
-        if position[1] < state["min_slice_pos"]:
-            state["min_slice_pos"] = position[1]
-
-    state["slice_pos"] += position[1]
-    pos_z = position[2]
-    print("accumulated slice pos", state["slice_pos"])
-    print("accumulated position", position[1])
-    print("pos_z", pos_z)
 
     # Display MetaAttributes for first image
     logging.debug("MetaAttributes[0]: %s", ismrmrd.Meta.serialize(meta[0]))
@@ -412,9 +394,9 @@ def process_image(images, connection, config, metadata, im, state):
 
     # Normalize and convert to int16
     data = data.astype(np.float64)
-    # data *= 32767/data.max()
-    # data = np.around(data)
-    # data = data.astype(np.int16)
+    data *= 32767 / data.max()
+    data = np.around(data)
+    data = data.astype(np.int16)
 
     # Invert image contrast
     # data = 32767-data
@@ -422,7 +404,9 @@ def process_image(images, connection, config, metadata, im, state):
     data = data.astype(np.int16)
     np.save(debugFolder + "/" + "imgInverted.npy", data)
 
-    currentSeries = 0
+    im = np.squeeze(data)
+    im = nib.Nifti1Image(im, np.eye(4))
+    nib.save(im, debugFolder + "/" + "im.nii.gz")
 
     slice = imheader.slice
     contrast = imheader.contrast
@@ -437,9 +421,6 @@ def process_image(images, connection, config, metadata, im, state):
     srow_x = (sform_x[0], sform_x[1], sform_x[2])
     srow_y = (sform_y[0], sform_y[1], sform_y[2])
     srow_z = (sform_z[0], sform_z[1], sform_z[2])
-
-    # position = position[0], slice_pos, pos_z
-    position = position[0], state["slice_pos"], pos_z
 
     sform_x = imheader.slice_dir
     sform_y = imheader.phase_dir
@@ -472,48 +453,63 @@ def process_image(images, connection, config, metadata, im, state):
 
     fetalbody_path = debugFolder
 
-    # Check if the parent directory exists, if not, create it
-    if not os.path.exists(fetalbody_path):
-        os.makedirs(fetalbody_path)
+    im_ = np.squeeze(data)
 
-    logging.info("Storing each slice into the 3D data buffer...")
+    im_ = im_[:, :, 0::ncontrasts]
 
-    if contrast == 1:
-        im[:, :, slice] = np.squeeze(data)
-
-    if slice == nslices-1 and contrast == 1:
-
-        # Define a 180-degree rotation matrix
-        rotation_matrix = np.array([[-1, 0, 0],
-                                    [0, -1, 0],
-                                    [0, 0, 1]])  # Include the homogeneous transformation part if needed.
-
-        # Perform the transformation using scipy's affine_transform
-        center = (np.array(im.shape) - 1) / 2
-        shift = center - np.dot(rotation_matrix, center)
-
-        # Apply the affine transformation
-        im_ = affine_transform(im, rotation_matrix, offset=shift)
-
-        im = nib.Nifti1Image(im_, np.eye(4))
-        nib.save(im, debugFolder + "/"
-                + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
+    im = nib.Nifti1Image(im_, np.eye(4))
+    nib.save(im, debugFolder + "/"
+            + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
 
     try:
         print("Checkpoint reached after saving NIfTI file", flush=True)
         logging.info("Checkpoint reached after saving NIfTI file")
         sys.stdout.flush()  # Ensure logs are immediately written
 
+        # print("..................................................................................")
+        # print("This is the echo-time we're looking at: ", 1)
+        #
+        # logging.info("Initializing localization network...")
+        # sys.stdout.flush()  # Flush again
+
     except Exception as e:
         print(f"ERROR: {e}", flush=True)
         logging.error(f"Script failed: {e}")
         sys.stdout.flush()
 
-    print("..................................................................................")
-    print("This is the echo-time we're looking at: ", 1)
+    # if slice == nslices - 1 and contrast == 1:
 
-    logging.info("Initializing localization network...")
-    sys.stdout.flush()  # Flush again
+    # Define a 180-degree rotation matrix
+    rotation_matrix = np.array([[-1, 0, 0],
+                                [0, -1, 0],
+                                [0, 0, 1]])  # Include the homogeneous transformation part if needed.
+
+    # Perform the transformation using scipy's affine_transform
+    center = (np.array(im_.shape) - 1) / 2
+    shift = center - np.dot(rotation_matrix, center)
+
+    # Apply the affine transformation
+    im_ = affine_transform(im_, rotation_matrix, offset=shift)
+
+    im = nib.Nifti1Image(im_, np.eye(4))
+    nib.save(im, debugFolder + "/"
+             + timestamp + "-gadgetron-fetal-brain-localisation-img_rot.nii.gz")
+
+    try:
+        print("Checkpoint reached after saving NIfTI file", flush=True)
+        logging.info("Checkpoint reached after saving NIfTI file")
+        sys.stdout.flush()  # Ensure logs are immediately written
+
+        print("..................................................................................")
+        print("This is the echo-time we're looking at: ", 1)
+
+        logging.info("Initializing localization network...")
+        sys.stdout.flush()  # Flush again
+
+    except Exception as e:
+        print(f"ERROR: {e}", flush=True)
+        logging.error(f"Script failed: {e}")
+        sys.stdout.flush()
 
     N_epochs = 100
     I_size = 128
@@ -555,10 +551,10 @@ def process_image(images, connection, config, metadata, im, state):
 
     # RUN with empty masks - to generate new ones (practical application)
 
-    # print("args.root_dir", args.root_dir)
-    # print("args.csv_dir", args.csv_dir)
-    # print("args.checkpoint_dir", args.checkpoint_dir)
-    # print("args.results_dir", args.results_dir)
+    print("args.root_dir", args.root_dir)
+    print("args.csv_dir", args.csv_dir)
+    print("args.checkpoint_dir", args.checkpoint_dir)
+    print("args.results_dir", args.results_dir)
 
     if args.running:
         print("Running")
