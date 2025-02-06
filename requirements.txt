@@ -17,5 +17,5 @@ pydicom==3.0.1
 nnunetv2
 nilearn
 img2pdf
-PIL
+Pillow
 PyPDF2

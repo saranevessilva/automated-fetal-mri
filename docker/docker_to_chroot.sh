@@ -40,6 +40,7 @@ echo ------------------------------------------------------------
 echo Adding ${BUFFER_MB}MB of buffer space to the chroot image
 echo ------------------------------------------------------------
 dd if=/dev/zero of=${CHROOT_FILE}_buffer bs=1M count=${BUFFER_MB}
+sudo chmod u+w ${CHROOT_FILE}
 cat ${CHROOT_FILE}_buffer >> ${CHROOT_FILE}
 rm ${CHROOT_FILE}_buffer
 
