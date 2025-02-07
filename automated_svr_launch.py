@@ -184,8 +184,8 @@ def convert_to_nii(folder_path, output_folder):
         if file.endswith(".dcm"):
             file_path = os.path.join(folder_path, file)
 
-            subprocess.run(['gdcmconv', '-w', file_path, f"{file_path}_converted.dcm"])
-            subprocess.run(['mv', f"{file_path}_converted.dcm", file_path])
+            subprocess.run(['gdcmconv', '--raw', '--implicit', file_path, f"{file_path}_converted.dcm"])
+            # subprocess.run(['mv', f"{file_path}_converted.dcm", file_path])
 
     subprocess.run(['dcm2niix', '-g', 'n', '-o', output_folder, folder_path])
     # subprocess.run(['dcm2nii', '-g', 'n', '-o', output_folder, folder_path])
