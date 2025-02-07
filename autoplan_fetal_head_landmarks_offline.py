@@ -48,6 +48,8 @@ from ismrmrd.constants import *
 import matplotlib.image
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
+import torch
+import torchvision
 
 import sys
 
@@ -62,51 +64,23 @@ from src.boundingbox import calculate_expanded_bounding_box, apply_bounding_box
 # import numpy as np
 from numpy.fft import fftshift, ifftshift, fftn, ifftn
 
+# Reset and configure logging
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+
+try:
+    from scipy.ndimage import affine_transform
+except ImportError:
+    print("Error: scipy is not installed or affine_transform is not available")
+
 # Folder for debug output files
 debugFolder = "/tmp/share/debug"
-
-
-def adjust_contrast(image_array, mid_intensity, target_y):
-    # Calculate the intensity range
-    max_intensity = np.abs(np.max(image_array))
-    min_intensity = np.abs(np.min(image_array))
-    intensity_range = max_intensity - min_intensity
-
-    # Precompute constant values
-    ratio1 = (target_y - 0) / (mid_intensity - min_intensity)
-    ratio2 = (1 - target_y) / (max_intensity - mid_intensity)
-
-    # Apply the transformation to the entire array
-    adjusted_array = np.where(image_array < mid_intensity,
-                              (image_array - min_intensity) * ratio1,
-                              (image_array - mid_intensity) * ratio2 + target_y)
-
-    # Adjust the intensity range to match the original range
-    adjusted_array = (adjusted_array - np.min(adjusted_array)) * (
-            intensity_range / (np.max(adjusted_array) - np.min(adjusted_array))) + min_intensity
-
-    return adjusted_array
-
-
-def append_new_line(file_name, text_to_append):
-    """Append given text as a new line at the end of file"""
-    # Open the file in append & read mode ('a+')
-    with open(file_name, "a+") as file_object:
-        # Move read cursor to the start of file.
-        file_object.seek(0)
-        # If file is not empty then append '\n'
-        data = file_object.read(100)
-        if len(data) > 0:
-            file_object.write("\n")
-        # Append text at the end of file
-        file_object.write(text_to_append)
-
-
-state = {
-    "slice_pos": 0,
-    "min_slice_pos": 0,
-    "first_slice": 1
-}
 
 
 def process(connection, config, metadata):
@@ -135,16 +109,6 @@ def process(connection, config, metadata):
     except:
         logging.info("Improperly formatted metadata: \n%s", metadata)
 
-    nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
-    ncontrasts = metadata.encoding[0].encodingLimits.contrast.maximum + 1
-    dim_x = metadata.encoding[0].encodedSpace.matrixSize.x // 2  # oversampling
-    dim_y = metadata.encoding[0].encodedSpace.matrixSize.y
-    # im = np.zeros((dim_x, dim_y, nslices, ncontrasts), dtype=np.int16)
-    im = np.zeros((dim_x, dim_y, nslices), dtype=np.int16)
-    # slice_pos = 0
-    # min_slice_pos = 0
-    # first_slice = 1
-
     # Continuously parse incoming data parsed from MRD messages
     currentSeries = 0
     acqGroup = []
@@ -152,6 +116,13 @@ def process(connection, config, metadata):
     waveformGroup = []
     try:
         for item in connection:
+
+            state = {
+                "slice_pos": 0,
+                "min_slice_pos": 0,
+                "first_slice": 1
+            }
+
             # ----------------------------------------------------------
             # Raw k-space data messages
             # ----------------------------------------------------------
@@ -163,8 +134,6 @@ def process(connection, config, metadata):
                         not item.is_flag_set(ismrmrd.ACQ_IS_NAVIGATION_DATA)):
                     acqGroup.append(item)
 
-                # When this criteria is met, run process_raw() on the accumulated
-                # data, which returns images that are sent back to the client.
                 if item.is_flag_set(ismrmrd.ACQ_LAST_IN_SLICE):
                     logging.info("Processing a group of k-space data")
                     image = process_raw(acqGroup, connection, config, metadata)
@@ -175,22 +144,14 @@ def process(connection, config, metadata):
             # Image data messages
             # ----------------------------------------------------------
             elif isinstance(item, ismrmrd.Image):
-                # When this criteria is met, run process_group() on the accumulated
-                # data, which returns images that are sent back to the client.
-                # e.g. when the series number changes:
                 if item.image_series_index != currentSeries:
                     logging.info("Processing a group of images because series index changed to %d",
                                  item.image_series_index)
                     currentSeries = item.image_series_index
-                    # image = process_image(imgGroup, connection, config, metadata, im,
-                    #                       slice_pos, min_slice_pos, first_slice)
-                    image = process_image(imgGroup, connection, config, metadata, im, state)
-
+                    image = process_image(imgGroup, connection, config, metadata, state)
                     connection.send_image(image)
                     imgGroup = []
 
-                # Only process magnitude images -- send phase images back without modification (fallback for images
-                # with unknown type)
                 if (item.image_type is ismrmrd.IMTYPE_MAGNITUDE) or (item.image_type == 0):
                     imgGroup.append(item)
                 else:
@@ -233,8 +194,7 @@ def process(connection, config, metadata):
 
         if len(imgGroup) > 0:
             logging.info("Processing a group of images (untriggered)")
-            # image = process_image(imgGroup, connection, config, metadata, im, slice_pos, min_slice_pos, first_slice)
-            image = process_image(imgGroup, connection, config, metadata, im, state)
+            image = process_image(imgGroup, connection, config, metadata, state)
             connection.send_image(image)
             imgGroup = []
 
@@ -279,7 +239,7 @@ def process_raw(group, connection, config, metadata):
             # center line of k-space is encoded in user[5]
             if (rawHead[phs] is None) or (
                     np.abs(acq.getHead().idx.kspace_encode_step_1 - acq.getHead().idx.user[5]) < np.abs(
-                rawHead[phs].idx.kspace_encode_step_1 - rawHead[phs].idx.user[5])):
+                    rawHead[phs].idx.kspace_encode_step_1 - rawHead[phs].idx.user[5])):
                 rawHead[phs] = acq.getHead()
 
     # Flip matrix in RO/PE to be consistent with ICE
@@ -364,14 +324,13 @@ def process_raw(group, connection, config, metadata):
         tmpImg.attribute_string = xml
         imagesOut.append(tmpImg)
 
-    # Call process_image() to invert image contrast
-    imagesOut = process_image(imagesOut, connection, config, metadata)
+    # # Call process_image() to invert image contrast
+    # imagesOut = process_image(imagesOut, connection, config, metadata)
 
     return imagesOut
 
 
-# def process_image(images, connection, config, metadata, im, slice_pos, min_slice_pos, first_slice):
-def process_image(images, connection, config, metadata, im, state):
+def process_image(images, connection, config, metadata, state):
     if len(images) == 0:
         return []
 
@@ -410,6 +369,7 @@ def process_image(images, connection, config, metadata, im, state):
 
     # Reformat data to [y x z cha img], i.e. [row col] for the first two dimensions
     data = data.transpose((3, 4, 2, 1, 0))
+
     print("Reformatted data", data.shape)
 
     position = imheader.position
@@ -421,20 +381,6 @@ def process_image(images, connection, config, metadata, im, state):
     read_dir = imheader.read_dir
     read_dir = read_dir[0], read_dir[1], read_dir[2]
     print("position ", position, "read_dir", read_dir, "phase_dir ", phase_dir, "slice_dir ", slice_dir)
-
-    # Update state variables directly
-    if state["first_slice"] == 1:
-        state["min_slice_pos"] = position[1]
-        state["first_slice"] = 0
-    else:
-        if position[1] < state["min_slice_pos"]:
-            state["min_slice_pos"] = position[1]
-
-    state["slice_pos"] += position[1]
-    pos_z = position[2]
-    print("accumulated slice pos", state["slice_pos"])
-    print("accumulated position", position[1])
-    print("pos_z", pos_z)
 
     # Display MetaAttributes for first image
     logging.debug("MetaAttributes[0]: %s", ismrmrd.Meta.serialize(meta[0]))
@@ -448,9 +394,9 @@ def process_image(images, connection, config, metadata, im, state):
 
     # Normalize and convert to int16
     data = data.astype(np.float64)
-    # data *= 32767/data.max()
-    # data = np.around(data)
-    # data = data.astype(np.int16)
+    data *= 32767 / data.max()
+    data = np.around(data)
+    data = data.astype(np.int16)
 
     # Invert image contrast
     # data = 32767-data
@@ -458,7 +404,9 @@ def process_image(images, connection, config, metadata, im, state):
     data = data.astype(np.int16)
     np.save(debugFolder + "/" + "imgInverted.npy", data)
 
-    currentSeries = 0
+    im = np.squeeze(data)
+    im = nib.Nifti1Image(im, np.eye(4))
+    nib.save(im, debugFolder + "/" + "im.nii.gz")
 
     slice = imheader.slice
     contrast = imheader.contrast
@@ -473,15 +421,6 @@ def process_image(images, connection, config, metadata, im, state):
     srow_x = (sform_x[0], sform_x[1], sform_x[2])
     srow_y = (sform_y[0], sform_y[1], sform_y[2])
     srow_z = (sform_z[0], sform_z[1], sform_z[2])
-
-    # im = np.squeeze(data)
-
-    # im[:, :, slice, contrast] = np.squeeze(data)  # slice - 1 because 'slice
-
-    # print("Image shape:", im.shape)
-
-    # position = position[0], slice_pos, pos_z
-    position = position[0], state["slice_pos"], pos_z
 
     sform_x = imheader.slice_dir
     sform_y = imheader.phase_dir
@@ -512,133 +451,130 @@ def process_image(images, connection, config, metadata, im, state):
     contrast = imheader.contrast
     print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
-    # Define the path where the results will be saved
-    fetalbody_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
-                      + date_path)
+    fetalbody_path = debugFolder
 
-    file_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "-"
-                 + timestamp + "-centreofmass.txt")
+    im_ = np.squeeze(data)
 
-    # Check if the parent directory exists, if not, create it
-    if not os.path.exists(fetalbody_path):
-        os.makedirs(fetalbody_path)
+    im_ = im_[:, :, 0::ncontrasts]
 
-    logging.info("Storing each slice into the 3D data buffer...")
-    if contrast == 1:
-        im[:, :, slice] = np.squeeze(data)
+    im = nib.Nifti1Image(im_, np.eye(4))
+    nib.save(im, debugFolder + "/"
+            + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
 
-        # # TESTING!
+    try:
+        print("Checkpoint reached after saving NIfTI file", flush=True)
+        logging.info("Checkpoint reached after saving NIfTI file")
+        sys.stdout.flush()  # Ensure logs are immediately written
+
+        # print("..................................................................................")
+        # print("This is the echo-time we're looking at: ", 1)
         #
-        # # Define the paths
-        # path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
-        #         "2025-01-14/10-37-05-gadgetron-fetal-brain-localisation-mask_img-0.nii.gz")
-        #
-        # # Read the NIfTI files
-        # image = sitk.ReadImage(path)
-        # im = sitk.GetArrayFromImage(image)
+        # logging.info("Initializing localization network...")
+        # sys.stdout.flush()  # Flush again
 
-    if slice == nslices-1 and contrast == 1:
+    except Exception as e:
+        print(f"ERROR: {e}", flush=True)
+        logging.error(f"Script failed: {e}")
+        sys.stdout.flush()
 
-        # Define a 180-degree rotation matrix
-        rotation_matrix = np.array([[-1, 0, 0],
-                                    [0, -1, 0],
-                                    [0, 0, 1]])  # Include the homogeneous transformation part if needed.
+    # if slice == nslices - 1 and contrast == 1:
 
-        # Perform the transformation using scipy's affine_transform
-        center = (np.array(im.shape) - 1) / 2
-        shift = center - np.dot(rotation_matrix, center)
+    # Define a 180-degree rotation matrix
+    rotation_matrix = np.array([[-1, 0, 0],
+                                [0, -1, 0],
+                                [0, 0, 1]])  # Include the homogeneous transformation part if needed.
 
-        # Apply the affine transformation
-        im_ = affine_transform(im, rotation_matrix, offset=shift)
+    # Perform the transformation using scipy's affine_transform
+    center = (np.array(im_.shape) - 1) / 2
+    shift = center - np.dot(rotation_matrix, center)
+
+    # Apply the affine transformation
+    im_ = affine_transform(im_, rotation_matrix, offset=shift)
+
+    im = nib.Nifti1Image(im_, np.eye(4))
+    nib.save(im, debugFolder + "/"
+             + timestamp + "-gadgetron-fetal-brain-localisation-img_rot.nii.gz")
+
+    try:
+        print("Checkpoint reached after saving NIfTI file", flush=True)
+        logging.info("Checkpoint reached after saving NIfTI file")
+        sys.stdout.flush()  # Ensure logs are immediately written
 
         print("..................................................................................")
         print("This is the echo-time we're looking at: ", 1)
 
         logging.info("Initializing localization network...")
+        sys.stdout.flush()  # Flush again
 
-        N_epochs = 100
-        I_size = 128
-        N_classes = 2
+    except Exception as e:
+        print(f"ERROR: {e}", flush=True)
+        logging.error(f"Script failed: {e}")
+        sys.stdout.flush()
 
-        # # # Prepare arguments
+    N_epochs = 100
+    I_size = 128
+    N_classes = 2
 
-        args = ArgumentsTrainTestLocalisation(epochs=N_epochs,
-                                              batch_size=2,
-                                              lr=0.002,
-                                              crop_height=I_size,
-                                              crop_width=I_size,
-                                              crop_depth=I_size,
-                                              validation_steps=8,
-                                              lamda=10,
-                                              training=False,
-                                              testing=False,
-                                              running=True,
-                                              root_dir='/home/sn21/miniconda3/envs/gadgetron/share/gadgetron'
-                                                       '/python',
-                                              csv_dir='/home/sn21/miniconda3/envs/gadgetron/share/gadgetron'
-                                                      '/python/files/',
-                                              checkpoint_dir='/home/sn21/miniconda3/envs/gadgetron/share'
-                                                             '/gadgetron/python/checkpoints/2022-12-16-newest/',
-                                              # change to -breech or -young if needed!
-                                              train_csv=
-                                              'data_localisation_1-label-brain_uterus_train-2022-11-23.csv',
-                                              valid_csv=
-                                              'data_localisation_1-label-brain_uterus_valid-2022-11-23.csv',
-                                              test_csv=
-                                              'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
-                                              run_csv=
-                                              'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
-                                              # run_input=im_corr2ab,
-                                              run_input=im_,
-                                              results_dir='/home/sn21/miniconda3/envs/gadgetron/share'
-                                                          '/gadgetron/python/results/',
-                                              exp_name='Loc_3D',
-                                              task_net='unet_3D',
-                                              n_classes=N_classes)
+    # # # Prepare arguments
 
-        # path = "/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/2023-09-25/im.nii.gz"
-        # image = sitk.GetImageFromArray(im)
-        # sitk.WriteImage(image, path)
+    args = ArgumentsTrainTestLocalisation(epochs=N_epochs,
+                                          batch_size=2,
+                                          lr=0.002,
+                                          crop_height=I_size,
+                                          crop_width=I_size,
+                                          crop_depth=I_size,
+                                          validation_steps=8,
+                                          lamda=10,
+                                          training=False,
+                                          testing=False,
+                                          running=True,
+                                          root_dir='/opt/code/automated-fetal-mri/eagle',
+                                          csv_dir='/opt/code/automated-fetal-mri/eagle/files/',
+                                          checkpoint_dir='/opt/code/automated-fetal-mri/eagle/files/checkpoints',
+                                          # change to -breech or -young if needed!
+                                          train_csv=
+                                          'data_localisation_1-label-brain_uterus_train-2022-11-23.csv',
+                                          valid_csv=
+                                          'data_localisation_1-label-brain_uterus_valid-2022-11-23.csv',
+                                          test_csv=
+                                          'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
+                                          run_csv=
+                                          'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
+                                          # run_input=im_corr2ab,
+                                          run_input=im_,
+                                          results_dir=debugFolder + '/',
+                                          exp_name='Loc_3D',
+                                          task_net='unet_3D',
+                                          n_classes=N_classes)
 
-        # for acquisition in connection:
+    args.gpu_ids = [0]
 
-        args.gpu_ids = [0]
+    # RUN with empty masks - to generate new ones (practical application)
 
-        # RUN with empty masks - to generate new ones (practical application)
+    print("args.root_dir", args.root_dir)
+    print("args.csv_dir", args.csv_dir)
+    print("args.checkpoint_dir", args.checkpoint_dir)
+    print("args.results_dir", args.results_dir)
 
-        if args.running:
-            print("Running")
-            # print("im shape ", im_corr2ab.shape)
-            logging.info("Starting localization...")
-            model = md.LocalisationNetwork3DMultipleLabels(args)
-            # Run inference
-            ####################
-            model.run(args, 1)  # Changing this to 0 avoids the plotting
-            logging.info("Localization completed!")
+    if args.running:
+        print("Running")
+        # print("im shape ", im_corr2ab.shape)
+        logging.info("Starting localization...")
+        model = md.LocalisationNetwork3DMultipleLabels(args)
+        # Run inference
+        ####################
+        model.run(args, 1)  # Changing this to 0 avoids the plotting
+        logging.info("Localization completed!")
 
-            rotx = 0.0
-            roty = 0.0
-            rotz = 0.0
+        rotx = 0.0
+        roty = 0.0
+        rotz = 0.0
 
-            logging.info("Storing motion parameters into variables...")
-            xcm = model.x_cm
-            ycm = model.y_cm
-            zcm = model.z_cm
-            logging.info("Motion parameters stored!")
-
-            text = str('CoM: ')
-            append_new_line(file_path, text)
-            text = str(xcm)
-            append_new_line(file_path, text)
-            text = str(ycm)
-            append_new_line(file_path, text)
-            text = str(zcm)
-            append_new_line(file_path, text)
-            text = str('---------------------------------------------------')
-            append_new_line(file_path, text)
-
-            print("centre-of-mass coordinates: ", xcm, ycm, zcm)
-            print("Localisation completed.")
+        logging.info("Storing motion parameters into variables...")
+        xcm = model.x_cm
+        ycm = model.y_cm
+        zcm = model.z_cm
+        logging.info("Motion parameters stored!")
 
         segmentation_volume = model.seg_pr
         image_volume = model.img_gt
@@ -650,11 +586,14 @@ def process_image(images, connection, config, metadata, im, state):
                                                                                (segmentation_volume,
                                                                                 image_volume))
 
-        # Define the path you want to create
-        new_directory_seg = fetalbody_path + "/" + timestamp + "-nnUNet_seg/"
-        new_directory_pred = fetalbody_path + "/" + timestamp + "-nnUNet_pred/"
+        # box = im_  # brain segmentation not working
 
-        box_path = args.results_dir + date_path
+        # Define the path you want to create
+        new_directory_seg = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_seg/"
+        new_directory_pred = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_pred/"
+
+        box_path = args.results_dir + "/" + date_path
+        print("box_path", box_path)
 
         # Check if the directory already exists
         if not os.path.exists(new_directory_seg):
@@ -672,30 +611,42 @@ def process_image(images, connection, config, metadata, im, state):
             # If it already exists, handle it accordingly (maybe log a message or take alternative action)
             print("Directory already exists:", new_directory_pred)
 
+        # Check if the directory already exists
+        if not os.path.exists(box_path):
+            # If it doesn't exist, create it
+            os.mkdir(box_path)
+        else:
+            # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+            print("Directory already exists:", new_directory_pred)
+
         box_im = nib.Nifti1Image(box, np.eye(4))
         nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
-        path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "/"
+        path = (fetalbody_path + "/"
                 + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
         im_ = nib.Nifti1Image(im_, np.eye(4))
         nib.save(im_, path)
 
         # Run Prediction with nnUNet
         # Set the DISPLAY and XAUTHORITY environment variables
-        os.environ['DISPLAY'] = ':1'  # Replace with your X11 display, e.g., ':1.0'
-        os.environ["XAUTHORITY"] = '/home/sn21/.Xauthority'
+        os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
+        os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
+
+        # Ensure nnUNet_results is set correctly
+        os.environ['nnUNet_results'] = '/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'
 
         start_time = time.time()
 
-        command = (("export nnUNet_raw='/home/sn21/landmark-data/FetalBrainLandmarks/nnUNet_raw'; "
-                    "export"
-                    "nnUNet_preprocessed='/home/sn21/landmark-data/FetalBrainLandmarks"
-                    "/nnUNet_preprocessed' ; export "
-                    "nnUNet_results='/home/sn21/landmark-data/FetalBrainLandmarks/nnUNet_results' ; "
-                    "conda activate gadgetron ; nnUNetv2_predict -i ") + box_path + "/" +
-                   timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
-                   "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1")
+        command = (
+                "export nnUNet_raw='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_raw'; "
+                "export nnUNet_preprocessed='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks"
+                "/nnUNet_preprocessed';"
+                "export nnUNet_results='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'; "
+                "nnUNetv2_predict -i " + box_path + "/" + timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
+                "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1"
+        )
 
         subprocess.run(command, shell=True)
+
         # Record the end time
         end_time = time.time()
 
@@ -710,8 +661,7 @@ def process_image(images, connection, config, metadata, im, state):
         landmarks_paths = glob.glob(os.path.join(l_path, "*.nii.gz"))
         print(landmarks_paths)
 
-        for landmarks_path in landmarks_paths:
-            # Load the image using sitk.ReadImage
+    for landmarks_path in landmarks_paths:
             landmark = nib.load(landmarks_path)
             # Get the image data as a NumPy array
             landmark = landmark.get_fdata()
@@ -779,8 +729,8 @@ def process_image(images, connection, config, metadata, im, state):
             date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
 
             # Define the file name with the formatted date and time
-            text_file_1 = args.results_dir + date_path + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
-            text_file = "/home/sn21/freemax-transfer/Sara/landmarks-interface-autoplan/sara.dvs"
+            text_file_1 = args.results_dir + "/" + date_path + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
+            text_file = "/home/data/eagle/sara.dvs"
 
             cm_brain = model.x_cm, model.y_cm, model.z_cm
             # print("BRAIN", cm_brain)
@@ -1134,12 +1084,6 @@ def process_image(images, connection, config, metadata, im, state):
             print("LOBE 2 ROT", cm_lobe_2)
             print("NOSE ROT", cm_nose)
 
-            # transformation = [(srow_x[0], srow_x[1], srow_x[2], srow_x[3]),
-            #                   (srow_y[0], srow_y[1], srow_y[2], srow_y[3]),
-            #                   (srow_z[0], srow_z[1], srow_z[2], srow_z[3]),
-            #                   (0, 0, 0, 1)]
-
-            # Create and write to the text file
             with open(text_file, "w") as file:
                 # file.write("This is a text file created on " + date_time_string)
                 # file.write("\n" + str('CoM: '))
@@ -1178,26 +1122,11 @@ def process_image(images, connection, config, metadata, im, state):
 
             print(f"Text file '{text_file}' has been created.")
 
-            # Convert the modified NumPy array back to a SimpleITK image
-            # modified_image = sitk.GetImageFromArray(labelled_segmentation)
-            # modified_image = labelled_segmentation
-
-            # # Save the modified image with the same file path
-            # output_image_path = landmarks_path.replace(".nii.gz", "_3-labels.nii.gz")
-            #
-            # # sitk.WriteImage(modified_image, output_image_path)
-            # modified_image = nib.Nifti1Image(labelled_segmentation, np.eye(4))
-            # nib.save(modified_image, output_image_path)
-
-        else:
-            print("This is slice ", slice)
+    currentSeries = 0
 
     # Re-slice back into 2D images
     imagesOut = [None] * data.shape[-1]
-
     for iImg in range(data.shape[-1]):
-        # print("iImg", iImg)
-        # print("range", data.shape[-1])
 
         # Create new MRD instance for the inverted image
         # Transpose from convenience shape of [y x z cha] to MRD Image shape of [cha z y x]
