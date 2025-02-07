@@ -135,16 +135,6 @@ RUN apt-get update && apt-get install -y \
     wget unzip tar && \
     rm -rf /var/lib/apt/lists/*
 
-# Download and extract dcm2nii (MRIcron)
-RUN wget -O mricron.zip https://nitrc.org/frs/download.php/11542/mricron_lx.tar.gz && \
-    tar -xvzf mricron.zip && \
-    mv mricron/dcm2nii /usr/local/bin/ && \
-    chmod +x /usr/local/bin/dcm2nii && \
-    rm -rf mricron.zip mricron
-
-# Verify installation
-RUN dcm2nii --help
-
 # Set working directory
 WORKDIR /opt/code/automated-fetal-mri
 RUN git lfs pull
