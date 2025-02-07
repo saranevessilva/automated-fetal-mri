@@ -821,7 +821,7 @@ def process_image(images, connection, config, metadata):
     terminal_command = (("export nnUNet_raw='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_raw'; export "
                          "nnUNet_preprocessed='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_preprocessed'; "
                          "export nnUNet_results='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_results'; "
-                         "conda activate gadgetron; nnUNetv2_predict -i ") + volumetry_path + "/"
+                         "nnUNetv2_predict -i ") + volumetry_path + "/"
                         + timestamp + "-nnUNet_seg-volumetry/ -o " + volumetry_path + "/" + timestamp
                         + "-nnUNet_pred-volumetry/ -d 084 -c 3d_fullres -f 1")
 
@@ -850,7 +850,7 @@ def process_image(images, connection, config, metadata):
     text_file_1 = (debugFolder + "/" + date_path + "/" + timestamp + "-volumetry.txt")
     # text_file = "/home/sn21/freemax-transfer/Sara/landmarks-interface-autoplan/" + timestamp + "-volumetry.txt"
 
-    file_ga = "/home/sn21/freemax-transfer/Sara/volumetry-ga-interface/ga.txt"
+    # file_ga = "/home/sn21/freemax-transfer/Sara/volumetry-ga-interface/ga.txt"
 
     # # Create and write to the text file
     # with open(text_file, "w") as file:
@@ -876,24 +876,24 @@ def process_image(images, connection, config, metadata):
     img_raw = img_nii.get_fdata()
     lab_raw = lab_nii.get_fdata()
     #
-    ga = None
+    ga = 38
 
-    with open(file_ga, 'r') as file:
-        content = file.read()
+    # with open(file_ga, 'r') as file:
+    #     content = file.read()
 
-        # Search for the line containing 'ga' in the format 'weeks+days'
-        match = re.search(r'ga\s*=\s*(\d+)\+(\d+)', content)
-        print("MATCH", match)
-        if match:
-            weeks = int(match.group(1))  # Extract the weeks part
-            days = int(match.group(2))  # Extract the days part
-            ga = weeks + days / 7.0  # Convert to total weeks as a float
-
-    # Print the extracted GA value
-    if ga is not None:
-        print(f"Extracted GA value: {ga:.2f} weeks")
-    else:
-        print("GA value not found.")
+    #     # Search for the line containing 'ga' in the format 'weeks+days'
+    #     match = re.search(r'ga\s*=\s*(\d+)\+(\d+)', content)
+    #     print("MATCH", match)
+    #     if match:
+    #         weeks = int(match.group(1))  # Extract the weeks part
+    #         days = int(match.group(2))  # Extract the days part
+    #         ga = weeks + days / 7.0  # Convert to total weeks as a float
+    #
+    # # Print the extracted GA value
+    # if ga is not None:
+    #     print(f"Extracted GA value: {ga:.2f} weeks")
+    # else:
+    #     print("GA value not found.")
 
     id = "FetalScan"
     scan_date = date_path
