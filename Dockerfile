@@ -116,6 +116,11 @@ ENV DISPLAY=:0
 # Set environment variables (optional, but helps avoid interactive prompts)
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install system dependencies, including curl
+RUN apt-get update && apt-get install -y \
+    curl wget unzip python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+    
 # Download, extract, and install the latest dcm2niix
 RUN curl -fLO https://github.com/rordenlab/dcm2niix/releases/latest/download/dcm2niix_lnx.zip && \
     unzip dcm2niix_lnx.zip -d dcm2niix && \

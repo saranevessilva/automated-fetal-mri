@@ -19,4 +19,3 @@ nilearn
 img2pdf
 Pillow
 PyPDF2
-curl
