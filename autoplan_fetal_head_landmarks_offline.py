@@ -442,7 +442,7 @@ def process_image(images, connection, config, metadata, im, state):
 
     im_ = np.squeeze(data)
 
-    im_ = im_[:, :, 0::ncontrasts]
+    # im_ = im_[:, :, 0::ncontrasts]
 
     im = nib.Nifti1Image(im_, np.eye(4))
     nib.save(im, debugFolder + "/"
