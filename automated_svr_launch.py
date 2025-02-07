@@ -557,7 +557,7 @@ def process_image(images, connection, config, metadata, state):
     print("Launching docker now...")
 
     # Set the DISPLAY and XAUTHORITY environment variables
-    os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
+    os.environ['DISPLAY'] = ':1'  # Replace with your X11 display, e.g., ':1.0'
     # os.environ['XAUTHORITY'] = '/home/sn21/.Xauthority'
     os.environ['XAUTHORITY'] = "/opt/code/automated-fetal-mri/.Xauthority"
 
@@ -591,6 +591,7 @@ def process_image(images, connection, config, metadata, state):
     chmod 1777 /home/data/{date_path}; ' '''
 
     subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', command])
+    # subprocess.Popen(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     print()
     print("--------------------------------------------------------------")
