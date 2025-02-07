@@ -179,8 +179,16 @@ def convert_to_nii(folder_path, output_folder):
     # Extract the folder name
     folder_name = os.path.basename(folder_path)
 
-    # subprocess.run(['dcm2niix', '-g', 'n', '-o', output_folder, folder_path])
-    subprocess.run(['dcm2nii', '-g', 'n', '-o', output_folder, folder_path])
+    # Loop through all .dcm files in the folder
+    for file in os.listdir(folder_path):
+        if file.endswith(".dcm"):
+            file_path = os.path.join(folder_path, file)
+
+            subprocess.run(['sudo', 'gdcmconv', '-w', file_path, f"{file_path}_converted.dcm"])
+            subprocess.run(['mv', f"{file_path}_converted.dcm", file_path])
+
+    subprocess.run(['sudo', 'dcm2niix', '-g', 'n', '-o', output_folder, folder_path])
+    # subprocess.run(['dcm2nii', '-g', 'n', '-o', output_folder, folder_path])
 
     # Find the generated NIfTI file in the output folder (not within subfolder)
     nifti_files = glob.glob(os.path.join(output_folder, f'{folder_name}*.nii'))
