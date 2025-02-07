@@ -440,7 +440,7 @@ def process_raw(group, connection, config, metadata):
         imagesOut.append(tmpImg)
 
     # Call process_image() to invert image contrast
-    imagesOut = process_image(imagesOut, connection, config, metadata, state)
+    imagesOut = process_image(imagesOut, connection, config, metadata)
 
     return imagesOut
 
