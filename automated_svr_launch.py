@@ -591,12 +591,12 @@ def process_image(images, connection, config, metadata, state):
     chmod 1777 /home/data/{date_path}; ' '''
 
     # subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', command])
-    subprocess.Popen(command, shell=True)
+    # subprocess.Popen(command, shell=True)
     print()
     print("--------------------------------------------------------------")
     print()
 
-    # currentSeries = 0
+    currentSeries = 0
 
     # Re-slice back into 2D images
     imagesOut = [None] * data.shape[-1]

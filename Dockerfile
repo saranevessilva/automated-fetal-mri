@@ -116,9 +116,11 @@ ENV DISPLAY=:0
 # Set environment variables (optional, but helps avoid interactive prompts)
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update package list and install dependencies
-RUN apt-get update && \
-    apt-get install -y dcm2niix
+# Download, extract, and install the latest dcm2niix
+RUN curl -fLO https://github.com/rordenlab/dcm2niix/releases/latest/download/dcm2niix_lnx.zip && \
+    unzip dcm2niix_lnx.zip -d dcm2niix && \
+    mv dcm2niix/dcm2niix /usr/local/bin/ && \
+    rm -rf dcm2niix_lnx.zip dcm2niix
 
 # Set working directory
 WORKDIR /opt/code/automated-fetal-mri
