@@ -15,7 +15,7 @@ from time import perf_counter
 from scipy.ndimage import label, center_of_mass
 from scipy.ndimage import affine_transform
 
-import gadgetron
+# import gadgetron
 import ismrmrd
 import logging
 import time
