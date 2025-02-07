@@ -19,3 +19,4 @@ nilearn
 img2pdf
 Pillow
 PyPDF2
+gnome-terminal

@@ -590,9 +590,8 @@ def process_image(images, connection, config, metadata, state):
     mkdir /home/data/{date_path}; \
     chmod 1777 /home/data/{date_path}; ' '''
 
-    subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', command])
-    # subprocess.Popen(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
+    # subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', command])
+    subprocess.Popen(command, shell=True)
     print()
     print("--------------------------------------------------------------")
     print()
