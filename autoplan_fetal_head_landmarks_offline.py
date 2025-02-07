@@ -415,30 +415,25 @@ def process_image(images, connection, config, metadata, im, state):
     im = nib.Nifti1Image(im, np.eye(4))
     nib.save(im, debugFolder + "/" + "im.nii.gz")
 
-    slice = imheader.slice
-    contrast = imheader.contrast
-    repetition = imheader.repetition
-    print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
-
-    sform_x = imheader.read_dir
-    sform_y = imheader.phase_dir
-    sform_z = imheader.slice_dir
-    position = imheader.position
-
-    srow_x = (sform_x[0], sform_x[1], sform_x[2])
-    srow_y = (sform_y[0], sform_y[1], sform_y[2])
-    srow_z = (sform_z[0], sform_z[1], sform_z[2])
-
-    srow_x = (np.round(srow_x, 3))
-    srow_y = (np.round(srow_y, 3))
-    srow_z = (np.round(srow_z, 3))
-
-    slice = imheader.slice
-    repetition = imheader.repetition
-    contrast = imheader.contrast
-    print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
-
-    fetalbody_path = debugFolder
+    # slice = imheader.slice
+    # contrast = imheader.contrast
+    # repetition = imheader.repetition
+    # print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
+    #
+    # sform_x = imheader.read_dir
+    # sform_y = imheader.phase_dir
+    # sform_z = imheader.slice_dir
+    # position = imheader.position
+    #
+    # srow_x = (sform_x[0], sform_x[1], sform_x[2])
+    # srow_y = (sform_y[0], sform_y[1], sform_y[2])
+    # srow_z = (sform_z[0], sform_z[1], sform_z[2])
+    #
+    # srow_x = (np.round(srow_x, 3))
+    # srow_y = (np.round(srow_y, 3))
+    # srow_z = (np.round(srow_z, 3))
+    #
+    # fetalbody_path = debugFolder
 
     im_ = np.squeeze(data)
 
@@ -605,6 +600,8 @@ def process_image(images, connection, config, metadata, im, state):
         else:
             # If it already exists, handle it accordingly (maybe log a message or take alternative action)
             print("Directory already exists:", new_directory_pred)
+
+        fetalbody_path = debugFolder
 
         box_im = nib.Nifti1Image(box, np.eye(4))
         nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
@@ -1085,9 +1082,9 @@ def process_image(images, connection, config, metadata, im, state):
                 file.write("\n" + "nose = " + str(cm_nose))
                 file.write("\n" + "position = " + str(position))
                 # file.write("\n" + "centreofimageposition = " + str(centreofimageposition))
-                file.write("\n" + "srow_x = " + str(srow_x))
-                file.write("\n" + "srow_y = " + str(srow_y))
-                file.write("\n" + "srow_z = " + str(srow_z))
+                # file.write("\n" + "srow_x = " + str(srow_x))
+                # file.write("\n" + "srow_y = " + str(srow_y))
+                # file.write("\n" + "srow_z = " + str(srow_z))
 
             with open(text_file_1, "w") as file:
                 # file.write("This is a text file created on " + date_time_string)
@@ -1103,9 +1100,9 @@ def process_image(images, connection, config, metadata, im, state):
                 file.write("\n" + "nose = " + str(cm_nose))
                 file.write("\n" + "position = " + str(position))
                 # file.write("\n" + "centreofimageposition = " + str(centreofimageposition))
-                file.write("\n" + "srow_x = " + str(srow_x))
-                file.write("\n" + "srow_y = " + str(srow_y))
-                file.write("\n" + "srow_z = " + str(srow_z))
+                # file.write("\n" + "srow_x = " + str(srow_x))
+                # file.write("\n" + "srow_y = " + str(srow_y))
+                # file.write("\n" + "srow_z = " + str(srow_z))
 
             print(f"Text file '{text_file}' has been created.")
 
