@@ -127,12 +127,17 @@ RUN curl -fLO https://github.com/rordenlab/dcm2niix/releases/latest/download/dcm
     mv dcm2niix/dcm2niix /usr/local/bin/ && \
     rm -rf dcm2niix_lnx.zip dcm2niix
     
-# Download, extract, and install dcm2nii from MRIcron
-RUN wget http://www.mccauslandcenter.sc.edu/mricro/mricron.linux.tar.gz && \
-    tar -xvzf mricron.linux.tar.gz && \
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    wget unzip tar && \
+    rm -rf /var/lib/apt/lists/*
+
+# Download and extract dcm2nii (MRIcron)
+RUN wget -O mricron.zip https://nitrc.org/frs/download.php/11542/mricron_lx.tar.gz && \
+    tar -xvzf mricron.zip && \
     mv mricron/dcm2nii /usr/local/bin/ && \
     chmod +x /usr/local/bin/dcm2nii && \
-    rm -rf mricron.linux.tar.gz mricron
+    rm -rf mricron.zip mricron
 
 # Verify installation
 RUN dcm2nii --help
