@@ -469,15 +469,15 @@ def process_image(images, connection, config, metadata, im, state):
     if contrast == 1:
         im[:, :, slice] = np.squeeze(data)
 
+    # Define the paths
+    path = ("/opt/code/automated-fetal-mri/"
+            "13-54-12-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
+
+    # Read the NIfTI files
+    image = sitk.ReadImage(path)
+    im_ = sitk.GetArrayFromImage(image)
+
     if slice == nslices-1 and contrast == 1:
-
-        # Define the paths
-        path = ("/opt/code/automated-fetal-mri/"
-                "13-54-12-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
-
-        # Read the NIfTI files
-        image = sitk.ReadImage(path)
-        im = sitk.GetArrayFromImage(image)
 
         # Define a 180-degree rotation matrix
         rotation_matrix = np.array([[-1, 0, 0],

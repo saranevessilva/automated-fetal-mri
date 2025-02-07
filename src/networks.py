@@ -337,7 +337,7 @@ class LocalisationNetwork3DMultipleLabels(object):
             print(' [*] No checkpoint!')
             self.start_epoch = 0
             self.losses_train = []
-
+            
         # Loaders
         #####################################################
 
