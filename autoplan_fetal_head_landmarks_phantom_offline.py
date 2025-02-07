@@ -109,6 +109,13 @@ def process(connection, config, metadata):
     except:
         logging.info("Improperly formatted metadata: \n%s", metadata)
 
+    nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
+    ncontrasts = metadata.encoding[0].encodingLimits.contrast.maximum + 1
+    ninstances = nslices * ncontrasts
+    dim_x = metadata.encoding[0].encodedSpace.matrixSize.x // 2  # oversampling
+    dim_y = metadata.encoding[0].encodedSpace.matrixSize.y
+    im = np.zeros((dim_x, dim_y, ninstances), dtype=np.int16)
+
     # Continuously parse incoming data parsed from MRD messages
     currentSeries = 0
     acqGroup = []
@@ -148,7 +155,7 @@ def process(connection, config, metadata):
                     logging.info("Processing a group of images because series index changed to %d",
                                  item.image_series_index)
                     currentSeries = item.image_series_index
-                    image = process_image(imgGroup, connection, config, metadata, state)
+                    image = process_image(imgGroup, connection, config, metadata, im, state)
                     connection.send_image(image)
                     imgGroup = []
 
@@ -194,7 +201,7 @@ def process(connection, config, metadata):
 
         if len(imgGroup) > 0:
             logging.info("Processing a group of images (untriggered)")
-            image = process_image(imgGroup, connection, config, metadata, state)
+            image = process_image(imgGroup, connection, config, metadata, im, state)
             connection.send_image(image)
             imgGroup = []
 
@@ -324,13 +331,13 @@ def process_raw(group, connection, config, metadata):
         tmpImg.attribute_string = xml
         imagesOut.append(tmpImg)
 
-    # Call process_image() to invert image contrast
-    imagesOut = process_image(imagesOut, connection, config, metadata, state)
+    # # Call process_image() to invert image contrast
+    # imagesOut = process_image(imagesOut, connection, config, metadata)
 
     return imagesOut
 
 
-def process_image(images, connection, config, metadata, state):
+def process_image(images, connection, config, metadata, im, state):
     if len(images) == 0:
         return []
 
@@ -369,6 +376,7 @@ def process_image(images, connection, config, metadata, state):
 
     # Reformat data to [y x z cha img], i.e. [row col] for the first two dimensions
     data = data.transpose((3, 4, 2, 1, 0))
+
     print("Reformatted data", data.shape)
 
     position = imheader.position
@@ -403,7 +411,9 @@ def process_image(images, connection, config, metadata, state):
     data = data.astype(np.int16)
     np.save(debugFolder + "/" + "imgInverted.npy", data)
 
-    currentSeries = 0
+    # im = np.squeeze(data)
+    # im = nib.Nifti1Image(im, np.eye(4))
+    # nib.save(im, debugFolder + "/" + "im.nii.gz")
 
     slice = imheader.slice
     contrast = imheader.contrast
@@ -419,32 +429,9 @@ def process_image(images, connection, config, metadata, state):
     srow_y = (sform_y[0], sform_y[1], sform_y[2])
     srow_z = (sform_z[0], sform_z[1], sform_z[2])
 
-    # position = position[0], slice_pos, pos_z
-    position = position[0], state["slice_pos"], pos_z
-
-    sform_x = imheader.slice_dir
-    sform_y = imheader.phase_dir
-    sform_z = imheader.read_dir
-
-    srow_x = (sform_x[0], sform_x[1], sform_x[2])
-    srow_y = (sform_y[0], sform_y[1], sform_y[2])
-    srow_z = (sform_z[0], sform_z[1], sform_z[2])
-
     srow_x = (np.round(srow_x, 3))
     srow_y = (np.round(srow_y, 3))
     srow_z = (np.round(srow_z, 3))
-
-    srow_x = (srow_x[0], srow_x[1], srow_x[2])
-    srow_y = (srow_y[0], srow_y[1], srow_y[2])
-    srow_z = (srow_z[0], srow_z[1], srow_z[2])
-
-    srow_x = (np.round(srow_x, 3))
-    srow_y = (np.round(srow_y, 3))
-    srow_z = (np.round(srow_z, 3))
-
-    srow_x = (srow_x[0], srow_x[1], srow_x[2])
-    srow_y = (srow_y[0], srow_y[1], srow_y[2])
-    srow_z = (srow_z[0], srow_z[1], srow_z[2])
 
     slice = imheader.slice
     repetition = imheader.repetition
@@ -453,13 +440,13 @@ def process_image(images, connection, config, metadata, state):
 
     fetalbody_path = debugFolder
 
+    # Check if the parent directory exists, if not, create it
+    if not os.path.exists(fetalbody_path):
+        os.makedirs(fetalbody_path)
+
     im_ = np.squeeze(data)
 
     im_ = im_[:, :, 0::ncontrasts]
-
-    im = nib.Nifti1Image(im_, np.eye(4))
-    nib.save(im, debugFolder + "/"
-            + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
 
     # Define the paths
     path = ("/opt/code/automated-fetal-mri/"
@@ -469,31 +456,51 @@ def process_image(images, connection, config, metadata, state):
     image = sitk.ReadImage(path)
     im = sitk.GetArrayFromImage(image)
 
+    im = nib.Nifti1Image(im_, np.eye(4))
+    nib.save(im, debugFolder + "/"
+            + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
+
     # Define a 180-degree rotation matrix
     rotation_matrix = np.array([[-1, 0, 0],
                                 [0, -1, 0],
                                 [0, 0, 1]])  # Include the homogeneous transformation part if needed.
 
     # Perform the transformation using scipy's affine_transform
-    center = (np.array(im.shape) - 1) / 2
+    center = (np.array(im_.shape) - 1) / 2
     shift = center - np.dot(rotation_matrix, center)
 
     # Apply the affine transformation
-    im_ = affine_transform(im, rotation_matrix, offset=shift)
+    im_ = affine_transform(im_, rotation_matrix, offset=shift)
 
     im = nib.Nifti1Image(im_, np.eye(4))
     nib.save(im, debugFolder + "/"
-            + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
+             + timestamp + "-gadgetron-fetal-brain-localisation-img_rot.nii.gz")
 
-    print("..................................................................................")
-    print("This is the echo-time we're looking at: ", 1)
+    try:
+        print("Checkpoint reached after saving NIfTI file", flush=True)
+        logging.info("Checkpoint reached after saving NIfTI file")
+        sys.stdout.flush()  # Ensure logs are immediately written
 
-    logging.info("Initializing localization network...")
-    sys.stdout.flush()  # Flush again
+        print("..................................................................................")
+        print("This is the echo-time we're looking at: ", 1)
 
-    N_epochs = 100
-    I_size = 128
-    N_classes = 2
+        logging.info("Initializing localization network...")
+        sys.stdout.flush()  # Flush again
+
+    except Exception as e:
+        print(f"ERROR: {e}", flush=True)
+        logging.error(f"Script failed: {e}")
+        sys.stdout.flush()
+
+        print("..................................................................................")
+        print("This is the echo-time we're looking at: ", 1)
+
+        logging.info("Initializing localization network...")
+        sys.stdout.flush()  # Flush again
+
+        N_epochs = 100
+        I_size = 128
+        N_classes = 2
 
     # # # Prepare arguments
 
@@ -531,10 +538,10 @@ def process_image(images, connection, config, metadata, state):
 
     # RUN with empty masks - to generate new ones (practical application)
 
-    # print("args.root_dir", args.root_dir)
-    # print("args.csv_dir", args.csv_dir)
-    # print("args.checkpoint_dir", args.checkpoint_dir)
-    # print("args.results_dir", args.results_dir)
+    print("args.root_dir", args.root_dir)
+    print("args.csv_dir", args.csv_dir)
+    print("args.checkpoint_dir", args.checkpoint_dir)
+    print("args.results_dir", args.results_dir)
 
     if args.running:
         print("Running")
@@ -710,7 +717,7 @@ def process_image(images, connection, config, metadata, state):
 
             # Define the file name with the formatted date and time
             text_file_1 = args.results_dir + "/" + date_path + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
-            text_file = debugFolder + "/" + "sara.dvs"
+            text_file = "/home/data/eagle/sara.dvs"
 
             cm_brain = model.x_cm, model.y_cm, model.z_cm
             # print("BRAIN", cm_brain)
