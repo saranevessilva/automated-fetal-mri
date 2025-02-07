@@ -717,7 +717,6 @@ def process_image(images, connection, config, metadata):
     pixdim_y = (metadata.encoding[0].encodedSpace.fieldOfView_mm.y / metadata.encoding[0].encodedSpace.matrixSize.y)
     pixdim_z = metadata.encoding[0].encodedSpace.fieldOfView_mm.z
     print("pixdims", pixdim_x, pixdim_y, pixdim_z)
-    # pixdim_z = 2.4
 
     # Reformat data to [y x z cha img], i.e. [row col] for the first two dimensions
     data = data.transpose((3, 4, 2, 1, 0))
@@ -752,36 +751,9 @@ def process_image(images, connection, config, metadata):
     im = np.squeeze(data)
     print("Image Shape:", im.shape)
 
-    position = imheader.position
-    position = position[0], position[1], position[2]
-
     # this is for ascending order - create for descending / interleaved slices
     slice_thickness = metadata.encoding[0].encodedSpace.fieldOfView_mm.z
     print("slice_thickness", slice_thickness)
-    slice_pos = position[1] - ((nslices / 2) - 0.5) * slice_thickness  # mid-slice position
-    # pos_z = patient_table_position[2] + position[2]
-    pos_z = position[2]
-    print("mid slice pos", slice_pos)
-    print("last position", position[1])
-    print("pos_z", pos_z)
-
-    position = position[0], slice_pos, pos_z
-
-    sform_x = imheader.slice_dir
-    sform_y = imheader.phase_dir
-    sform_z = imheader.read_dir
-
-    srow_x = (sform_x[0], sform_x[1], sform_x[2])
-    srow_y = (sform_y[0], sform_y[1], sform_y[2])
-    srow_z = (sform_z[0], sform_z[1], sform_z[2])
-
-    srow_x = (np.round(srow_x, 3))
-    srow_y = (np.round(srow_y, 3))
-    srow_z = (np.round(srow_z, 3))
-
-    srow_x = (srow_x[0], srow_x[1], srow_x[2])
-    srow_y = (srow_y[0], srow_y[1], srow_y[2])
-    srow_z = (srow_z[0], srow_z[1], srow_z[2])
 
     slice = imheader.slice
     repetition = imheader.repetition
@@ -819,10 +791,8 @@ def process_image(images, connection, config, metadata):
 
     fetal_im_sitk = sitk.GetImageFromArray(fetal_im_sitk)
     voxel_sizes = (pixdim_z, pixdim_y, pixdim_x)  # Define the desired voxel sizes in millimeters
-    srows = srow_x[0], srow_x[1], srow_x[2], srow_y[0], srow_y[1], srow_y[2], srow_z[0], srow_z[1], srow_z[2]
     print("VOXEL SIZE", voxel_sizes)
     fetal_im_sitk.SetSpacing(voxel_sizes)
-    fetal_im_sitk.SetDirection(srows)
     print("New spacing has been set!")
     fetal_im = sitk.GetArrayFromImage(fetal_im_sitk)
 
