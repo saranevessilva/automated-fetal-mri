@@ -109,6 +109,13 @@ def process(connection, config, metadata):
     except:
         logging.info("Improperly formatted metadata: \n%s", metadata)
 
+    nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
+    ncontrasts = metadata.encoding[0].encodingLimits.contrast.maximum + 1
+    ninstances = nslices * ncontrasts
+    dim_x = metadata.encoding[0].encodedSpace.matrixSize.x // 2  # oversampling
+    dim_y = metadata.encoding[0].encodedSpace.matrixSize.y
+    im = np.zeros((dim_x, dim_y, ninstances), dtype=np.int16)
+
     # Continuously parse incoming data parsed from MRD messages
     currentSeries = 0
     acqGroup = []
@@ -148,7 +155,7 @@ def process(connection, config, metadata):
                     logging.info("Processing a group of images because series index changed to %d",
                                  item.image_series_index)
                     currentSeries = item.image_series_index
-                    image = process_image(imgGroup, connection, config, metadata, state)
+                    image = process_image(imgGroup, connection, config, metadata, im, state)
                     connection.send_image(image)
                     imgGroup = []
 
@@ -194,7 +201,7 @@ def process(connection, config, metadata):
 
         if len(imgGroup) > 0:
             logging.info("Processing a group of images (untriggered)")
-            image = process_image(imgGroup, connection, config, metadata, state)
+            image = process_image(imgGroup, connection, config, metadata, im, state)
             connection.send_image(image)
             imgGroup = []
 
@@ -324,13 +331,13 @@ def process_raw(group, connection, config, metadata):
         tmpImg.attribute_string = xml
         imagesOut.append(tmpImg)
 
-    # Call process_image() to invert image contrast
-    imagesOut = process_image(imagesOut, connection, config, metadata, state)
+    # # Call process_image() to invert image contrast
+    # imagesOut = process_image(imagesOut, connection, config, metadata)
 
     return imagesOut
 
 
-def process_image(images, connection, config, metadata, state):
+def process_image(images, connection, config, metadata, im, state):
     if len(images) == 0:
         return []
 
@@ -422,29 +429,9 @@ def process_image(images, connection, config, metadata, state):
     srow_y = (sform_y[0], sform_y[1], sform_y[2])
     srow_z = (sform_z[0], sform_z[1], sform_z[2])
 
-    sform_x = imheader.slice_dir
-    sform_y = imheader.phase_dir
-    sform_z = imheader.read_dir
-
-    srow_x = (sform_x[0], sform_x[1], sform_x[2])
-    srow_y = (sform_y[0], sform_y[1], sform_y[2])
-    srow_z = (sform_z[0], sform_z[1], sform_z[2])
-
     srow_x = (np.round(srow_x, 3))
     srow_y = (np.round(srow_y, 3))
     srow_z = (np.round(srow_z, 3))
-
-    srow_x = (srow_x[0], srow_x[1], srow_x[2])
-    srow_y = (srow_y[0], srow_y[1], srow_y[2])
-    srow_z = (srow_z[0], srow_z[1], srow_z[2])
-
-    srow_x = (np.round(srow_x, 3))
-    srow_y = (np.round(srow_y, 3))
-    srow_z = (np.round(srow_z, 3))
-
-    srow_x = (srow_x[0], srow_x[1], srow_x[2])
-    srow_y = (srow_y[0], srow_y[1], srow_y[2])
-    srow_z = (srow_z[0], srow_z[1], srow_z[2])
 
     slice = imheader.slice
     repetition = imheader.repetition

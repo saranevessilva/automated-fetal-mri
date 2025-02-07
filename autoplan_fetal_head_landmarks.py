@@ -329,8 +329,8 @@ def process_raw(group, connection, config, metadata):
         tmpImg.attribute_string = xml
         imagesOut.append(tmpImg)
 
-    # Call process_image() to invert image contrast
-    imagesOut = process_image(imagesOut, connection, config, metadata)
+    # # Call process_image() to invert image contrast
+    # imagesOut = process_image(imagesOut, connection, config, metadata)
 
     return imagesOut
 
@@ -452,18 +452,6 @@ def process_image(images, connection, config, metadata, im, state):
     srow_x = (np.round(srow_x, 3))
     srow_y = (np.round(srow_y, 3))
     srow_z = (np.round(srow_z, 3))
-
-    srow_x = (srow_x[0], srow_x[1], srow_x[2])
-    srow_y = (srow_y[0], srow_y[1], srow_y[2])
-    srow_z = (srow_z[0], srow_z[1], srow_z[2])
-
-    srow_x = (np.round(srow_x, 3))
-    srow_y = (np.round(srow_y, 3))
-    srow_z = (np.round(srow_z, 3))
-
-    srow_x = (srow_x[0], srow_x[1], srow_x[2])
-    srow_y = (srow_y[0], srow_y[1], srow_y[2])
-    srow_z = (srow_z[0], srow_z[1], srow_z[2])
 
     slice = imheader.slice
     repetition = imheader.repetition
