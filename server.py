@@ -14,6 +14,9 @@ import autoplan_fetal_cardiac_landmarks
 import automated_volumetry
 import autoplan_fetal_sagittal_landmarks
 import autoplan_fetal_head_landmarks
+import autoplan_fetal_head_landmarks_offline
+import autoplan_fetal_head_landmarks_phantom
+import autoplan_fetal_head_landmarks_phantom_offline
 import automated_svr_launch
 import automated_pull_svr_brain
 import automated_pull_svr_body
@@ -106,6 +109,15 @@ class Server:
             elif config == "autoplan_fetal_head_landmarks":
                 logging.info("Starting autoplan_fetal_head_landmarks processing based on config")
                 autoplan_fetal_head_landmarks.process(connection, config, metadata)
+            elif config == "autoplan_fetal_head_landmarks_offline":
+                logging.info("Starting autoplan_fetal_head_landmarks_offline processing based on config")
+                autoplan_fetal_head_landmarks_offline.process(connection, config, metadata)
+            elif config == "autoplan_fetal_head_landmarks_phantom":
+                logging.info("Starting autoplan_fetal_head_landmarks_phantom processing based on config")
+                autoplan_fetal_head_landmarks_phantom.process(connection, config, metadata)
+            elif config == "autoplan_fetal_head_landmarks_phantom_offline":
+                logging.info("Starting autoplan_fetal_head_landmarks_phantom_offline processing based on config")
+                autoplan_fetal_head_landmarks_phantom_offline.process(connection, config, metadata)
             elif config == "automated_svr_launch":
                 logging.info("Starting automated_svr_launch processing based on config")
                 automated_svr_launch.process(connection, config, metadata)
