@@ -561,7 +561,7 @@ def process_image(images, connection, config, metadata, state):
                 print(f"Error deleting file {file_name}: {e}")
 
     # Process all NIfTI files in the folder
-    process_folder(output_folder, pixdim_z)
+    # process_folder(output_folder, pixdim_z)
 
     print("Launching docker now...")
 
@@ -600,7 +600,7 @@ def process_image(images, connection, config, metadata, state):
     chmod 1777 /home/data/{date_path}; ' '''
 
     # subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', command])
-    # subprocess.Popen(command, shell=True)
+    subprocess.Popen(command, shell=True)
     print()
     print("--------------------------------------------------------------")
     print()

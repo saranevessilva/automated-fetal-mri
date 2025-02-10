@@ -359,7 +359,7 @@ def main(args):
         # Update the ImagePositionPatient with the final position
         if position is not None:
             dicomDset.ImagePositionPatient = list(all_positions[imgNum])
-            print(f"Updating file {fileName} with final position: {position}")
+            print(f"Updating file {fileName} with final position: {all_positions[imgNum]}")
 
         # Save the updated DICOM file
         dicomDset.save_as(filePath)
