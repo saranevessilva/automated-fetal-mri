@@ -26,11 +26,13 @@ venc_dir_map = {'FLOW_DIR_R_TO_L' : 'rl',
                 'FLOW_DIR_TP_IN'  : 'in',
                 'FLOW_DIR_TP_OUT' : 'out'}
 
-state = {
-    "slice_pos": 0,
-    "min_slice_pos": 0,
-    "first_slice": 1
-}
+# state = {
+#     "slice_pos": 0,
+#     "min_slice_pos": 0,
+#     "first_slice": 1
+# }
+
+all_positions = np.empty((0, 3))
 
 
 def main(args):
@@ -105,6 +107,12 @@ def main(args):
             continue
 
         print("Reading images from '/" + args.in_group + "/" + group + "'")
+
+        state = {
+            "slice_pos": 0,
+            "min_slice_pos": 0,
+            "first_slice": 1
+        }
 
         for imgNum in range(0, dset.number_of_images(group)):
             mrdImg = dset.read_image(group, imgNum)
@@ -246,7 +254,7 @@ def main(args):
                 read_dir = mrdImg.read_dir[0], mrdImg.read_dir[1], mrdImg.read_dir[2]
                 phase_dir = mrdImg.phase_dir[0], mrdImg.phase_dir[1], mrdImg.phase_dir[2]
                 slice_dir = mrdImg.slice_dir[0], mrdImg.slice_dir[1], mrdImg.slice_dir[2]
-                print("position ", position, "read_dir", read_dir, "phase_dir ", phase_dir, "slice_dir ", slice_dir)
+                print("position initial ", position, "read_dir", read_dir, "phase_dir ", phase_dir, "slice_dir ", slice_dir)
 
                 # Update state variables directly
                 if state["first_slice"] == 1:
@@ -318,16 +326,27 @@ def main(args):
                 nslices = filesWritten
                 print("nslices", nslices)
 
-                if instance == nslices-1:
-                    pos = state["slice_pos"] / nslices  # slice position mid volume
-                    print("POS", pos)
-                    print("slice_pos", state["slice_pos"])
-                    print("nslices", nslices)
-                    position = (position[0], pos, position[2])
-                    print("final position", position)
+                # if instance == nslices-1:
+                #     pos = state["slice_pos"] / nslices  # slice position mid volume
+                #     print("POS", pos)
+                #     print("slice_pos", state["slice_pos"])
+                #     print("nslices", nslices)
+                #     position = (position[0], pos, position[2])
+                #     print("final position", position)
+                #
+                # else:
+                #     continue
 
-                else:
-                    continue
+                pos = state["slice_pos"] / nslices  # slice position mid volume
+                print("POS", pos)
+                print("slice_pos", state["slice_pos"])
+                print("nslices", nslices)
+                position = (position[0], pos, position[2])
+                print("final position", position)
+
+                all_positions = np.vstack([all_positions, [position]])
+
+                print(all_positions)
 
     print("Wrote %d DICOM files to %s" % (filesWritten, args.out_folder))
 
@@ -341,7 +360,7 @@ def main(args):
 
         # Update the ImagePositionPatient with the final position
         if position is not None:
-            dicomDset.ImagePositionPatient = list(position)
+            dicomDset.ImagePositionPatient = list(all_positions[imgNum])
             print(f"Updating file {fileName} with final position: {position}")
 
         # Save the updated DICOM file
