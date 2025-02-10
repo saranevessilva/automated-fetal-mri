@@ -32,10 +32,8 @@ venc_dir_map = {'FLOW_DIR_R_TO_L' : 'rl',
 #     "first_slice": 1
 # }
 
-all_positions = np.empty((0, 3))
-
-
 def main(args):
+    all_positions = []
     dset = h5py.File(args.filename, 'r')
     if not dset:
         print("Not a valid dataset: %s" % (args.filename))
@@ -344,7 +342,7 @@ def main(args):
                 position = (position[0], pos, position[2])
                 print("final position", position)
 
-                all_positions = np.vstack([all_positions, [position]])
+                all_positions.append(position)
 
                 print(all_positions)
 
