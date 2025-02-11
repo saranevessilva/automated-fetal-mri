@@ -1,6 +1,5 @@
 # Stage 1: Build ISMRMRD and siemens_to_ismrmrd
 FROM python:3.10.2-slim AS mrd_converter
-ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     git cmake g++ libhdf5-dev libxml2-dev libxslt1-dev libboost-all-dev libfftw3-dev libpugixml-dev && \
@@ -33,9 +32,12 @@ RUN cd /opt/code && \
 # Create ISMRMRD archive
 RUN cd /usr/local/lib && tar -czvf libismrmrd.tar.gz libismrmrd*
 
-# Use Docker-in-Docker image
-FROM docker:latest
-
+# Install Docker inside the container
+RUN apt-get update && \
+    apt-get -qy full-upgrade && \
+    apt-get install -qy curl && \
+    curl -sSL https://get.docker.com/ | sh
+    
 # Install dependencies
 RUN apk add --no-cache \
     apt-transport-https \
@@ -45,11 +47,7 @@ RUN apk add --no-cache \
     lsb-release \
     sudo
 
-# Enable Docker daemon
-RUN dockerd &
-
 # Pull the image
-RUN apt-get update && apt-get install -y docker.io
 RUN docker pull fetalsvrtk/svrtk:general_auto_amd
 
 # Stage 2: Final Image
