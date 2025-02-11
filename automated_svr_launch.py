@@ -32,29 +32,11 @@ import ctypes
 import copy
 import glob
 import warnings
-from scipy import ndimage, misc
-from skimage import measure
-from scipy.spatial.distance import euclidean
 
 warnings.simplefilter('default')
 
-from ismrmrd.acquisition import Acquisition
-from ismrmrd.flags import FlagsMixin
-from ismrmrd.equality import EqualityMixin
-from ismrmrd.constants import *
-
-import matplotlib.image
-import matplotlib.pyplot as plt
-from matplotlib.widgets import RectangleSelector
-
-import sys
-
 import nibabel as nib
 import SimpleITK as sitk
-from numpy.fft import fftshift, ifftshift, fftn, ifftn
-
-# standard libraries
-from matplotlib import pyplot as plt
 
 import os
 
@@ -73,88 +55,9 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-
-# Reset and configure logging
-for handler in logging.root.handlers[:]:
-    logging.root.removeHandler(handler)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
-
-try:
-    from scipy.ndimage import affine_transform
-except ImportError:
-    print("Error: scipy is not installed or affine_transform is not available")
-
 # Folder for debug output files
 debugFolder = "/tmp/share/debug"
 date_path = datetime.today().strftime("%Y-%m-%d")
-os.environ['PATH'] += ':/usr/local/bin'
-
-
-def load_and_sort_image(nifti_file, new_thickness):
-    # Load the NIfTI file
-    img = sitk.ReadImage(nifti_file)
-    data = sitk.GetArrayFromImage(img)
-
-    # Retrieve and modify slice thickness (assuming it's the third element in the spacing tuple)
-    spacing = list(img.GetSpacing())
-    original_thickness = spacing[2]
-    spacing[2] = new_thickness
-    img.SetSpacing(spacing)
-
-    # Retrieve the direction (srow equivalent in SimpleITK)
-    direction = np.array(img.GetDirection()).reshape((3, 3))
-
-    # Find the largest value in the direction matrix
-    largest = np.max(np.abs(direction))
-    print("Largest value in direction matrix:", largest)
-
-    # Find the index of the largest value and divide it by 2
-    indices = np.where(np.abs(direction) == largest)
-    direction[indices] = new_thickness
-
-    # Update the direction in the image
-    img.SetDirection(direction.flatten())
-
-    # Log the updated direction
-    print("Updated direction matrix:", direction)
-
-    # Check if slices are interleaved and combine them (example logic)
-    combined = np.zeros_like(data)
-    mid = (data.shape[0] + 1) // 2
-    odd = data[:mid, :, :]  # Odd slices
-    even = data[mid:, :, :]  # Even slices
-    combined[::2, :, :] = odd
-    combined[1::2, :, :] = even
-
-    print("Combined data shape:", combined.shape)
-
-    # Create a new NIfTI image with the updated header and sorted data
-    new_img = sitk.GetImageFromArray(combined)
-    new_img.SetSpacing(spacing)
-    new_img.SetDirection(direction.flatten())
-    new_img.SetOrigin(img.GetOrigin())
-
-    # Save the updated NIfTI file
-    # new_file = nifti_file.replace('.nii.gz', '_sorted.nii.gz').replace('.nii', '_sorted.nii')
-    sitk.WriteImage(new_img, nifti_file)
-    print(f"Sorted NIfTI file saved as: {nifti_file}")
-
-    return new_img
-
-
-def process_folder(folder_path, pixdim_z):
-    # Loop through all files in the folder
-    for nifti_file in os.listdir(folder_path):
-        # Check if the file is a NIfTI file (.nii or .nii.gz)
-        if (nifti_file.endswith('.nii.gz') or nifti_file.endswith('.nii')) and not nifti_file.startswith('o'):
-            nifti_file_path = os.path.join(folder_path, nifti_file)
-            print(f"Processing NIfTI file: {nifti_file_path}")
-            load_and_sort_image(nifti_file_path, pixdim_z)
 
 
 def process_mrd_files(folder_path, in_group=None, out_folder=None):
@@ -173,38 +76,6 @@ def process_mrd_files(folder_path, in_group=None, out_folder=None):
 
             # Call the main function
             main(args)
-
-
-def convert_to_nii(folder_path, output_folder):
-    # Extract the folder name
-    folder_name = os.path.basename(folder_path)
-
-    # Loop through all .dcm files in the folder
-    for file in os.listdir(folder_path):
-        if file.endswith(".dcm"):
-            file_path = os.path.join(folder_path, file)
-
-            subprocess.run(['gdcmconv', '--raw', '--implicit', file_path, f"{file_path}_converted.dcm"])
-            subprocess.run(['mv', f"{file_path}_converted.dcm", file_path])
-
-    subprocess.run(['dcm2niix', '-g', 'n', '-o', output_folder, folder_path])
-    # subprocess.run(['dcm2nii', '-g', 'n', '-o', output_folder, folder_path])
-
-    # Find the generated NIfTI file in the output folder (not within subfolder)
-    nifti_files = glob.glob(os.path.join(output_folder, f'{folder_name}*.nii'))
-
-    if nifti_files:
-        nifti_file = nifti_files[0]
-
-        # Construct the new NIfTI file path (using folder_name as the name)
-        new_nifti_path = os.path.join(output_folder, f"{folder_name}.nii")
-
-        # Rename the NIfTI file to match the folder name
-        os.rename(nifti_file, new_nifti_path)
-        print(f"NIfTI file renamed to {new_nifti_path}")
-
-    else:
-        print(f"No NIfTI file found in {folder_path}")
 
 
 def process(connection, config, metadata):
@@ -240,13 +111,6 @@ def process(connection, config, metadata):
     waveformGroup = []
     try:
         for item in connection:
-
-            state = {
-                "slice_pos": 0,
-                "min_slice_pos": 0,
-                "first_slice": 1
-            }
-
             # ----------------------------------------------------------
             # Raw k-space data messages
             # ----------------------------------------------------------
@@ -258,6 +122,7 @@ def process(connection, config, metadata):
                         not item.is_flag_set(ismrmrd.ACQ_IS_NAVIGATION_DATA)):
                     acqGroup.append(item)
 
+                # data, which returns images that are sent back to the client.
                 if item.is_flag_set(ismrmrd.ACQ_LAST_IN_SLICE):
                     logging.info("Processing a group of k-space data")
                     image = process_raw(acqGroup, connection, config, metadata)
@@ -272,10 +137,12 @@ def process(connection, config, metadata):
                     logging.info("Processing a group of images because series index changed to %d",
                                  item.image_series_index)
                     currentSeries = item.image_series_index
-                    image = process_image(imgGroup, connection, config, metadata, state)
+                    image = process_image(imgGroup, connection, config, metadata)
                     connection.send_image(image)
                     imgGroup = []
 
+                # Only process magnitude images -- send phase images back without modification (fallback for images
+                # with unknown type)
                 if (item.image_type is ismrmrd.IMTYPE_MAGNITUDE) or (item.image_type == 0):
                     imgGroup.append(item)
                 else:
@@ -318,7 +185,7 @@ def process(connection, config, metadata):
 
         if len(imgGroup) > 0:
             logging.info("Processing a group of images (untriggered)")
-            image = process_image(imgGroup, connection, config, metadata, state)
+            image = process_image(imgGroup, connection, config, metadata)
             connection.send_image(image)
             imgGroup = []
 
@@ -364,7 +231,7 @@ def process_raw(group, connection, config, metadata):
             if (rawHead[phs] is None) or (
                     np.abs(acq.getHead().idx.kspace_encode_step_1 - acq.getHead().idx.user[5]) < np.abs(
                     rawHead[phs].idx.kspace_encode_step_1 - rawHead[phs].idx.user[5])):
-                rawHead[phs] = acq.getHead()
+                    rawHead[phs] = acq.getHead()
 
     # Flip matrix in RO/PE to be consistent with ICE
     data = np.flip(data, (1, 2))
@@ -454,7 +321,8 @@ def process_raw(group, connection, config, metadata):
     return imagesOut
 
 
-def process_image(images, connection, config, metadata, state):
+def process_image(images, connection, config, metadata):
+    # global timestamp
     if len(images) == 0:
         return []
 
@@ -478,54 +346,37 @@ def process_image(images, connection, config, metadata, state):
 
     imheader = head[0]
 
-    nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
-    ncontrasts = metadata.encoding[0].encodingLimits.contrast.maximum + 1
-    nreps = metadata.encoding[0].encodingLimits.repetition.maximum + 1
-    ninstances = nslices * ncontrasts * nreps
-
-    print("Number of echoes =", ncontrasts)
-    print("Number of instances =", ninstances)
-
     pixdim_x = (metadata.encoding[0].encodedSpace.fieldOfView_mm.x / metadata.encoding[0].encodedSpace.matrixSize.x)
     pixdim_y = metadata.encoding[0].encodedSpace.fieldOfView_mm.y / metadata.encoding[0].encodedSpace.matrixSize.y
-    pixdim_z = metadata.encoding[0].encodedSpace.fieldOfView_mm.z
+    # pixdim_z = metadata.encoding[0].encodedSpace.fieldOfView_mm.z
+    pixdim_z = metadata.encoding[0].reconSpace.fieldOfView_mm.z
     print("pixdims", pixdim_x, pixdim_y, pixdim_z)
 
     # Reformat data to [y x z cha img], i.e. [row col] for the first two dimensions
     data = data.transpose((3, 4, 2, 1, 0))
-
-    print("Reformatted data", data.shape)
+    print("reformatted data", data.shape)
 
     # Display MetaAttributes for first image
-    logging.debug("MetaAttributes[0]: %s", ismrmrd.Meta.serialize(meta[0]))
+    # logging.debug("MetaAttributes[0]: %s", ismrmrd.Meta.serialize(meta[0]))
 
     # Optional serialization of ICE MiniHeader
     if 'IceMiniHead' in meta[0]:
         logging.debug("IceMiniHead[0]: %s", base64.b64decode(meta[0]['IceMiniHead']).decode('utf-8'))
 
-    logging.debug("Original image data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "imgOrig.npy", data)
-
-    # Normalize and convert to int16
     data = data.astype(np.float64)
-    data *= 32767 / data.max()
+    # data *= 32767/data.max()
     data = np.around(data)
-    data = data.astype(np.int16)
+    # data = data.astype(np.int16)
 
     # Invert image contrast
     # data = 32767-data
     data = np.abs(data)
     data = data.astype(np.int16)
-    np.save(debugFolder + "/" + "imgInverted.npy", data)
+    currentSeries = 0
 
-    im = np.squeeze(data)
-    im = nib.Nifti1Image(im, np.eye(4))
-    nib.save(im, debugFolder + "/" + "im.nii.gz")
+    nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
 
     slice = imheader.slice
-    contrast = imheader.contrast
-    repetition = imheader.repetition
-    print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
     svr_path = (debugFolder + "/" + date_path)
 
@@ -545,7 +396,21 @@ def process_image(images, connection, config, metadata, state):
         folder_path = os.path.join(svr_path, folder_name)
         if os.path.isdir(folder_path):
             print(f"Processing folder: {folder_path}")
-            convert_to_nii(folder_path, output_folder)
+            output = output_folder + "/" + folder_name + ".nii.gz"
+            conv_path = "/opt/code/automated-fetal-mri/convert-dicom-to-nifti.sh"
+
+            result = subprocess.run(["bash", conv_path, folder_path, output], capture_output=True, text=True)
+
+            # Print output regardless of success or failure
+            print("STDOUT:", result.stdout)
+            print("STDERR:", result.stderr)
+
+            if result.returncode != 0:
+                print(f"Warning: Script failed with exit code {result.returncode}, but continuing execution...")
+            else:
+                print("Script executed successfully!")
+
+            # convert_to_nii(folder_path, output_folder)
 
     for file_name in os.listdir(output_folder):
         file_path = os.path.join(output_folder, file_name)
@@ -559,9 +424,6 @@ def process_image(images, connection, config, metadata, state):
                 os.remove(file_path)
             except Exception as e:
                 print(f"Error deleting file {file_name}: {e}")
-
-    # Process all NIfTI files in the folder
-    # process_folder(output_folder, pixdim_z)
 
     print("Launching docker now...")
 
@@ -599,17 +461,20 @@ def process_image(images, connection, config, metadata, state):
     mkdir /home/data/{date_path}; \
     chmod 1777 /home/data/{date_path}; ' '''
 
-    # subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', command])
     subprocess.Popen(command, shell=True)
+
     print()
     print("--------------------------------------------------------------")
     print()
 
-    currentSeries = 0
+    # INCLUDE THIS SCRIPT IN THE FIRE INITIALIZATION
 
     # Re-slice back into 2D images
     imagesOut = [None] * data.shape[-1]
+
     for iImg in range(data.shape[-1]):
+        # print("iImg", iImg)
+        # print("range", data.shape[-1])
 
         # Create new MRD instance for the inverted image
         # Transpose from convenience shape of [y x z cha] to MRD Image shape of [cha z y x]
@@ -666,6 +531,7 @@ def process_image(images, connection, config, metadata, state):
     return imagesOut
 
 
+# Create an example ROI <3
 # Create an example ROI <3
 def create_example_roi(img_size):
     t = np.linspace(0, 2 * np.pi)

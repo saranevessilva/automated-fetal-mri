@@ -26,14 +26,14 @@ venc_dir_map = {'FLOW_DIR_R_TO_L' : 'rl',
                 'FLOW_DIR_TP_IN'  : 'in',
                 'FLOW_DIR_TP_OUT' : 'out'}
 
-# state = {
-#     "slice_pos": 0,
-#     "min_slice_pos": 0,
-#     "first_slice": 1
-# }
+state = {
+    "slice_pos": 0,
+    "min_slice_pos": 0,
+    "first_slice": 1
+}
+
 
 def main(args):
-    all_positions = []
     dset = h5py.File(args.filename, 'r')
     if not dset:
         print("Not a valid dataset: %s" % (args.filename))
@@ -105,6 +105,8 @@ def main(args):
             continue
 
         print("Reading images from '/" + args.in_group + "/" + group + "'")
+
+        all_positions = []
 
         state = {
             "slice_pos": 0,
@@ -178,22 +180,34 @@ def main(args):
                     if mrdHead.acquisitionSystemInformation is None:
                         pass
                     else:
+                        # print("---------- Old -------------------------")
+                        # print("mrdHead.acquisitionSystemInformation.systemVendor         : %s" % mrdHead.acquisitionSystemInformation.systemVendor          )
+                        # print("mrdHead.acquisitionSystemInformation.systemModel          : %s" % mrdHead.acquisitionSystemInformation.systemModel           )
+                        # print("mrdHead.acquisitionSystemInformation.systemFieldStrength_T: %s" % mrdHead.acquisitionSystemInformation.systemFieldStrength_T )
+                        # print("mrdHead.acquisitionSystemInformation.institutionName      : %s" % mrdHead.acquisitionSystemInformation.institutionName       )
+                        # print("mrdHead.acquisitionSystemInformation.stationName          : %s" % mrdHead.acquisitionSystemInformation.stationName           )
+
                         if mrdHead.acquisitionSystemInformation.systemVendor          is not None: dicomDset.Manufacturer          = mrdHead.acquisitionSystemInformation.systemVendor
                         if mrdHead.acquisitionSystemInformation.systemModel           is not None: dicomDset.ManufacturerModelName = mrdHead.acquisitionSystemInformation.systemModel
                         if mrdHead.acquisitionSystemInformation.systemFieldStrength_T is not None: dicomDset.MagneticFieldStrength = mrdHead.acquisitionSystemInformation.systemFieldStrength_T
                         if mrdHead.acquisitionSystemInformation.institutionName       is not None: dicomDset.InstitutionName       = mrdHead.acquisitionSystemInformation.institutionName
                         if mrdHead.acquisitionSystemInformation.stationName           is not None: dicomDset.StationName           = mrdHead.acquisitionSystemInformation.stationName
+
+                        # print("---------- New -------------------------")
+                        # print("mrdHead.acquisitionSystemInformation.systemVendor         : %s" % mrdHead.acquisitionSystemInformation.systemVendor          )
+                        # print("mrdHead.acquisitionSystemInformation.systemModel          : %s" % mrdHead.acquisitionSystemInformation.systemModel           )
+                        # print("mrdHead.acquisitionSystemInformation.systemFieldStrength_T: %s" % mrdHead.acquisitionSystemInformation.systemFieldStrength_T )
+                        # print("mrdHead.acquisitionSystemInformation.institutionName      : %s" % mrdHead.acquisitionSystemInformation.institutionName       )
+                        # print("mrdHead.acquisitionSystemInformation.stationName          : %s" % mrdHead.acquisitionSystemInformation.stationName           )
                 except:
                     print("Error setting header information from MRD header's acquisitionSystemInformation section")
 
+
                 # Set mrdImg pixel data from MRD mrdImg
-                # dicomDset.PixelData = np.squeeze(mrdImg.data) # mrdImg.data is [cha z y x] -- squeeze to [y x] for [row col]
-                print("mrdImg.data.shape", mrdImg.data.shape)
-                dicomDset.PixelData = np.squeeze(mrdImg.data).astype(np.uint32).tobytes()
-                # imag = np.squeeze((mrdImg.data))
-                # print("imag", imag.shape)
+                dicomDset.PixelData = np.squeeze(mrdImg.data) # mrdImg.data is [cha z y x] -- squeeze to [y x] for [row col]
+                imag = np.squeeze((mrdImg.data))
                 # print("imag dimensions", imag.shape)
-                # dicomDset.PixelData = imag.astype(np.uint32).tobytes()
+                dicomDset.PixelData = imag.astype(np.uint32)
                 dicomDset.Rows      = mrdImg.data.shape[2]
                 dicomDset.Columns   = mrdImg.data.shape[3]
 
@@ -214,6 +228,7 @@ def main(args):
 
                 dicomDset.SeriesNumber               = mrdImg.image_series_index
                 dicomDset.InstanceNumber             = mrdImg.image_index
+                print("image index", mrdImg.image_index)
 
                 # ----- Set some mandatory default values -----
                 if not 'SamplesPerPixel' in dicomDset:
@@ -241,7 +256,7 @@ def main(args):
                 # ----- Update DICOM header from MRD ImageHeader -----
                 dicomDset.ImageType[2]               = imtype_map[mrdImg.image_type]
                 dicomDset.PixelSpacing               = [float(mrdImg.field_of_view[0]) / mrdImg.data.shape[2], float(mrdImg.field_of_view[1]) / mrdImg.data.shape[3]]
-                dicomDset.SliceThickness             = mrdImg.field_of_view[2] / 2
+                dicomDset.SliceThickness             = mrdImg.field_of_view[2]
                 dicomDset.ImagePositionPatient       = [mrdImg.position[0], mrdImg.position[1], mrdImg.position[2]]
                 dicomDset.ImageOrientationPatient    = [mrdImg.read_dir[0], mrdImg.read_dir[1], mrdImg.read_dir[2], mrdImg.phase_dir[0], mrdImg.phase_dir[1], mrdImg.phase_dir[2]]
 
@@ -252,7 +267,8 @@ def main(args):
                 read_dir = mrdImg.read_dir[0], mrdImg.read_dir[1], mrdImg.read_dir[2]
                 phase_dir = mrdImg.phase_dir[0], mrdImg.phase_dir[1], mrdImg.phase_dir[2]
                 slice_dir = mrdImg.slice_dir[0], mrdImg.slice_dir[1], mrdImg.slice_dir[2]
-                print("position initial ", position, "read_dir", read_dir, "phase_dir ", phase_dir, "slice_dir ", slice_dir)
+                print("position initial ", position, "read_dir initial", read_dir, "phase_dir initial", phase_dir, "slice_dir initial",
+                      slice_dir)
 
                 # Update state variables directly
                 if state["first_slice"] == 1:
@@ -269,11 +285,13 @@ def main(args):
                 print("pos_z", pos_z)
 
                 time_sec = mrdImg.acquisition_time_stamp/1000/2.5
+                print("time_sec", time_sec)
                 hour = int(np.floor(time_sec/3600))
                 min  = int(np.floor((time_sec - hour*3600)/60))
                 sec  = time_sec - hour*3600 - min*60
                 dicomDset.AcquisitionTime            = "%02.0f%02.0f%09.6f" % (hour, min, sec)
                 dicomDset.TriggerTime                = mrdImg.physiology_time_stamp[0] / 2.5
+                print("trigger time", mrdImg.physiology_time_stamp[0] / 2.5)
 
                 # ----- Update DICOM header from MRD Image MetaAttributes -----
                 if meta.get('SeriesDescription') is not None:
@@ -323,48 +341,6 @@ def main(args):
 
                 nslices = filesWritten
                 print("nslices", nslices)
-
-                # if instance == nslices-1:
-                #     pos = state["slice_pos"] / nslices  # slice position mid volume
-                #     print("POS", pos)
-                #     print("slice_pos", state["slice_pos"])
-                #     print("nslices", nslices)
-                #     position = (position[0], pos, position[2])
-                #     print("final position", position)
-                #
-                # else:
-                #     continue
-
-                pos = state["slice_pos"] / nslices  # slice position mid volume
-                print("POS", pos)
-                print("slice_pos", state["slice_pos"])
-                print("nslices", nslices)
-                position = (position[0], pos, position[2])
-                print("final position", position)
-
-                all_positions.append(position)
-
-                print(all_positions)
-
-    print("Wrote %d DICOM files to %s" % (filesWritten, args.out_folder))
-
-    # Reopen each DICOM file and update the ImagePositionPatient
-    for imgNum in range(filesWritten):
-        fileName = "%02.0f_%s_%03.0f.dcm" % (series, dicomDset.SeriesDescription, imgNum)
-        filePath = os.path.join(args.out_folder, fileName)
-
-        # Load the existing DICOM file with force=True to bypass header issues
-        dicomDset = pydicom.dcmread(filePath, force=True)
-
-        # Update the ImagePositionPatient with the final position
-        if position is not None:
-            dicomDset.ImagePositionPatient = list(all_positions[imgNum])
-            print(f"Updating file {fileName} with final position: {all_positions[imgNum]}")
-
-        # Save the updated DICOM file
-        dicomDset.save_as(filePath)
-
-    print("Updated all DICOM files with the final position.")
 
     return
 
