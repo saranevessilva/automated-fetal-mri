@@ -204,10 +204,8 @@ def main(args):
 
 
                 # Set mrdImg pixel data from MRD mrdImg
-                dicomDset.PixelData = np.squeeze(mrdImg.data) # mrdImg.data is [cha z y x] -- squeeze to [y x] for [row col]
-                imag = np.squeeze((mrdImg.data))
-                # print("imag dimensions", imag.shape)
-                dicomDset.PixelData = imag.astype(np.uint32)
+                imag = np.squeeze(mrdImg.data).astype(np.uint32) # mrdImg.data is [cha z y x] -- squeeze to [y x] for [row col]
+                dicomDset.PixelData = imag.tobytes()
                 dicomDset.Rows      = mrdImg.data.shape[2]
                 dicomDset.Columns   = mrdImg.data.shape[3]
 
