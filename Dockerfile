@@ -49,6 +49,7 @@ RUN apk add --no-cache \
 RUN dockerd &
 
 # Pull the image
+RUN apt-get update && apt-get install -y docker.io
 RUN docker pull fetalsvrtk/svrtk:general_auto_amd
 
 # Stage 2: Final Image
