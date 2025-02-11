@@ -38,6 +38,9 @@ RUN apt-get update && \
     apt-get install -qy curl && \
     curl -sSL https://get.docker.com/ | sh
     
+# Use Docker-in-Docker image
+FROM docker:latest
+
 # Install dependencies
 RUN apk add --no-cache \
     apt-transport-https \
