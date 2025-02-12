@@ -432,8 +432,7 @@ def process_image(images, connection, config, metadata):
     # os.environ['XAUTHORITY'] = '/home/sn21/.Xauthority'
     os.environ['XAUTHORITY'] = "/opt/code/automated-fetal-mri/.Xauthority"
 
-    command = f'''docker run --rm --mount type=bind,source=/tmp/share/debug,target=/home/data \
-    fetalsvrtk/svrtk:general_auto_amd sh -c 'bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \
+    command = f'''bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \
     /home/data/{date_path}/dicoms /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
     chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
     /bin/MIRTK/build/lib/tools/pad-3d /home/data/{date_path}/{date_path}-result/reo-SVR-output-brain.nii.gz /home/ref.nii.gz 160 1 ; \

@@ -1,5 +1,6 @@
 # Stage 1: Build ISMRMRD and siemens_to_ismrmrd
 FROM python:3.10.2-slim AS mrd_converter
+# FROM fetalsvrtk/svrtk:general_auto_amd
 
 RUN apt-get update && apt-get install -y \
     git cmake g++ libhdf5-dev libxml2-dev libxslt1-dev libboost-all-dev libfftw3-dev libpugixml-dev && \
@@ -39,22 +40,22 @@ RUN apt-get update && \
     curl -sSL https://get.docker.com/ | sh
     
 # Use Docker-in-Docker image
-FROM docker:latest
+# FROM docker:latest
 
 # Install dependencies
-RUN apk add --no-cache \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg2 \
-    lsb-release \
-    sudo
+# RUN apk add --no-cache \
+#     apt-transport-https \
+#     ca-certificates \
+#     curl \
+#     gnupg2 \
+#     lsb-release \
+#     sudo
 
 # Pull the image
-RUN docker pull fetalsvrtk/svrtk:general_auto_amd
+# RUN docker pull fetalsvrtk/svrtk:general_auto_amd
 
 # Stage 2: Final Image
-FROM python:3.10.2-slim
+FROM fetalsvrtk/svrtk:general_auto_amd
 LABEL org.opencontainers.image.description="Automated fetal MRI tools"
 LABEL org.opencontainers.image.authors="Sara Neves Silva (sara.neves_silva@kcl.ac.uk)"
 
