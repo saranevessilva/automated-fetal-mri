@@ -1,5 +1,17 @@
 # Stage 1: Build ISMRMRD and siemens_to_ismrmrd
-FROM python:3.10.2-slim AS mrd_converter
+#FROM python:3.10.2-slim AS mrd_converter
+#FROM python:3.10.2-bullseye AS mrd_converter
+FROM ubuntu:22.04 AS mrd_converter
+
+# Install Python and other necessary packages
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set the default Python version
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
 
 RUN apt-get update && apt-get install -y \
     git cmake g++ libhdf5-dev libxml2-dev libxslt1-dev libboost-all-dev libfftw3-dev libpugixml-dev && \
@@ -38,17 +50,17 @@ RUN apt-get update && \
     apt-get install -qy curl && \
     curl -sSL https://get.docker.com/ | sh
 
-RUN cd /usr/src && \
-    curl -O http://ftp.gnu.org/gnu/libc/glibc-2.34.tar.gz && \
-    tar -xvzf glibc-2.34.tar.gz && \
-    cd glibc-2.34 && \
-    mkdir build && cd build && \
-    ../configure --prefix=/opt/glibc-2.34 && \
-    make -j$(nproc) && \
-    make install
+#RUN cd /usr/src && \
+ #   curl -O http://ftp.gnu.org/gnu/libc/glibc-2.34.tar.gz && \
+  #  tar -xvzf glibc-2.34.tar.gz && \
+  #  cd glibc-2.34 && \
+  #  mkdir build && cd build && \
+  #  ../configure --prefix=/opt/glibc-2.34 && \
+  #  make -j$(nproc) && \
+  #  make install
 
 # Update library path
-ENV LD_LIBRARY_PATH=/opt/glibc-2.34/lib   
+#ENV LD_LIBRARY_PATH=/opt/glibc-2.34/lib   
 
 # Use Docker-in-Docker image
 FROM docker:latest
@@ -65,7 +77,19 @@ RUN apk add --no-cache \
 RUN docker pull fetalsvrtk/svrtk:general_auto_amd
 
 # Stage 2: Final Image
-FROM python:3.10.2-slim
+#FROM python:3.10.2-slim
+#FROM python:3.10.2-bullseye
+FROM ubuntu:22.04
+
+# Install Python and other necessary packages
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set the default Python version
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
 LABEL org.opencontainers.image.description="Automated fetal MRI tools"
 LABEL org.opencontainers.image.authors="Sara Neves Silva (sara.neves_silva@kcl.ac.uk)"
 
@@ -159,3 +183,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
 
 CMD ["python3", "main.py", "-v", "-H=0.0.0.0", "-p=9002", "-l=/tmp/python-ismrmrd-server.log"]
+
