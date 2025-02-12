@@ -5,9 +5,8 @@ RUN apt-get update && apt-get install -y \
     git cmake g++ libhdf5-dev libxml2-dev libxslt1-dev libboost-all-dev libfftw3-dev libpugixml-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install GLIBC 2.34 (before building ISMRMRD)
 RUN cd /usr/src && \
-    wget http://ftp.gnu.org/gnu/libc/glibc-2.34.tar.gz && \
+    curl -O http://ftp.gnu.org/gnu/libc/glibc-2.34.tar.gz && \
     tar -xvzf glibc-2.34.tar.gz && \
     cd glibc-2.34 && \
     mkdir build && cd build && \
