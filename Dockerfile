@@ -1,6 +1,5 @@
 # Stage 1: Build ISMRMRD and siemens_to_ismrmrd
 FROM python:3.10.2-slim AS mrd_converter
-# FROM fetalsvrtk/svrtk:general_auto_amd
 
 RUN apt-get update && apt-get install -y \
     git cmake g++ libhdf5-dev libxml2-dev libxslt1-dev libboost-all-dev libfftw3-dev libpugixml-dev && \
@@ -38,24 +37,23 @@ RUN apt-get update && \
     apt-get -qy full-upgrade && \
     apt-get install -qy curl && \
     curl -sSL https://get.docker.com/ | sh
-    
-# Use Docker-in-Docker image
-# FROM docker:latest
 
+# Use Docker-in-Docker image
+FROM docker:latest
 # Install dependencies
-# RUN apk add --no-cache \
-#     apt-transport-https \
-#     ca-certificates \
-#     curl \
-#     gnupg2 \
-#     lsb-release \
-#     sudo
+RUN apk add --no-cache \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg2 \
+    lsb-release \
+    sudo
 
 # Pull the image
-# RUN docker pull fetalsvrtk/svrtk:general_auto_amd
+RUN docker pull fetalsvrtk/svrtk:general_auto_amd
 
 # Stage 2: Final Image
-FROM fetalsvrtk/svrtk:general_auto_amd
+FROM python:3.10.2-slim
 LABEL org.opencontainers.image.description="Automated fetal MRI tools"
 LABEL org.opencontainers.image.authors="Sara Neves Silva (sara.neves_silva@kcl.ac.uk)"
 
@@ -126,13 +124,13 @@ RUN apt-get update && apt-get install -y \
     unzip \
     python3-pip && \
     rm -rf /var/lib/apt/lists/*
-    
+
 # Download, extract, and install the latest dcm2niix
 RUN curl -fLO https://github.com/rordenlab/dcm2niix/releases/latest/download/dcm2niix_lnx.zip && \
     unzip dcm2niix_lnx.zip -d dcm2niix && \
     mv dcm2niix/dcm2niix /usr/local/bin/ && \
     rm -rf dcm2niix_lnx.zip dcm2niix
-    
+
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     wget unzip tar && \
@@ -149,4 +147,3 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
 
 CMD ["python3", "main.py", "-v", "-H=0.0.0.0", "-p=9002", "-l=/tmp/python-ismrmrd-server.log"]
-
