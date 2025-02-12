@@ -100,17 +100,11 @@ RUN apt update && apt install -y git git-lfs && git lfs install
 RUN mkdir -p /opt/code && \
     cd /opt/code && \
     git clone https://github.com/kspacekelvin/python-ismrmrd-server.git && \
-    git clone https://github.com/saranevessilva/automated-fetal-mri.git && \
     git clone https://github.com/ismrmrd/ismrmrd-python-tools.git && \
     cd /opt/code/ismrmrd-python-tools && \
     pip3 install --no-cache-dir . && \
     pip freeze
 
-# Set correct permissions to access the file
-RUN chmod 600 /opt/code/automated-fetal-mri/.Xauthority
-
-# Optionally, you can set environment variables if required
-ENV XAUTHORITY=/opt/code/automated-fetal-mri/.Xauthority
 
 ENV DISPLAY=:0
 
@@ -135,10 +129,6 @@ RUN curl -fLO https://github.com/rordenlab/dcm2niix/releases/latest/download/dcm
 RUN apt-get update && apt-get install -y \
     wget unzip tar && \
     rm -rf /var/lib/apt/lists/*
-
-# Set working directory
-WORKDIR /opt/code/automated-fetal-mri
-RUN git lfs pull
 
 # Entry point
 COPY "entrypoint.sh" /usr/local/bin/entrypoint.sh

@@ -1,0 +1,15 @@
+
+# BUILD
+docker build --no-cache -t automated-fetal-mri .
+
+# SERVER
+docker run --gpus all -p=9002:9002 --rm -it \
+    -v /tmp:/tmp \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /usr/bin/docker:/usr/bin/docker \
+    -v /home/vzalevskyi/projects/automated-fetal-mri:/opt/code/automated-fetal-mri \
+    --workdir /opt/code/automated-fetal-mri \
+    automated-fetal-mri
+
+#  CLIENT
+docker run -it --gpus all --rm     -v /tmp:/tmp     -v /var/run/docker.sock:/var/run/docker.sock     -v /usr/bin/docker:/usr/bin/docker     -v /home/vzalevskyi/projects/automated-fetal-mri:/opt/code/automated-fetal-mri  --workdir /opt/code/automated-fetal-mri   automated-fetal-mri bash 

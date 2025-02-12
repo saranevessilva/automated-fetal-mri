@@ -8,6 +8,9 @@ TARGET_DIR_OWL="/home/data/owl/$DATE"
 TARGET_DIR_VOL="/home/data/eagle/$DATE"
 TARGET_DIR_RAT="/home/data/rat/$DATE"
 
+chmod 600 /opt/code/automated-fetal-mri/.Xauthority
+export XAUTHORITY=/opt/code/automated-fetal-mri/.Xauthority
+
 
 if [ ! -d "$TARGET_DIR" ]; then
     mkdir -p "$TARGET_DIR"
