@@ -5,18 +5,6 @@ RUN apt-get update && apt-get install -y \
     git cmake g++ libhdf5-dev libxml2-dev libxslt1-dev libboost-all-dev libfftw3-dev libpugixml-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN cd /usr/src && \
-    curl -O http://ftp.gnu.org/gnu/libc/glibc-2.34.tar.gz && \
-    tar -xvzf glibc-2.34.tar.gz && \
-    cd glibc-2.34 && \
-    mkdir build && cd build && \
-    ../configure --prefix=/opt/glibc-2.34 && \
-    make -j$(nproc) && \
-    make install
-
-# Update library path
-ENV LD_LIBRARY_PATH=/opt/glibc-2.34/lib:$LD_LIBRARY_PATH
-
 RUN mkdir -p /opt/code
 
 # Build ISMRMRD library
@@ -49,6 +37,18 @@ RUN apt-get update && \
     apt-get -qy full-upgrade && \
     apt-get install -qy curl && \
     curl -sSL https://get.docker.com/ | sh
+
+RUN cd /usr/src && \
+    curl -O http://ftp.gnu.org/gnu/libc/glibc-2.34.tar.gz && \
+    tar -xvzf glibc-2.34.tar.gz && \
+    cd glibc-2.34 && \
+    mkdir build && cd build && \
+    ../configure --prefix=/opt/glibc-2.34 && \
+    make -j$(nproc) && \
+    make install
+
+# Update library path
+ENV LD_LIBRARY_PATH=/opt/glibc-2.34/lib   
 
 # Use Docker-in-Docker image
 FROM docker:latest
