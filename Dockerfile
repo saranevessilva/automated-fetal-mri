@@ -179,6 +179,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /opt/code/automated-fetal-mri
 RUN git lfs pull
 
+RUN apt-get update && apt-get install -y libtbb2
+
 # Entry point
 COPY "entrypoint.sh" /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
