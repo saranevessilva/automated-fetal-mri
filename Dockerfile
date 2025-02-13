@@ -95,6 +95,7 @@ LABEL org.opencontainers.image.description="Automated fetal MRI tools"
 LABEL org.opencontainers.image.authors="Sara Neves Silva (sara.neves_silva@kcl.ac.uk)"
 
 # Copy ISMRMRD libraries
+COPY --from=mrd_converter /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.71.0 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.71.0
 COPY --from=mrd_converter /home                             /home
 COPY --from=mrd_converter /bin/MIRTK/                       /bin/MIRTK/
 COPY --from=mrd_converter /usr/local/include/ismrmrd        /usr/local/include/ismrmrd/
@@ -161,6 +162,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     unzip \
+    libtbb2 \
     python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
@@ -178,8 +180,6 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /opt/code/automated-fetal-mri
 RUN git lfs pull
-
-RUN apt-get update && apt-get install -y libtbb2
 
 # Entry point
 COPY "entrypoint.sh" /usr/local/bin/entrypoint.sh
