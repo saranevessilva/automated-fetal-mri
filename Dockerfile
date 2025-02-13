@@ -95,6 +95,8 @@ LABEL org.opencontainers.image.description="Automated fetal MRI tools"
 LABEL org.opencontainers.image.authors="Sara Neves Silva (sara.neves_silva@kcl.ac.uk)"
 
 # Copy ISMRMRD libraries
+COPY --from=mrd_converter /home                             /home
+COPY --from=mrd_converter /bin/MIRTK/                       /bin/MIRTK/
 COPY --from=mrd_converter /usr/local/include/ismrmrd        /usr/local/include/ismrmrd/
 COPY --from=mrd_converter /usr/local/share/ismrmrd          /usr/local/share/ismrmrd/
 COPY --from=mrd_converter /usr/local/bin/ismrmrd*           /usr/local/bin/
