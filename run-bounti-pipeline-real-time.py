@@ -7,14 +7,14 @@ base_dir = "/tmp/share/debug/"
 
 # Docker command template
 command_template = '''docker run --rm \
-    --mount type=bind,source=/home/sn21/data,target=/home/data \
+    --mount type=bind,source=/tmp/share/debug,target=/home/data \
     fetalsvrtk/svrtk:general_auto_amd sh -c ' \
-    rm -f /home/data/t2-stacks/"{path}"/reo*; \
+    rm -f /tmp/share/debug/"{path}"/reo*; \
     chmod -R 777 /home/data/t2-stacks/"{path}"; \
     bash /home/auto-proc-svrtk/scripts/auto-brain-bounti-segmentation-fetal.sh \
-    /home/data/t2-stacks/"{path}" \
-    /home/data/t2-stacks/"{path}"; \
-    chmod -R 777 /home/data/t2-stacks/"{path}"; \
+    /tmp/share/debug/"{path}" \
+    /tmp/share/debug/"{path}"; \
+    chmod -R 777 /tmp/share/debug/"{path}"; \
     ' '''
 
 def find_latest_file(base_dir):

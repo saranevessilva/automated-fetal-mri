@@ -1,7 +1,8 @@
 # Stage 1: Build ISMRMRD and siemens_to_ismrmrd
-#FROM python:3.10.2-slim AS mrd_converter
-#FROM python:3.10.2-bullseye AS mrd_converter
-FROM ubuntu:22.04 AS mrd_converter
+# FROM python:3.10.2-slim AS mrd_converter
+# FROM python:3.10.2-bullseye AS mrd_converter
+# FROM ubuntu:22.04 AS mrd_converter
+FROM fetalsvrtk/svrtk:general_auto_amd AS mrd_converter
 
 # Install Python and other necessary packages
 RUN apt-get update && \
@@ -44,11 +45,11 @@ RUN cd /opt/code && \
 # Create ISMRMRD archive
 RUN cd /usr/local/lib && tar -czvf libismrmrd.tar.gz libismrmrd*
 
-# Install Docker inside the container
-RUN apt-get update && \
-    apt-get -qy full-upgrade && \
-    apt-get install -qy curl && \
-    curl -sSL https://get.docker.com/ | sh
+# # Install Docker inside the container
+# RUN apt-get update && \
+#     apt-get -qy full-upgrade && \
+#     apt-get install -qy curl && \
+#     curl -sSL https://get.docker.com/ | sh
 
 #RUN cd /usr/src && \
  #   curl -O http://ftp.gnu.org/gnu/libc/glibc-2.34.tar.gz && \
@@ -73,12 +74,12 @@ RUN apk add --no-cache \
     lsb-release \
     sudo
 
-# Pull the image
-RUN docker pull fetalsvrtk/svrtk:general_auto_amd
+# # Pull the image
+# RUN docker pull fetalsvrtk/svrtk:general_auto_amd
 
 # Stage 2: Final Image
-#FROM python:3.10.2-slim
-#FROM python:3.10.2-bullseye
+# FROM python:3.10.2-slim
+# FROM python:3.10.2-bullseye
 FROM ubuntu:22.04
 
 # Install Python and other necessary packages
