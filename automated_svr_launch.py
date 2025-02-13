@@ -432,34 +432,52 @@ def process_image(images, connection, config, metadata):
     # os.environ['XAUTHORITY'] = '/home/sn21/.Xauthority'
     os.environ['XAUTHORITY'] = "/opt/code/automated-fetal-mri/.Xauthority"
 
+    # command = f'''docker run --rm --mount type=bind,source=/tmp/share/debug,target=/home/data \
+    # fetalsvrtk/svrtk:general_auto_amd sh -c 'bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \
+    # /home/data/{date_path}/dicoms /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
+    # chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
+    # /bin/MIRTK/build/lib/tools/pad-3d /home/data/{date_path}/{date_path}-result/reo-SVR-output-brain.nii.gz /home/ref.nii.gz 160 1 ; \
+    # /bin/MIRTK/build/lib/tools/edit-image /home/ref.nii.gz /home/ref.nii.gz -dx 1 -dy 1 -dz 1 ; \
+    # /bin/MIRTK/build/lib/tools/transform-image /home/data/{date_path}/{date_path}-result/reo-SVR-output-brain.nii.gz \
+    # /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz -target /home/ref.nii.gz -interp BSpline ; \
+    # /bin/MIRTK/build/lib/tools/nan /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz 1000000 ; \
+    # /bin/MIRTK/build/lib/tools/convert-image /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz \
+    # /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz -short ; \
+    # chmod 1777 /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz ; \
+    # bash /home/auto-proc-svrtk/scripts/auto-body-055t-reconstruction.sh /home/data/{date_path}/dicoms \
+    # /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
+    # chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
+    # /bin/MIRTK/build/lib/tools/pad-3d /home/data/{date_path}/{date_path}-result/reo-DSVR-output-body.nii.gz /home/ref.nii.gz 256 1 ; \
+    # /bin/MIRTK/build/lib/tools/edit-image /home/ref.nii.gz /home/ref.nii.gz -dx 1 -dy 1 -dz 1 ; \
+    # /bin/MIRTK/build/lib/tools/transform-image /home/data/{date_path}/{date_path}-result/reo-DSVR-output-body.nii.gz \
+    # /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz -target /home/ref.nii.gz -interp BSpline ; \
+    # /bin/MIRTK/build/lib/tools/nan /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz 1000000 ; \
+    # /bin/MIRTK/build/lib/tools/convert-image /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz \
+    # /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz -short ; \
+    # chmod 1777 /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz ; \
+    # suffix=1; \
+    # while [ -d "/home/data/{date_path}-$suffix" ]; do suffix=$((suffix+1)); done; \
+    # mv /home/data/{date_path} /home/data/{date_path}-$suffix; \
+    # mkdir /home/data/{date_path}; \
+    # chmod 1777 /home/data/{date_path}; ' '''
+
     command = f'''docker run --rm --mount type=bind,source=/tmp/share/debug,target=/home/data \
-    fetalsvrtk/svrtk:general_auto_amd sh -c 'bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \
-    /home/data/{date_path}/dicoms /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
-    chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
-    /bin/MIRTK/build/lib/tools/pad-3d /home/data/{date_path}/{date_path}-result/reo-SVR-output-brain.nii.gz /home/ref.nii.gz 160 1 ; \
-    /bin/MIRTK/build/lib/tools/edit-image /home/ref.nii.gz /home/ref.nii.gz -dx 1 -dy 1 -dz 1 ; \
-    /bin/MIRTK/build/lib/tools/transform-image /home/data/{date_path}/{date_path}-result/reo-SVR-output-brain.nii.gz \
-    /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz -target /home/ref.nii.gz -interp BSpline ; \
-    /bin/MIRTK/build/lib/tools/nan /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz 1000000 ; \
-    /bin/MIRTK/build/lib/tools/convert-image /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz \
-    /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz -short ; \
-    chmod 1777 /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz ; \
-    bash /home/auto-proc-svrtk/scripts/auto-body-055t-reconstruction.sh /home/data/{date_path}/dicoms \
-    /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
-    chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
-    /bin/MIRTK/build/lib/tools/pad-3d /home/data/{date_path}/{date_path}-result/reo-DSVR-output-body.nii.gz /home/ref.nii.gz 256 1 ; \
-    /bin/MIRTK/build/lib/tools/edit-image /home/ref.nii.gz /home/ref.nii.gz -dx 1 -dy 1 -dz 1 ; \
-    /bin/MIRTK/build/lib/tools/transform-image /home/data/{date_path}/{date_path}-result/reo-DSVR-output-body.nii.gz \
-    /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz -target /home/ref.nii.gz -interp BSpline ; \
-    /bin/MIRTK/build/lib/tools/nan /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz 1000000 ; \
-    /bin/MIRTK/build/lib/tools/convert-image /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz \
-    /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz -short ; \
-    chmod 1777 /home/data/{date_path}/{date_path}-result/grid-reo-DSVR-output-body.nii.gz ; \
-    suffix=1; \
-    while [ -d "/home/data/{date_path}-$suffix" ]; do suffix=$((suffix+1)); done; \
-    mv /home/data/{date_path} /home/data/{date_path}-$suffix; \
-    mkdir /home/data/{date_path}; \
-    chmod 1777 /home/data/{date_path}; ' '''
+        fetalsvrtk/svrtk:general_auto_amd sh -c 'bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \
+        /home/data/{date_path}/dicoms /home/data/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
+        chmod 1777 -R /home/data/{date_path}/{date_path}-result ; \
+        /bin/MIRTK/build/lib/tools/pad-3d /home/data/{date_path}/{date_path}-result/reo-SVR-output-brain.nii.gz /home/ref.nii.gz 160 1 ; \
+        /bin/MIRTK/build/lib/tools/edit-image /home/ref.nii.gz /home/ref.nii.gz -dx 1 -dy 1 -dz 1 ; \
+        /bin/MIRTK/build/lib/tools/transform-image /home/data/{date_path}/{date_path}-result/reo-SVR-output-brain.nii.gz \
+        /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz -target /home/ref.nii.gz -interp BSpline ; \
+        /bin/MIRTK/build/lib/tools/nan /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz 1000000 ; \
+        /bin/MIRTK/build/lib/tools/convert-image /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz \
+        /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz -short ; \
+        chmod 1777 /home/data/{date_path}/{date_path}-result/grid-reo-SVR-output-brain.nii.gz ; \
+        suffix=1; \
+        while [ -d "/home/data/{date_path}-$suffix" ]; do suffix=$((suffix+1)); done; \
+        mv /home/data/{date_path} /home/data/{date_path}-$suffix; \
+        mkdir /home/data/{date_path}; \
+        chmod 1777 /home/data/{date_path}; ' '''
 
     subprocess.Popen(command, shell=True)
 
