@@ -96,6 +96,7 @@ LABEL org.opencontainers.image.authors="Sara Neves Silva (sara.neves_silva@kcl.a
 
 # Copy ISMRMRD libraries
 COPY --from=mrd_converter /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.71.0 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.71.0
+COPY --from=mrd_converter /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.71.0 /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.71.0
 COPY --from=mrd_converter /home                             /home
 COPY --from=mrd_converter /bin/MIRTK/                       /bin/MIRTK/
 COPY --from=mrd_converter /usr/local/include/ismrmrd        /usr/local/include/ismrmrd/
