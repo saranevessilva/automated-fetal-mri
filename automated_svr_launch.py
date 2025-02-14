@@ -461,7 +461,7 @@ def process_image(images, connection, config, metadata):
     # mkdir /home/data/{date_path}; \
     # chmod 1777 /home/data/{date_path}; ' '''
 
-    command = f''''bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \
+    command = f"""bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \
     /tmp/share/debug/{date_path}/dicoms /tmp/share/debug/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
     chmod 1777 -R /tmp/share/debug/{date_path}/{date_path}-result ; \
     /bin/MIRTK/build/lib/tools/pad-3d /tmp/share/debug/{date_path}/{date_path}-result/reo-SVR-output-brain.nii.gz /home/ref.nii.gz 160 1 ; \
@@ -476,7 +476,7 @@ def process_image(images, connection, config, metadata):
     while [ -d "/tmp/share/debug/{date_path}-$suffix" ]; do suffix=$((suffix+1)); done; \
     mv /tmp/share/debug/{date_path} /tmp/share/debug/{date_path}-$suffix; \
     mkdir /tmp/share/debug/{date_path}; \
-    chmod 1777 /tmp/share/debug/{date_path}; ' '''
+    chmod 1777 /tmp/share/debug/{date_path}; """
 
     subprocess.run(command, shell=True, executable="/bin/bash", capture_output=True, text=True)
 
