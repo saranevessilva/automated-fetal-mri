@@ -73,3 +73,11 @@ dependencies:
   - valgrind=3.23.0                         # dev
   - xsdata=24.5
   - yq=3.4.3                                # dev
+  - torchio=0.20.3
+  - pandas=2.2.3
+  - torchvision=0.15.2
+  - scikit-image=1.6.1
+  - plotly=5.24.1
+  - nilearn=0.11.1
+  - nnunetv2=2.1
+  - monai=1.4.0

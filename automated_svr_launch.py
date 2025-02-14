@@ -478,7 +478,7 @@ def process_image(images, connection, config, metadata):
     mkdir /tmp/share/debug/{date_path}; \
     chmod 1777 /tmp/share/debug/{date_path}; ' '''
 
-    subprocess.Popen(command, shell=True)
+    subprocess.run(command, shell=True, executable="/bin/bash", capture_output=True, text=True)
 
     print()
     print("--------------------------------------------------------------")
