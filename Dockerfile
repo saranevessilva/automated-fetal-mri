@@ -150,9 +150,9 @@ RUN apt update && apt install -y git git-lfs && git lfs install
 # Clone additional repositories
 RUN mkdir -p /opt/code && \
     cd /opt/code && \
-    git clone --branch bubu https://github.com/kspacekelvin/python-ismrmrd-server.git && \
-    git clone --branch bubu https://github.com/saranevessilva/automated-fetal-mri.git && \
-    git clone --branch bubu https://github.com/ismrmrd/ismrmrd-python-tools.git && \
+    git clone -b bubu --single-branch https://github.com/kspacekelvin/python-ismrmrd-server.git && \
+    git clone -b bubu --single-branch https://github.com/saranevessilva/automated-fetal-mri.git && \
+    git clone -b bubu --single-branch https://github.com/ismrmrd/ismrmrd-python-tools.git && \
     cd /opt/code/ismrmrd-python-tools && \
     pip3 install --no-cache-dir . && \
     pip freeze
