@@ -384,6 +384,14 @@ def process_image(images, connection, config, metadata):
     if not os.path.exists(svr_path):
         os.makedirs(svr_path)
 
+    saved_path="tmp/share/saved_data"
+    #move from saved path to svr path the h5 file
+    for file_name in os.listdir(saved_path):
+        #if file name finish with h5
+        if file_name.endswith('.h5'):
+            file_path = os.path.join(saved_path, file_name)
+            os.rename(file_path, svr_path + "/" + file_name)
+
     process_mrd_files(svr_path)  # Conversion of MRD to DICOM happens here
 
     # Set the base test folder path
