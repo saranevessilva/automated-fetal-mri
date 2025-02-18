@@ -383,7 +383,7 @@ def process_image(images, connection, config, metadata):
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(svr_path):
         os.makedirs(svr_path)
-
+    print("modification works")
     saved_path="tmp/share/saved_data"
     #move from saved path to svr path the h5 file
     for file_name in os.listdir(saved_path):
