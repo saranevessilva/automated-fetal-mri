@@ -350,11 +350,11 @@ def process_image(images, connection, config, metadata):
     pixdim_y = metadata.encoding[0].encodedSpace.fieldOfView_mm.y / metadata.encoding[0].encodedSpace.matrixSize.y
     # pixdim_z = metadata.encoding[0].encodedSpace.fieldOfView_mm.z
     pixdim_z = metadata.encoding[0].reconSpace.fieldOfView_mm.z
-    print("pixdims", pixdim_x, pixdim_y, pixdim_z)
+    #print("pixdims", pixdim_x, pixdim_y, pixdim_z)
 
     # Reformat data to [y x z cha img], i.e. [row col] for the first two dimensions
     data = data.transpose((3, 4, 2, 1, 0))
-    print("reformatted data", data.shape)
+    #print("reformatted data", data.shape)
 
     # Display MetaAttributes for first image
     # logging.debug("MetaAttributes[0]: %s", ismrmrd.Meta.serialize(meta[0]))
@@ -383,7 +383,7 @@ def process_image(images, connection, config, metadata):
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(svr_path):
         os.makedirs(svr_path)
-    print("modification works")
+    
     saved_path="/tmp/share/saved_data"
     #move from saved path to svr path the h5 file
     for file_name in os.listdir(saved_path):
@@ -391,6 +391,8 @@ def process_image(images, connection, config, metadata):
         if file_name.endswith('.h5'):
             file_path = os.path.join(saved_path, file_name)
             os.rename(file_path, svr_path + "/" + file_name)
+
+    print(f"Moving from {saved_path} to {svr_path}")
 
     process_mrd_files(svr_path)  # Conversion of MRD to DICOM happens here
 
