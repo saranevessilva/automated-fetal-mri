@@ -2,7 +2,8 @@
 # FROM python:3.10.2-slim AS mrd_converter
 # FROM python:3.10.2-bullseye AS mrd_converter
 # FROM ubuntu:22.04 AS mrd_converter
-FROM fetalsvrtk/svrtk:general_auto_amd AS mrd_converter
+#FROM fetalsvrtk/svrtk:general_auto_amd AS mrd_converter
+FROM fnndsc/nesvor:latest AS mrd_converter
 
 # Install Python and other necessary packages
 RUN apt-get update && \
@@ -95,10 +96,12 @@ LABEL org.opencontainers.image.description="Automated fetal MRI tools"
 LABEL org.opencontainers.image.authors="Sara Neves Silva (sara.neves_silva@kcl.ac.uk)"
 
 # Copy ISMRMRD libraries
-COPY --from=mrd_converter /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.71.0 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.71.0
-COPY --from=mrd_converter /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.71.0 /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.71.0
-COPY --from=mrd_converter /home                             /home
-COPY --from=mrd_converter /bin/MIRTK/                       /bin/MIRTK/
+#COPY --from=mrd_converter /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.71.0 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.71.0
+#COPY --from=mrd_converter /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.71.0 /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.71.0
+#COPY --from=mrd_converter /home                             /home
+#COPY --from=mrd_converter /bin/MIRTK/                       /bin/MIRTK/
+#COPY --from=mrd_converter /home                             /home
+COPY --from=mrd_converter /usr/local/NesVor /usr/local/NesVor/
 COPY --from=mrd_converter /usr/local/include/ismrmrd        /usr/local/include/ismrmrd/
 COPY --from=mrd_converter /usr/local/share/ismrmrd          /usr/local/share/ismrmrd/
 COPY --from=mrd_converter /usr/local/bin/ismrmrd*           /usr/local/bin/
@@ -107,6 +110,7 @@ RUN cd /usr/local/lib && tar -zxvf libismrmrd.tar.gz && rm libismrmrd.tar.gz && 
 
 # Copy siemens_to_ismrmrd
 COPY --from=mrd_converter /usr/local/bin/siemens_to_ismrmrd /usr/local/bin/siemens_to_ismrmrd
+
 
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -151,7 +155,7 @@ RUN apt update && apt install -y git git-lfs && git lfs install
 RUN mkdir -p /opt/code && \
     cd /opt/code && \
     git clone https://github.com/kspacekelvin/python-ismrmrd-server.git && \
-    git clone --single-branch --branch bubu https://github.com/saranevessilva/automated-fetal-mri.git && \
+    git clone --single-branch --branch Nesv https://github.com/saranevessilva/automated-fetal-mri.git && \
     git clone https://github.com/ismrmrd/ismrmrd-python-tools.git && \
     cd /opt/code/ismrmrd-python-tools && \
     pip3 install --no-cache-dir . && \
