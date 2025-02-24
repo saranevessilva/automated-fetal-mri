@@ -466,22 +466,11 @@ def process_image(images, connection, config, metadata):
 
     # Vérifier qu'on a bien trouvé des fichiers
     if not nii_files:
-        raise ValueError("Aucun fichier .nii.gz trouvé dans le dossier spécifié.")
+        raise ValueError("NO nitfi file has been found")
+    
+    command = f"nesvor reconstruct --input-stacks {' '.join(nii_files)} --thicknesses 4.5 --output-volume volume_result.nii.gz --output-resolution 1.48 --registration svort --segmentation --bias-field-correction"
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
 
-    # Construire la commande NesVor en Python
-    command = [
-        "/opt/conda/bin/python3.10", "-m", "nesvor", "reconstruct",
-        "--input-stacks", nii_files,  # Décompresse la liste pour qu'ils soient passés comme arguments séparés
-        "--thicknesses", "4.5",
-        "--output-volume", "volume_result.nii.gz",
-        "--output-resolution", "1.48",
-        "--registration", "svort",
-        "--segmentation",
-        "--bias-field-correction"
-    ]
-
-    # Exécuter la commande
-    result = subprocess.run(command, capture_output=True, text=True)
 
     print()
     print("--------------------------------------------------------------")
