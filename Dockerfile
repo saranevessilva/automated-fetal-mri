@@ -82,7 +82,7 @@ RUN apk add --no-cache \
 # Stage 2: Final Image
 # FROM python:3.10.2-slim
 # FROM python:3.10.2-bullseye
-FROM fnndsc/nesvor:v0.6.0rc2
+FROM junshenxu/nesvor
 
 # Install Python and other necessary packages
 RUN apt-get update && \
