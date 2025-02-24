@@ -1,4 +1,4 @@
-Script started on 2025-02-24 18:30:46+01:00 [TERM="xterm-256color" TTY="/dev/pts/6" COLUMNS="80" LINES="24"]
+Script started on 2025-02-24 19:47:01+01:00 [TERM="xterm-256color" TTY="/dev/pts/6" COLUMNS="74" LINES="21"]
 -------- freesurfer-linux-ubuntu22_x86_64-7.4.1-20230614-7eb8460 --------
 Setting up environment for FreeSurfer/FS-FAST (and FSL)
 FREESURFER_HOME   /usr/local/freesurfer/7.4.1
@@ -7,7 +7,7 @@ FSF_OUTPUT_FORMAT nii.gz
 SUBJECTS_DIR      /usr/local/freesurfer/7.4.1/subjects
 MNI_DIR           /usr/local/freesurfer/7.4.1/mni
 FSL_DIR           /home/mroulet/fsl
-[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [7msudo docker run --gpus all[27m[7m [27m[7m-p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock[27m[7m [27m[7m-v /usr/bin/docker:/usr/bin/docker automated-fetal-mri[27m[A[Asudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri
+[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [7msudo docker run --gp[27m[7mu[27m[7ms all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run[27m[7m/[27m[7mdocker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri[27m[A[Asudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri
 [?2004l[sudo] password for bbulut: 
 Created folder: /home/data/t2-stacks/2025-02-24
 Created folder: /home/data/eagle/2025-02-24
@@ -17,7 +17,7 @@ Created folder: /home/data/rat/2025-02-24
 Logging to file:  /tmp/python-ismrmrd-server.log
 Starting server and listening for data at 0.0.0.0:9002
 Serving... 
-Accepting connection from: 172.17.0.3:49328
+Accepting connection from: 172.17.0.3:56792
 <-- Received MRD_MESSAGE_CONFIG_FILE (1)
     automated_nesvor_launch
 <-- Received MRD_MESSAGE_METADATA_XML_TEXT (3)
@@ -6651,7 +6651,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
 Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97 (304x304x35x1)
-Conversion required 0.252493 seconds (0.252467 for core code).
+Conversion required 0.271202 seconds (0.271185 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -6771,7 +6771,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 68 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..26.8008, TA= 26.8008, TR=0 ms)
 Convert 68 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53 (304x304x68x1)
-Conversion required 0.492951 seconds (0.492926 for core code).
+Conversion required 0.514056 seconds (0.513975 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7001,7 +7001,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 91 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..36, TA= 36, TR=0 ms)
 Convert 91 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54 (304x304x91x1)
-Conversion required 0.673685 seconds (0.673652 for core code).
+Conversion required 0.701602 seconds (0.701561 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7289,7 +7289,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
 Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96 (304x304x35x1)
-Conversion required 0.238930 seconds (0.238899 for core code).
+Conversion required 0.248235 seconds (0.248225 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7409,7 +7409,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70312, TA= 8.70312, TR=0 ms)
 Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87 (304x304x35x1)
-Conversion required 0.227436 seconds (0.227417 for core code).
+Conversion required 0.235399 seconds (0.235376 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7529,7 +7529,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
 Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55 (304x304x35x1)
-Conversion required 0.250640 seconds (0.250623 for core code).
+Conversion required 0.249087 seconds (0.249072 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7649,7 +7649,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 75 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..29.5996, TA= 29.5996, TR=0 ms)
 Convert 75 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1 (304x304x75x1)
-Conversion required 0.505189 seconds (0.505174 for core code).
+Conversion required 0.526596 seconds (0.526565 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7889,7 +7889,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 68 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..26.8008, TA= 26.8008, TR=0 ms)
 Convert 68 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12 (304x304x68x1)
-Conversion required 0.502627 seconds (0.502609 for core code).
+Conversion required 0.521044 seconds (0.521014 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -16312,7 +16312,7 @@ Image data has 92416 elements
 --> Sending MRD_MESSAGE_CLOSE (4)
 Socket closed
 ^CReceived signal interrupt -- stopping server
-[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ exit 
+[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ exit
 [?2004lexit
 
-Script done on 2025-02-24 18:31:45+01:00 [COMMAND_EXIT_CODE="0"]
+Script done on 2025-02-24 19:48:15+01:00 [COMMAND_EXIT_CODE="0"]
