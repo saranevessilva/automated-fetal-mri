@@ -422,7 +422,7 @@ def process_image(images, connection, config, metadata):
                 print("Script executed successfully!")
 
             # convert_to_nii(folder_path, output_folder)
-
+    """
     for file_name in os.listdir(output_folder):
         file_path = os.path.join(output_folder, file_name)
 
@@ -435,44 +435,43 @@ def process_image(images, connection, config, metadata):
                 os.remove(file_path)
             except Exception as e:
                 print(f"Error deleting file {file_name}: {e}")
+    """
+    nii_files = []  # Liste pour stocker les fichiers .nii.gz
 
-    print("Launching docker now...")
+    for file_name in os.listdir(output_folder):
+        file_path = os.path.join(output_folder, file_name)
+
+        # Debugging step: print the file names
+        print(f"Checking file: {file_name}")
+
+        if os.path.isfile(file_path):
+            if file_name.startswith('o'):
+                # Supprimer les fichiers qui commencent par "o"
+                try:
+                    print(f"Deleting file: {file_path}")
+                    os.remove(file_path)
+                except Exception as e:
+                    print(f"Error deleting file {file_name}: {e}")
+            elif file_name.endswith('.nii.gz'):
+                # Ajouter les fichiers .nii.gz à la liste
+                nii_files.append(file_path)
+
+    # Afficher les fichiers collectés
+    print("NIfTI files collected:", nii_files)
 
     # Set the DISPLAY and XAUTHORITY environment variables
     os.environ['DISPLAY'] = ':1'  # Replace with your X11 display, e.g., ':1.0'
     # os.environ['XAUTHORITY'] = '/home/sn21/.Xauthority'
     os.environ['XAUTHORITY'] = "/opt/code/automated-fetal-mri/.Xauthority"
 
-    # need to keep in a list all the nitfi file, for input file of nesvor command, add segmentation option
-
-
-    #command = f"""bash -c "
-    #    INPUT_STACKS=$(ls $output_folder/*.nii.gz)
-
-        # Run NesVor reconstruction with dynamic input stacks
-    #    nesvor reconstruct \
-    #        --input-stacks $INPUT_STACKS \
-    #        --thicknesses 4.5
-    #        --output-volume volume_result.nii.gz \
-    #        --output-resolution 1.48 \
-    #        --registration svort \
-    #        --segmentation \
-     #       --bias-field-correction" """
-
-    #Need to give as input 
-
-    #subprocess.run(command, shell=True, executable="/bin/bash", capture_output=True, text=True)
-    # Récupérer les fichiers .nii.gz
-    input_stacks = glob.glob(f"{output_folder}/*.nii.gz")
-
     # Vérifier qu'on a bien trouvé des fichiers
-    if not input_stacks:
+    if not nii_files:
         raise ValueError("Aucun fichier .nii.gz trouvé dans le dossier spécifié.")
 
     # Construire la commande NesVor en Python
     command = [
         "/opt/conda/bin/python3.10", "-m", "nesvor", "reconstruct",
-        "--input-stacks", *input_stacks,  # Décompresse la liste pour qu'ils soient passés comme arguments séparés
+        "--input-stacks", nii_files,  # Décompresse la liste pour qu'ils soient passés comme arguments séparés
         "--thicknesses", "4.5",
         "--output-volume", "volume_result.nii.gz",
         "--output-resolution", "1.48",

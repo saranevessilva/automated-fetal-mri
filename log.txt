@@ -1,4 +1,4 @@
-Script started on 2025-02-24 12:31:44+01:00 [TERM="xterm-256color" TTY="/dev/pts/6" COLUMNS="80" LINES="24"]
+Script started on 2025-02-24 15:57:31+01:00 [TERM="xterm-256color" TTY="/dev/pts/9" COLUMNS="80" LINES="24"]
 -------- freesurfer-linux-ubuntu22_x86_64-7.4.1-20230614-7eb8460 --------
 Setting up environment for FreeSurfer/FS-FAST (and FSL)
 FREESURFER_HOME   /usr/local/freesurfer/7.4.1
@@ -7,16 +7,9 @@ FSF_OUTPUT_FORMAT nii.gz
 SUBJECTS_DIR      /usr/local/freesurfer/7.4.1/subjects
 MNI_DIR           /usr/local/freesurfer/7.4.1/mni
 FSL_DIR           /home/mroulet/fsl
-[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ 
-[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C
-[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C^[[200~sudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri~[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Csudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker[1P[A[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [C[C[C[C[C[Csudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.[1P[A[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [C[C[C[C[Csudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.s[1P[A[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [C[C[C[Csudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.so[1P[A[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [C[C[Csudo docker run --gpus al[C -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.soc[1P[A[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [C[Csudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock [2P[A[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ 
-
-
+[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [7msudo docker run --gpus all[27m[7m [27m[7m-p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock[27m[7m [27m[7m-v /usr/bin/docker:/usr/bin/docker automated-fetal-mri[27m[A[Asudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri
 [?2004l[sudo] password for bbulut: 
-docker: invalid reference format.
-See 'docker run --help'.
-[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ sudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri~[K
-[?2004lCreated folder: /home/data/t2-stacks/2025-02-24
+Created folder: /home/data/t2-stacks/2025-02-24
 Created folder: /home/data/eagle/2025-02-24
 Created folder: /home/data/owl/2025-02-24
 Folder already exists: /home/data/eagle/2025-02-24
@@ -24,7 +17,7 @@ Created folder: /home/data/rat/2025-02-24
 Logging to file:  /tmp/python-ismrmrd-server.log
 Starting server and listening for data at 0.0.0.0:9002
 Serving... 
-Accepting connection from: 172.17.0.3:44204
+Accepting connection from: 172.17.0.3:35060
 <-- Received MRD_MESSAGE_CONFIG_FILE (1)
     automated_nesvor_launch
 <-- Received MRD_MESSAGE_METADATA_XML_TEXT (3)
@@ -6657,8 +6650,8 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
-Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97 (304x304x35x1)
-Conversion required 0.266878 seconds (0.266852 for core code).
+Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97a (304x304x35x1)
+Conversion required 0.254972 seconds (0.254955 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -6777,8 +6770,8 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 68 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..26.8008, TA= 26.8008, TR=0 ms)
-Convert 68 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53 (304x304x68x1)
-Conversion required 0.497050 seconds (0.497001 for core code).
+Convert 68 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53a (304x304x68x1)
+Conversion required 0.520007 seconds (0.519957 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7007,8 +7000,8 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 91 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..36, TA= 36, TR=0 ms)
-Convert 91 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54 (304x304x91x1)
-Conversion required 0.668917 seconds (0.668893 for core code).
+Convert 91 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54a (304x304x91x1)
+Conversion required 0.703641 seconds (0.703596 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7295,8 +7288,8 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
-Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96 (304x304x35x1)
-Conversion required 0.242380 seconds (0.242364 for core code).
+Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96a (304x304x35x1)
+Conversion required 0.260521 seconds (0.260500 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7415,8 +7408,8 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70312, TA= 8.70312, TR=0 ms)
-Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87 (304x304x35x1)
-Conversion required 0.228155 seconds (0.228138 for core code).
+Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87a (304x304x35x1)
+Conversion required 0.234325 seconds (0.234300 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7535,8 +7528,8 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
-Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55 (304x304x35x1)
-Conversion required 0.254184 seconds (0.254146 for core code).
+Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55a (304x304x35x1)
+Conversion required 0.247435 seconds (0.247337 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7655,8 +7648,8 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 75 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..29.5996, TA= 29.5996, TR=0 ms)
-Convert 75 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1 (304x304x75x1)
-Conversion required 0.498181 seconds (0.498154 for core code).
+Convert 75 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1a (304x304x75x1)
+Conversion required 0.525648 seconds (0.525503 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7895,8 +7888,8 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 68 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..26.8008, TA= 26.8008, TR=0 ms)
-Convert 68 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12 (304x304x68x1)
-Conversion required 0.501108 seconds (0.501077 for core code).
+Convert 68 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12a (304x304x68x1)
+Conversion required 0.520847 seconds (0.520661 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -8105,19 +8098,35 @@ W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
 
 Script executed successfully!
+Checking file: haste_cor_wholeuterus_2025-01-27-140248_53a.json
+Checking file: haste_cor_wholeuterus_2025-01-27-135024_12a.json
 Checking file: haste_cor_wholeuterus_2025-01-27-135024_12.json
+Checking file: haste_ax_wholeuterus_2025-01-27-133832_54a.nii.gz
 Checking file: haste_true_brain_tra_autoplan_2025-01-27-135654_97.nii.gz
 Checking file: haste_true_brain_sag_autoplan_2025-01-27-135454_55.json
 Checking file: haste_sag_wholeuterus_2025-01-27-140824_1.json
+Checking file: haste_ax_wholeuterus_2025-01-27-133832_54a.json
+Checking file: haste_true_brain_tra_autoplan_2025-01-27-135654_97a.json
+Checking file: haste_sag_wholeuterus_2025-01-27-140824_1a.nii.gz
 Checking file: haste_cor_wholeuterus_2025-01-27-135024_12.nii.gz
 Checking file: haste_true_brain_sag_autoplan_2025-01-27-135754_96.nii.gz
 Checking file: haste_cor_wholeuterus_2025-01-27-140248_53.nii.gz
+Checking file: haste_true_brain_sag_autoplan_2025-01-27-135754_96a.json
 Checking file: haste_true_brain_cor_autoplan_2025-01-27-135554_87.nii.gz
+Checking file: haste_true_brain_tra_autoplan_2025-01-27-135654_97a.nii.gz
+Checking file: haste_true_brain_sag_autoplan_2025-01-27-135454_55a.nii.gz
+Checking file: haste_cor_wholeuterus_2025-01-27-135024_12a.nii.gz
+Checking file: haste_true_brain_sag_autoplan_2025-01-27-135754_96a.nii.gz
 Checking file: haste_ax_wholeuterus_2025-01-27-133832_54.json
 Checking file: haste_true_brain_cor_autoplan_2025-01-27-135554_87.json
+Checking file: haste_sag_wholeuterus_2025-01-27-140824_1a.json
 Checking file: haste_cor_wholeuterus_2025-01-27-140248_53.json
+Checking file: haste_true_brain_cor_autoplan_2025-01-27-135554_87a.json
+Checking file: haste_true_brain_cor_autoplan_2025-01-27-135554_87a.nii.gz
 Checking file: haste_sag_wholeuterus_2025-01-27-140824_1.nii.gz
 Checking file: haste_true_brain_tra_autoplan_2025-01-27-135654_97.json
+Checking file: haste_true_brain_sag_autoplan_2025-01-27-135454_55a.json
+Checking file: haste_cor_wholeuterus_2025-01-27-140248_53a.nii.gz
 Checking file: haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz
 Checking file: haste_true_brain_sag_autoplan_2025-01-27-135754_96.json
 Checking file: haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz
@@ -16322,4 +16331,4 @@ Socket closed
 [?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ exit
 [?2004lexit
 
-Script done on 2025-02-24 12:34:53+01:00 [COMMAND_EXIT_CODE="0"]
+Script done on 2025-02-24 16:06:38+01:00 [COMMAND_EXIT_CODE="0"]
