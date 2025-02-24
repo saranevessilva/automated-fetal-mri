@@ -446,22 +446,43 @@ def process_image(images, connection, config, metadata):
     # need to keep in a list all the nitfi file, for input file of nesvor command, add segmentation option
 
 
-    command = f"""bash -c "
-        INPUT_STACKS=$(ls $output_folder/*.nii.gz)
+    #command = f"""bash -c "
+    #    INPUT_STACKS=$(ls $output_folder/*.nii.gz)
 
         # Run NesVor reconstruction with dynamic input stacks
-        nesvor reconstruct \
-            --input-stacks $INPUT_STACKS \
-            --thicknesses 4.5
-            --output-volume volume_result.nii.gz \
-            --output-resolution 1.48 \
-            --registration svort \
-            --segmentation \
-            --bias-field-correction" """
+    #    nesvor reconstruct \
+    #        --input-stacks $INPUT_STACKS \
+    #        --thicknesses 4.5
+    #        --output-volume volume_result.nii.gz \
+    #        --output-resolution 1.48 \
+    #        --registration svort \
+    #        --segmentation \
+     #       --bias-field-correction" """
 
     #Need to give as input 
 
-    subprocess.run(command, shell=True, executable="/bin/bash", capture_output=True, text=True)
+    #subprocess.run(command, shell=True, executable="/bin/bash", capture_output=True, text=True)
+    # Récupérer les fichiers .nii.gz
+    input_stacks = glob.glob(f"{output_folder}/*.nii.gz")
+
+    # Vérifier qu'on a bien trouvé des fichiers
+    if not input_stacks:
+        raise ValueError("Aucun fichier .nii.gz trouvé dans le dossier spécifié.")
+
+    # Construire la commande NesVor en Python
+    command = [
+        "/opt/conda/bin/python3.10", "-m", "nesvor", "reconstruct",
+        "--input-stacks", *input_stacks,  # Décompresse la liste pour qu'ils soient passés comme arguments séparés
+        "--thicknesses", "4.5",
+        "--output-volume", "volume_result.nii.gz",
+        "--output-resolution", "1.48",
+        "--registration", "svort",
+        "--segmentation",
+        "--bias-field-correction"
+    ]
+
+    # Exécuter la commande
+    result = subprocess.run(command, capture_output=True, text=True)
 
     print()
     print("--------------------------------------------------------------")
