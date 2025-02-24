@@ -3,7 +3,8 @@
 # FROM python:3.10.2-bullseye AS mrd_converter
 # FROM ubuntu:22.04 AS mrd_converter
 #FROM fetalsvrtk/svrtk:general_auto_amd AS mrd_converter
-FROM fnndsc/nesvor:v0.6.0rc2 AS mrd_converter
+#FROM fnndsc/nesvor:v0.6.0rc2 AS mrd_converter
+FROM ubuntu:22.04 AS mrd_converter
 
 # Install Python and other necessary packages
 RUN apt-get update && \
@@ -81,7 +82,7 @@ RUN apk add --no-cache \
 # Stage 2: Final Image
 # FROM python:3.10.2-slim
 # FROM python:3.10.2-bullseye
-FROM ubuntu:22.04
+FROM fnndsc/nesvor:v0.6.0rc2
 
 # Install Python and other necessary packages
 RUN apt-get update && \
