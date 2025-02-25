@@ -422,20 +422,7 @@ def process_image(images, connection, config, metadata):
                 print("Script executed successfully!")
 
             # convert_to_nii(folder_path, output_folder)
-    """
-    for file_name in os.listdir(output_folder):
-        file_path = os.path.join(output_folder, file_name)
 
-        # Debugging step: print the file names
-        print(f"Checking file: {file_name}")
-
-        if os.path.isfile(file_path) and file_name.startswith('o'):
-            try:
-                print(f"Deleting file: {file_path}")
-                os.remove(file_path)
-            except Exception as e:
-                print(f"Error deleting file {file_name}: {e}")
-    """
     nii_files = []  # Liste pour stocker les fichiers .nii.gz
 
     for file_name in os.listdir(output_folder):
@@ -468,7 +455,7 @@ def process_image(images, connection, config, metadata):
     if not nii_files:
         raise ValueError("NO nitfi file has been found")
     
-    command = f"nesvor reconstruct --input-stacks {' '.join(nii_files)} --thicknesses 4.5 --output-volume volume_result.nii.gz --output-resolution 1.48 --registration svort --segmentation --bias-field-correction"
+    command = f"nesvor reconstruct --input-stacks {' '.join(nii_files)} --thicknesses 4.5 --output-volume {output_folder}/volume_result.nii.gz --output-resolution 1.48 --registration svort --segmentation --bias-field-correction"
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     print(f"result of the command: {result}")
 
