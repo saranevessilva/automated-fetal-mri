@@ -1,4 +1,4 @@
-Script started on 2025-02-25 14:02:52+01:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="80" LINES="24"]
+Script started on 2025-02-25 15:08:06+01:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="80" LINES="24"]
 -------- freesurfer-linux-ubuntu22_x86_64-7.4.1-20230614-7eb8460 --------
 Setting up environment for FreeSurfer/FS-FAST (and FSL)
 FREESURFER_HOME   /usr/local/freesurfer/7.4.1
@@ -7,9 +7,7 @@ FSF_OUTPUT_FORMAT nii.gz
 SUBJECTS_DIR      /usr/local/freesurfer/7.4.1/subjects
 MNI_DIR           /usr/local/freesurfer/7.4.1/mni
 FSL_DIR           /home/mroulet/fsl
-[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ exitsudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri[A[Aexit[K
-[K
-[K[A[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Csudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri
+[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [7msudo docker run --gpus all[27m[7m [27m[7m-p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock[27m[7m [27m[7m-v /usr/bin/docker:/usr/bin/docker automated-fetal-mri[27m[A[Asudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri
 [?2004l[sudo] password for bbulut: 
 Created folder: /home/data/t2-stacks/2025-02-25
 Created folder: /home/data/eagle/2025-02-25
@@ -19,7 +17,7 @@ Created folder: /home/data/rat/2025-02-25
 Logging to file:  /tmp/python-ismrmrd-server.log
 Starting server and listening for data at 0.0.0.0:9002
 Serving... 
-Accepting connection from: 172.17.0.3:39444
+Accepting connection from: 172.17.0.3:57964
 <-- Received MRD_MESSAGE_CONFIG_FILE (1)
     automated_nesvor_launch
 <-- Received MRD_MESSAGE_METADATA_XML_TEXT (3)
@@ -6653,7 +6651,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
 Convert 35 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97 (304x304x35x1)
-Conversion required 0.258346 seconds (0.258054 for core code).
+Conversion required 0.263319 seconds (0.263298 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -6773,7 +6771,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 68 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..26.8008, TA= 26.8008, TR=0 ms)
 Convert 68 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53 (304x304x68x1)
-Conversion required 0.496176 seconds (0.496146 for core code).
+Conversion required 0.496913 seconds (0.496878 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7003,7 +7001,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 91 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..36, TA= 36, TR=0 ms)
 Convert 91 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54 (304x304x91x1)
-Conversion required 0.681542 seconds (0.681504 for core code).
+Conversion required 0.726154 seconds (0.726098 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7291,7 +7289,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
 Convert 35 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96 (304x304x35x1)
-Conversion required 0.240324 seconds (0.240305 for core code).
+Conversion required 0.246050 seconds (0.246003 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7411,7 +7409,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70312, TA= 8.70312, TR=0 ms)
 Convert 35 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87 (304x304x35x1)
-Conversion required 0.231095 seconds (0.231070 for core code).
+Conversion required 0.233261 seconds (0.233238 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7531,7 +7529,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
 Convert 35 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55 (304x304x35x1)
-Conversion required 0.240285 seconds (0.240263 for core code).
+Conversion required 0.243356 seconds (0.243331 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7651,7 +7649,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 75 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..29.5996, TA= 29.5996, TR=0 ms)
 Convert 75 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1 (304x304x75x1)
-Conversion required 0.499134 seconds (0.499107 for core code).
+Conversion required 0.504924 seconds (0.504797 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7891,7 +7889,7 @@ Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC
 Found 68 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..26.8008, TA= 26.8008, TR=0 ms)
 Convert 68 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12 (304x304x68x1)
-Conversion required 0.499921 seconds (0.499896 for core code).
+Conversion required 0.510054 seconds (0.509991 for core code).
 ✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -8117,7 +8115,7 @@ Checking file: haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz
 Checking file: haste_true_brain_sag_autoplan_2025-01-27-135754_96.json
 Checking file: haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz
 NIfTI files collected: ['/tmp/share/debug/2025-02-25/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz']
-result of the command: CompletedProcess(args='nesvor reconstruct --input-stacks /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz --thicknesses 4.5 --output-volume volume_result.nii.gz --output-resolution 1.48 --registration svort --segmentation --bias-field-correction', returncode=0, stdout="2025-02-25 13:03:30 [INFO] Data loading starts ...\n2025-02-25 13:03:30 [INFO] loading stacks\n2025-02-25 13:04:24 [INFO] background thresholding\n2025-02-25 13:04:24 [INFO] Data loading finished in 53.9 s\n2025-02-25 13:04:24 [INFO] Segmentation starts ...\n2025-02-25 13:04:24 [INFO] building monaifbs network\n2025-02-25 13:04:24 [INFO] segmenting stack 0\n2025-02-25 13:04:28 [INFO] segmenting stack 1\n2025-02-25 13:04:33 [INFO] segmenting stack 2\n2025-02-25 13:04:35 [INFO] segmenting stack 3\n2025-02-25 13:04:40 [INFO] segmenting stack 4\n2025-02-25 13:04:43 [INFO] segmenting stack 5\n2025-02-25 13:04:48 [INFO] segmenting stack 6\n2025-02-25 13:04:55 [INFO] segmenting stack 7\n2025-02-25 13:04:57 [INFO] Segmentation finished in 33.5 s\n2025-02-25 13:04:57 [INFO] Bias Field Correction starts ...\n2025-02-25 13:04:58 [INFO] start to correct bias field in stack 0\n2025-02-25 13:04:58 [INFO] start to correct bias field in stack 1\n2025-02-25 13:04:58 [INFO] start to correct bias field in stack 2\n2025-02-25 13:04:58 [INFO] start to correct bias field in stack 3\n2025-02-25 13:04:58 [INFO] start to correct bias field in stack 4\n2025-02-25 13:04:58 [INFO] start to correct bias field in stack 5\n2025-02-25 13:04:58 [INFO] start to correct bias field in stack 6\n2025-02-25 13:04:58 [INFO] start to correct bias field in stack 7\n2025-02-25 13:05:00 [INFO] Bias Field Correction finished in 2.2 s\n2025-02-25 13:05:00 [INFO] Registration starts ...\n2025-02-25 13:05:05 [INFO] similarity score for SVoRT = 0.748809\n2025-02-25 13:05:05 [INFO] similarity score for stack registration = 0.607124\n2025-02-25 13:05:05 [INFO] use slice transformation\n2025-02-25 13:05:05 [INFO] Registration finished in 5.4 s\n2025-02-25 13:05:05 [INFO] Reconsturction starts ...\n2025-02-25 13:05:05 [INFO] NeSVoR training starts.\n2025-02-25 13:08:36 [INFO]         time        epoch         iter          MSE       logVar   MSE+logVar     transReg     imageReg           lr \n2025-02-25 13:08:36 [INFO]      0:03:27           36         3000    4.251e-01   -2.788e+00   -2.363e+00    3.312e-03    2.439e-02    5.000e-03 \n2025-02-25 13:10:22 [INFO]      0:05:12           54         4500    4.642e-01   -3.063e+00   -2.599e+00    3.606e-03    2.848e-02    1.650e-03 \n2025-02-25 13:11:26 [INFO]      0:06:15           65         5400    4.716e-01   -3.142e+00   -2.670e+00    3.696e-03    2.996e-02    5.445e-04 \n2025-02-25 13:12:08 [INFO]      0:06:56           72         6000    4.733e-01   -3.173e+00   -2.700e+00    3.724e-03    3.060e-02    1.797e-04 \n2025-02-25 13:12:08 [INFO] Reconsturction finished in 423.2 s\n2025-02-25 13:12:08 [INFO] Results saving starts ...\n2025-02-25 13:12:09 [INFO] Results saving finished in 0.8 s\n2025-02-25 13:12:09 [INFO] Command 'nesvor reconstruct' finished, overall time: 519.0 s\n", stderr='/usr/local/lib/python3.10/dist-packages/tinycudann/modules.py:52: UserWarning: tinycudann was built for lower compute capability (70) than the system\'s (86). Performance may be suboptimal.\n  warnings.warn(f"tinycudann was built for lower compute capability ({cc}) than the system\'s ({system_compute_capability}). Performance may be suboptimal.")\n')
+result of the command: CompletedProcess(args='nesvor reconstruct --input-stacks /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz --thicknesses 4.5 --output-volume /tmp/share/debug/2025-02-25/dicoms/volume_result.nii.gz --output-resolution 1.48 --registration svort --segmentation --bias-field-correction', returncode=0, stdout="2025-02-25 14:12:59 [INFO] Data loading starts ...\n2025-02-25 14:12:59 [INFO] loading stacks\n2025-02-25 14:13:53 [INFO] background thresholding\n2025-02-25 14:13:53 [INFO] Data loading finished in 54.2 s\n2025-02-25 14:13:53 [INFO] Segmentation starts ...\n2025-02-25 14:13:53 [INFO] building monaifbs network\n2025-02-25 14:13:53 [INFO] segmenting stack 0\n2025-02-25 14:13:56 [INFO] segmenting stack 1\n2025-02-25 14:14:01 [INFO] segmenting stack 2\n2025-02-25 14:14:04 [INFO] segmenting stack 3\n2025-02-25 14:14:09 [INFO] segmenting stack 4\n2025-02-25 14:14:11 [INFO] segmenting stack 5\n2025-02-25 14:14:17 [INFO] segmenting stack 6\n2025-02-25 14:14:23 [INFO] segmenting stack 7\n2025-02-25 14:14:26 [INFO] Segmentation finished in 32.7 s\n2025-02-25 14:14:26 [INFO] Bias Field Correction starts ...\n2025-02-25 14:14:26 [INFO] start to correct bias field in stack 0\n2025-02-25 14:14:26 [INFO] start to correct bias field in stack 1\n2025-02-25 14:14:26 [INFO] start to correct bias field in stack 2\n2025-02-25 14:14:26 [INFO] start to correct bias field in stack 3\n2025-02-25 14:14:26 [INFO] start to correct bias field in stack 4\n2025-02-25 14:14:26 [INFO] start to correct bias field in stack 5\n2025-02-25 14:14:26 [INFO] start to correct bias field in stack 6\n2025-02-25 14:14:26 [INFO] start to correct bias field in stack 7\n2025-02-25 14:14:28 [INFO] Bias Field Correction finished in 2.3 s\n2025-02-25 14:14:28 [INFO] Registration starts ...\n2025-02-25 14:14:33 [INFO] similarity score for SVoRT = 0.748833\n2025-02-25 14:14:33 [INFO] similarity score for stack registration = 0.607117\n2025-02-25 14:14:33 [INFO] use slice transformation\n2025-02-25 14:14:33 [INFO] Registration finished in 5.2 s\n2025-02-25 14:14:33 [INFO] Reconsturction starts ...\n2025-02-25 14:14:33 [INFO] NeSVoR training starts.\n2025-02-25 14:18:04 [INFO]         time        epoch         iter          MSE       logVar   MSE+logVar     transReg     imageReg           lr \n2025-02-25 14:18:04 [INFO]      0:03:27           36         3000    4.395e-01   -2.774e+00   -2.335e+00    3.313e-03    2.445e-02    5.000e-03 \n2025-02-25 14:19:51 [INFO]      0:05:13           54         4500    4.728e-01   -2.974e+00   -2.501e+00    3.684e-03    2.909e-02    1.650e-03 \n2025-02-25 14:20:55 [INFO]      0:06:15           65         5400    4.736e-01   -3.024e+00   -2.551e+00    3.803e-03    3.073e-02    5.445e-04 \n2025-02-25 14:21:37 [INFO]      0:06:57           72         6000    4.734e-01   -3.046e+00   -2.572e+00    3.840e-03    3.147e-02    1.797e-04 \n2025-02-25 14:21:37 [INFO] Reconsturction finished in 424.1 s\n2025-02-25 14:21:37 [INFO] Results saving starts ...\n2025-02-25 14:21:38 [INFO] Results saving finished in 0.6 s\n2025-02-25 14:21:38 [INFO] Command 'nesvor reconstruct' finished, overall time: 518.9 s\n", stderr='/usr/local/lib/python3.10/dist-packages/tinycudann/modules.py:52: UserWarning: tinycudann was built for lower compute capability (70) than the system\'s (86). Performance may be suboptimal.\n  warnings.warn(f"tinycudann was built for lower compute capability ({cc}) than the system\'s ({system_compute_capability}). Performance may be suboptimal.")\n')
 
 --------------------------------------------------------------
 
@@ -16314,8 +16312,8 @@ Image data has 92416 elements
 --> Sending MRD_MESSAGE_ISMRMRD_IMAGE (1022) (91 images)
 --> Sending MRD_MESSAGE_CLOSE (4)
 Socket closed
-^CReceived signal interrupt -- stopping server
+^^C  ^CReceived signal interrupt -- stopping server
 [?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ exit
 [?2004lexit
 
-Script done on 2025-02-25 14:12:17+01:00 [COMMAND_EXIT_CODE="0"]
+Script done on 2025-02-25 15:23:11+01:00 [COMMAND_EXIT_CODE="0"]

@@ -398,7 +398,7 @@ def process_image(images, connection, config, metadata):
     process_mrd_files(svr_path)  # Conversion of MRD to DICOM happens here
 
     # Set the base test folder path
-    output_folder = svr_path + "/dicoms"
+    output_folder = svr_path + "/nitfis"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
@@ -455,9 +455,20 @@ def process_image(images, connection, config, metadata):
     if not nii_files:
         raise ValueError("NO nitfi file has been found")
     
-    command = f"nesvor reconstruct --input-stacks {' '.join(nii_files)} --thicknesses 4.5 --output-volume {output_folder}/volume_result.nii.gz --output-resolution 1.48 --registration svort --segmentation --bias-field-correction"
+    command = f"nesvor reconstruct --input-stacks {' '.join(nii_files)} --thicknesses 4.5 --output-volume {output_folder}/volume_result_nesvor.nii.gz --output-resolution 1.48 --registration svort --segmentation --bias-field-correction"
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     print(f"result of the command: {result}")
+    print("Changing the folder date path today")
+    # Suffix logic to avoid directory collision
+    suffix = 1
+    while os.path.isdir(f"/tmp/share/debug/{date_path}-{suffix}"):
+        suffix += 1
+
+    # Rename the existing directory
+    os.rename(f"/tmp/share/debug/{date_path}", f"/tmp/share/debug/{date_path}-{suffix}")
+
+    # Create a new directory
+    os.makedirs(f"/tmp/share/debug/{date_path}", mode=0o1777, exist_ok=True)
 
     print()
     print("--------------------------------------------------------------")
