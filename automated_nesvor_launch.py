@@ -470,7 +470,7 @@ def process_image(images, connection, config, metadata):
     
     command = f"nesvor reconstruct --input-stacks {' '.join(nii_files)} --thicknesses 4.5 --output-volume volume_result.nii.gz --output-resolution 1.48 --registration svort --segmentation --bias-field-correction"
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
-
+    print(f"result of the command: {result}")
 
     print()
     print("--------------------------------------------------------------")

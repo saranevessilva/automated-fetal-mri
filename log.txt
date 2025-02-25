@@ -1,4 +1,4 @@
-Script started on 2025-02-24 20:12:48+01:00 [TERM="xterm-256color" TTY="/dev/pts/6" COLUMNS="80" LINES="24"]
+Script started on 2025-02-25 11:28:28+01:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="80" LINES="24"]
 -------- freesurfer-linux-ubuntu22_x86_64-7.4.1-20230614-7eb8460 --------
 Setting up environment for FreeSurfer/FS-FAST (and FSL)
 FREESURFER_HOME   /usr/local/freesurfer/7.4.1
@@ -7,17 +7,27 @@ FSF_OUTPUT_FORMAT nii.gz
 SUBJECTS_DIR      /usr/local/freesurfer/7.4.1/subjects
 MNI_DIR           /usr/local/freesurfer/7.4.1/mni
 FSL_DIR           /home/mroulet/fsl
-[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [7msudo docker run --gpus all[27m[7m [27m[7m-p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock[27m[7m [27m[7m-v /usr/bin/docker:/usr/bin/docker automated-fetal-mri[27m[A[Asudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri
+[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ exitsudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri[A[Adocker build --no-cache -t automated-fetal-mri . [K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ ls[K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cdocker build --no-cache -t automated-fetal-mri . [A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ ls[K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccd automated-fetal-mri/git clone --single-branch --branch Nesv https://github.com/saranevessilva/automated-fetal-mri.git[Als[K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Crm -rf automated-fetal-mri/[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ cd ..[K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cgit push origin Nesvcommit -m "nesvorlatest"[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [C[C[C[Cadd .[K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccd automated-fetal-mri/ls[Kcd Repo ls[Kcd ..[3Plspython  ~/Documents/Repo/MONAIfbs/monaifbs/src/inference/monai_dynunet_inference.py --in_files haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz --out_folder  [A[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ --out_folder fetal_brain_masked_monai.nii.gz [K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ python  ~/Documents/Repo/MONAIfbs/monaifbs/src/inference/monai_dynunet_inference.py --in_files haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz\ [A[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ ls[K
+[K
+[K[A[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Ccd dicomsls[KLScd PYTHON/ls[Kcd ..[3Plsmv models ~/Documents/Repo/MONAIfbs/monaifbs/[A]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ [4Ptar -xvf models.tar.gz
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[7msudo docker run --gpus all[27m[7m [27m[7m-p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock[27m[7m [27m[7m-v /usr/bin/docker:/usr/bin/docker automated-fetal-mri[27m[A[Asudo docker run --gpus all -p=9002:9002 --rm -it -v /tmp:/tmp -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker automated-fetal-mri
 [?2004l[sudo] password for bbulut: 
-Created folder: /home/data/t2-stacks/2025-02-24
-Created folder: /home/data/eagle/2025-02-24
-Created folder: /home/data/owl/2025-02-24
-Folder already exists: /home/data/eagle/2025-02-24
-Created folder: /home/data/rat/2025-02-24
+Created folder: /home/data/t2-stacks/2025-02-25
+Created folder: /home/data/eagle/2025-02-25
+Created folder: /home/data/owl/2025-02-25
+Folder already exists: /home/data/eagle/2025-02-25
+Created folder: /home/data/rat/2025-02-25
 Logging to file:  /tmp/python-ismrmrd-server.log
 Starting server and listening for data at 0.0.0.0:9002
 Serving... 
-Accepting connection from: 172.17.0.3:59604
+Accepting connection from: 172.17.0.3:54950
 <-- Received MRD_MESSAGE_CONFIG_FILE (1)
     automated_nesvor_launch
 <-- Received MRD_MESSAGE_METADATA_XML_TEXT (3)
@@ -1279,11 +1289,11 @@ IceMiniHead[0]: <XProtocol>
   }
 }
 
-Moving from /tmp/share/saved_data to /tmp/share/debug/2025-02-24
-MRD file: /tmp/share/debug/2025-02-24/haste_true_brain_cor_autoplan_2025-01-27-135554_87.h5
-File /tmp/share/debug/2025-02-24/haste_true_brain_cor_autoplan_2025-01-27-135554_87.h5 contains 1 groups:
+Moving from /tmp/share/saved_data to /tmp/share/debug/2025-02-25
+MRD file: /tmp/share/debug/2025-02-25/haste_true_brain_cor_autoplan_2025-01-27-135554_87.h5
+File /tmp/share/debug/2025-02-25/haste_true_brain_cor_autoplan_2025-01-27-135554_87.h5 contains 1 groups:
   dataset
-Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-24/haste_true_brain_cor_autoplan_2025-01-27-135554_87.h5'
+Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-25/haste_true_brain_cor_autoplan_2025-01-27-135554_87.h5'
 Found 3 mrdImg sub-groups: config_file, images_0, xml
 Groups <KeysViewHDF5 ['config_file', 'images_0', 'xml']>
 Creating converter from 3 to 5
@@ -1708,10 +1718,10 @@ time_sec 8033.2956
 trigger time 0.0
   Writing file 87_haste_true_brain_cor_autoplan_034.dcm
 nslices 35
-MRD file: /tmp/share/debug/2025-02-24/haste_true_brain_tra_autoplan_2025-01-27-135654_97.h5
-File /tmp/share/debug/2025-02-24/haste_true_brain_tra_autoplan_2025-01-27-135654_97.h5 contains 1 groups:
+MRD file: /tmp/share/debug/2025-02-25/haste_true_brain_tra_autoplan_2025-01-27-135654_97.h5
+File /tmp/share/debug/2025-02-25/haste_true_brain_tra_autoplan_2025-01-27-135654_97.h5 contains 1 groups:
   dataset
-Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-24/haste_true_brain_tra_autoplan_2025-01-27-135654_97.h5'
+Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-25/haste_true_brain_tra_autoplan_2025-01-27-135654_97.h5'
 Found 3 mrdImg sub-groups: config_file, images_0, xml
 Groups <KeysViewHDF5 ['config_file', 'images_0', 'xml']>
 Reading images from '/dataset/images_0'
@@ -2135,10 +2145,10 @@ time_sec 8042.854799999999
 trigger time 0.0
   Writing file 97_haste_true_brain_tra_autoplan_034.dcm
 nslices 35
-MRD file: /tmp/share/debug/2025-02-24/haste_ax_wholeuterus_2025-01-27-133832_54.h5
-File /tmp/share/debug/2025-02-24/haste_ax_wholeuterus_2025-01-27-133832_54.h5 contains 1 groups:
+MRD file: /tmp/share/debug/2025-02-25/haste_ax_wholeuterus_2025-01-27-133832_54.h5
+File /tmp/share/debug/2025-02-25/haste_ax_wholeuterus_2025-01-27-133832_54.h5 contains 1 groups:
   dataset
-Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-24/haste_ax_wholeuterus_2025-01-27-133832_54.h5'
+Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-25/haste_ax_wholeuterus_2025-01-27-133832_54.h5'
 Found 3 mrdImg sub-groups: config_file, images_0, xml
 Groups <KeysViewHDF5 ['config_file', 'images_0', 'xml']>
 Reading images from '/dataset/images_0'
@@ -3234,10 +3244,10 @@ time_sec 7893.7976
 trigger time 0.0
   Writing file 54_haste_ax_wholeuterus_090.dcm
 nslices 91
-MRD file: /tmp/share/debug/2025-02-24/haste_true_brain_sag_autoplan_2025-01-27-135454_55.h5
-File /tmp/share/debug/2025-02-24/haste_true_brain_sag_autoplan_2025-01-27-135454_55.h5 contains 1 groups:
+MRD file: /tmp/share/debug/2025-02-25/haste_true_brain_sag_autoplan_2025-01-27-135454_55.h5
+File /tmp/share/debug/2025-02-25/haste_true_brain_sag_autoplan_2025-01-27-135454_55.h5 contains 1 groups:
   dataset
-Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-24/haste_true_brain_sag_autoplan_2025-01-27-135454_55.h5'
+Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-25/haste_true_brain_sag_autoplan_2025-01-27-135454_55.h5'
 Found 3 mrdImg sub-groups: config_file, images_0, xml
 Groups <KeysViewHDF5 ['config_file', 'images_0', 'xml']>
 Reading images from '/dataset/images_0'
@@ -3661,10 +3671,10 @@ time_sec 8023.7456
 trigger time 0.0
   Writing file 55_haste_true_brain_sag_autoplan_034.dcm
 nslices 35
-MRD file: /tmp/share/debug/2025-02-24/haste_cor_wholeuterus_2025-01-27-140248_53.h5
-File /tmp/share/debug/2025-02-24/haste_cor_wholeuterus_2025-01-27-140248_53.h5 contains 1 groups:
+MRD file: /tmp/share/debug/2025-02-25/haste_cor_wholeuterus_2025-01-27-140248_53.h5
+File /tmp/share/debug/2025-02-25/haste_cor_wholeuterus_2025-01-27-140248_53.h5 contains 1 groups:
   dataset
-Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-24/haste_cor_wholeuterus_2025-01-27-140248_53.h5'
+Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-25/haste_cor_wholeuterus_2025-01-27-140248_53.h5'
 Found 3 mrdImg sub-groups: config_file, images_0, xml
 Groups <KeysViewHDF5 ['config_file', 'images_0', 'xml']>
 Reading images from '/dataset/images_0'
@@ -4484,10 +4494,10 @@ time_sec 8107.534799999999
 trigger time 0.0
   Writing file 53_haste_cor_wholeuterus_067.dcm
 nslices 68
-MRD file: /tmp/share/debug/2025-02-24/haste_true_brain_sag_autoplan_2025-01-27-135754_96.h5
-File /tmp/share/debug/2025-02-24/haste_true_brain_sag_autoplan_2025-01-27-135754_96.h5 contains 1 groups:
+MRD file: /tmp/share/debug/2025-02-25/haste_true_brain_sag_autoplan_2025-01-27-135754_96.h5
+File /tmp/share/debug/2025-02-25/haste_true_brain_sag_autoplan_2025-01-27-135754_96.h5 contains 1 groups:
   dataset
-Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-24/haste_true_brain_sag_autoplan_2025-01-27-135754_96.h5'
+Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-25/haste_true_brain_sag_autoplan_2025-01-27-135754_96.h5'
 Found 3 mrdImg sub-groups: config_file, images_0, xml
 Groups <KeysViewHDF5 ['config_file', 'images_0', 'xml']>
 Reading images from '/dataset/images_0'
@@ -4911,10 +4921,10 @@ time_sec 8052.4016
 trigger time 0.0
   Writing file 96_haste_true_brain_sag_autoplan_034.dcm
 nslices 35
-MRD file: /tmp/share/debug/2025-02-24/haste_cor_wholeuterus_2025-01-27-135024_12.h5
-File /tmp/share/debug/2025-02-24/haste_cor_wholeuterus_2025-01-27-135024_12.h5 contains 1 groups:
+MRD file: /tmp/share/debug/2025-02-25/haste_cor_wholeuterus_2025-01-27-135024_12.h5
+File /tmp/share/debug/2025-02-25/haste_cor_wholeuterus_2025-01-27-135024_12.h5 contains 1 groups:
   dataset
-Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-24/haste_cor_wholeuterus_2025-01-27-135024_12.h5'
+Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-25/haste_cor_wholeuterus_2025-01-27-135024_12.h5'
 Found 3 mrdImg sub-groups: config_file, images_0, xml
 Groups <KeysViewHDF5 ['config_file', 'images_0', 'xml']>
 Reading images from '/dataset/images_0'
@@ -5734,10 +5744,10 @@ time_sec 7998.4992
 trigger time 0.0
   Writing file 12_haste_cor_wholeuterus_067.dcm
 nslices 68
-MRD file: /tmp/share/debug/2025-02-24/haste_sag_wholeuterus_2025-01-27-140824_1.h5
-File /tmp/share/debug/2025-02-24/haste_sag_wholeuterus_2025-01-27-140824_1.h5 contains 1 groups:
+MRD file: /tmp/share/debug/2025-02-25/haste_sag_wholeuterus_2025-01-27-140824_1.h5
+File /tmp/share/debug/2025-02-25/haste_sag_wholeuterus_2025-01-27-140824_1.h5 contains 1 groups:
   dataset
-Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-24/haste_sag_wholeuterus_2025-01-27-140824_1.h5'
+Reading data from group 'dataset' in file '/tmp/share/debug/2025-02-25/haste_sag_wholeuterus_2025-01-27-140824_1.h5'
 Found 3 mrdImg sub-groups: config_file, images_0, xml
 Groups <KeysViewHDF5 ['config_file', 'images_0', 'xml']>
 Reading images from '/dataset/images_0'
@@ -6641,7 +6651,7 @@ time_sec 8174.1831999999995
 trigger time 0.0
   Writing file 01_haste_sag_wholeuterus_074.dcm
 nslices 75
-Processing folder: /tmp/share/debug/2025-02-24/haste_true_brain_tra_autoplan_2025-01-27-135654_97
+Processing folder: /tmp/share/debug/2025-02-25/haste_true_brain_tra_autoplan_2025-01-27-135654_97
 STDOUT: Extracting DICOM slice positions...
 Detecting sorting column...
 Sorting by column 1...
@@ -6650,9 +6660,9 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
-Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97 (304x304x35x1)
-Conversion required 0.272952 seconds (0.272910 for core code).
-✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97.nii.gz
+Convert 35 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97 (304x304x35x1)
+Conversion required 0.258588 seconds (0.258228 for core code).
+✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -6761,7 +6771,7 @@ W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
 
 Script executed successfully!
-Processing folder: /tmp/share/debug/2025-02-24/haste_cor_wholeuterus_2025-01-27-140248_53
+Processing folder: /tmp/share/debug/2025-02-25/haste_cor_wholeuterus_2025-01-27-140248_53
 STDOUT: Extracting DICOM slice positions...
 Detecting sorting column...
 Sorting by column 2...
@@ -6770,9 +6780,9 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 68 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..26.8008, TA= 26.8008, TR=0 ms)
-Convert 68 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53 (304x304x68x1)
-Conversion required 0.500287 seconds (0.500247 for core code).
-✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53.nii.gz
+Convert 68 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53 (304x304x68x1)
+Conversion required 0.493523 seconds (0.493496 for core code).
+✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -6980,18 +6990,18 @@ W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
 
 Script executed successfully!
-Processing folder: /tmp/share/debug/2025-02-24/dicoms
+Processing folder: /tmp/share/debug/2025-02-25/dicoms
 STDOUT: Extracting DICOM slice positions...
 Detecting sorting column...
 Sorting by column 3...
 Renaming and updating metadata...
 
-STDERR: E: dcmdump: No such file or directory: reading file: /tmp/share/debug/2025-02-24/dicoms/*.dcm
-E: dcmdump: No such file or directory: reading file: /tmp/share/debug/2025-02-24/dicoms/*.dcm
-cp: cannot stat '/tmp/share/debug/2025-02-24/dicoms/*.dcm': No such file or directory
+STDERR: E: dcmdump: No such file or directory: reading file: /tmp/share/debug/2025-02-25/dicoms/*.dcm
+E: dcmdump: No such file or directory: reading file: /tmp/share/debug/2025-02-25/dicoms/*.dcm
+cp: cannot stat '/tmp/share/debug/2025-02-25/dicoms/*.dcm': No such file or directory
 
 Warning: Script failed with exit code 1, but continuing execution...
-Processing folder: /tmp/share/debug/2025-02-24/haste_ax_wholeuterus_2025-01-27-133832_54
+Processing folder: /tmp/share/debug/2025-02-25/haste_ax_wholeuterus_2025-01-27-133832_54
 STDOUT: Extracting DICOM slice positions...
 Detecting sorting column...
 Sorting by column 3...
@@ -7000,9 +7010,9 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 91 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..36, TA= 36, TR=0 ms)
-Convert 91 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54 (304x304x91x1)
-Conversion required 0.688919 seconds (0.688871 for core code).
-✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz
+Convert 91 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54 (304x304x91x1)
+Conversion required 0.670917 seconds (0.670887 for core code).
+✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7279,7 +7289,7 @@ W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
 
 Script executed successfully!
-Processing folder: /tmp/share/debug/2025-02-24/haste_true_brain_sag_autoplan_2025-01-27-135754_96
+Processing folder: /tmp/share/debug/2025-02-25/haste_true_brain_sag_autoplan_2025-01-27-135754_96
 STDOUT: Extracting DICOM slice positions...
 Detecting sorting column...
 Sorting by column 1...
@@ -7288,9 +7298,9 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
-Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96 (304x304x35x1)
-Conversion required 0.248518 seconds (0.248501 for core code).
-✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96.nii.gz
+Convert 35 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96 (304x304x35x1)
+Conversion required 0.242867 seconds (0.242846 for core code).
+✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7399,7 +7409,7 @@ W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
 
 Script executed successfully!
-Processing folder: /tmp/share/debug/2025-02-24/haste_true_brain_cor_autoplan_2025-01-27-135554_87
+Processing folder: /tmp/share/debug/2025-02-25/haste_true_brain_cor_autoplan_2025-01-27-135554_87
 STDOUT: Extracting DICOM slice positions...
 Detecting sorting column...
 Sorting by column 1...
@@ -7408,9 +7418,9 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70312, TA= 8.70312, TR=0 ms)
-Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87 (304x304x35x1)
-Conversion required 0.229333 seconds (0.229312 for core code).
-✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87.nii.gz
+Convert 35 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87 (304x304x35x1)
+Conversion required 0.225928 seconds (0.225912 for core code).
+✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7519,7 +7529,7 @@ W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
 
 Script executed successfully!
-Processing folder: /tmp/share/debug/2025-02-24/haste_true_brain_sag_autoplan_2025-01-27-135454_55
+Processing folder: /tmp/share/debug/2025-02-25/haste_true_brain_sag_autoplan_2025-01-27-135454_55
 STDOUT: Extracting DICOM slice positions...
 Detecting sorting column...
 Sorting by column 1...
@@ -7528,9 +7538,9 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 35 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..8.70508, TA= 8.70508, TR=0 ms)
-Convert 35 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55 (304x304x35x1)
-Conversion required 0.243431 seconds (0.243404 for core code).
-✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz
+Convert 35 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55 (304x304x35x1)
+Conversion required 0.240104 seconds (0.240080 for core code).
+✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7639,7 +7649,7 @@ W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
 
 Script executed successfully!
-Processing folder: /tmp/share/debug/2025-02-24/haste_sag_wholeuterus_2025-01-27-140824_1
+Processing folder: /tmp/share/debug/2025-02-25/haste_sag_wholeuterus_2025-01-27-140824_1
 STDOUT: Extracting DICOM slice positions...
 Detecting sorting column...
 Sorting by column 1...
@@ -7648,9 +7658,9 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 75 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..29.5996, TA= 29.5996, TR=0 ms)
-Convert 75 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1 (304x304x75x1)
-Conversion required 0.519518 seconds (0.519440 for core code).
-✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1.nii.gz
+Convert 75 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1 (304x304x75x1)
+Conversion required 0.498746 seconds (0.498707 for core code).
+✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -7879,7 +7889,7 @@ W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
 
 Script executed successfully!
-Processing folder: /tmp/share/debug/2025-02-24/haste_cor_wholeuterus_2025-01-27-135024_12
+Processing folder: /tmp/share/debug/2025-02-25/haste_cor_wholeuterus_2025-01-27-135024_12
 STDOUT: Extracting DICOM slice positions...
 Detecting sorting column...
 Sorting by column 2...
@@ -7888,9 +7898,9 @@ Converting to NIfTI format...
 Chris Rorden's dcm2niiX version v1.0.20241211  (JP2:OpenJPEG) (JP-LS:CharLS) GCC8.4.0 x86-64 (64-bit Linux)
 Found 68 DICOM file(s)
 Warning: Issue797: Check slice timing range 0..26.8008, TA= 26.8008, TR=0 ms)
-Convert 68 DICOM as /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12 (304x304x68x1)
-Conversion required 0.503777 seconds (0.503639 for core code).
-✅ Conversion complete! Output: /tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12.nii.gz
+Convert 68 DICOM as /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12 (304x304x68x1)
+Conversion required 0.494405 seconds (0.494379 for core code).
+✅ Conversion complete! Output: /tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12.nii.gz
 
 STDERR: W: DcmMetaInfo: No Group Length available in Meta Information Header
 W: DcmMetaInfo: No Group Length available in Meta Information Header
@@ -8114,7 +8124,7 @@ Checking file: haste_true_brain_tra_autoplan_2025-01-27-135654_97.json
 Checking file: haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz
 Checking file: haste_true_brain_sag_autoplan_2025-01-27-135754_96.json
 Checking file: haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz
-NIfTI files collected: ['/tmp/share/debug/2025-02-24/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97.nii.gz', '/tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12.nii.gz', '/tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96.nii.gz', '/tmp/share/debug/2025-02-24/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53.nii.gz', '/tmp/share/debug/2025-02-24/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87.nii.gz', '/tmp/share/debug/2025-02-24/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1.nii.gz', '/tmp/share/debug/2025-02-24/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz', '/tmp/share/debug/2025-02-24/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz']
+NIfTI files collected: ['/tmp/share/debug/2025-02-25/dicoms/haste_true_brain_tra_autoplan_2025-01-27-135654_97.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-135024_12.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135754_96.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_cor_wholeuterus_2025-01-27-140248_53.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_true_brain_cor_autoplan_2025-01-27-135554_87.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_sag_wholeuterus_2025-01-27-140824_1.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_ax_wholeuterus_2025-01-27-133832_54.nii.gz', '/tmp/share/debug/2025-02-25/dicoms/haste_true_brain_sag_autoplan_2025-01-27-135454_55.nii.gz']
 
 --------------------------------------------------------------
 
@@ -16315,4 +16325,4 @@ Socket closed
 [?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ exit
 [?2004lexit
 
-Script done on 2025-02-24 20:19:25+01:00 [COMMAND_EXIT_CODE="0"]
+Script done on 2025-02-25 11:29:48+01:00 [COMMAND_EXIT_CODE="0"]
