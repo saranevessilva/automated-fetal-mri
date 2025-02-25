@@ -8,7 +8,7 @@ scikit-image==0.21.0
 #torch==2.0.1
 #torchvision==0.15.2
 pandas==2.2.3
-#torchio==0.20.3
+torchio==0.20.3
 plotly==5.24.1
 nilearn==0.11.1
 #monai==1.4.0
