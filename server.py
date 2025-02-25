@@ -12,8 +12,6 @@ import simplefft
 import invertcontrast
 import automated_volumetry
 import automated_svr_launch
-import automated_pull_svr_brain
-import automated_pull_svr_body
 import automated_nesvor_launch 
 import mrd2dicom
 
@@ -98,12 +96,6 @@ class Server:
             elif config == "automated_svr_launch":
                 logging.info("Starting automated_svr_launch processing based on config")
                 automated_svr_launch.process(connection, config, metadata)
-            elif config == "automated_pull_svr_brain":
-                logging.info("Starting automated_pull_svr_brain processing based on config")
-                automated_pull_svr_brain.process(connection, config, metadata)
-            elif config == "automated_pull_svr_body":
-                logging.info("Starting automated_pull_svr_body processing based on config")
-                automated_pull_svr_body.process(connection, config, metadata)
             elif config == "automated_nesvor_launch":
                 logging.info("Starting automated_nesvor launch processing based on config")
                 automated_nesvor_launch.process(connection, config, metadata)
