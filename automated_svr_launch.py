@@ -383,7 +383,7 @@ def process_image(images, connection, config, metadata):
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(svr_path):
         os.makedirs(svr_path)
-        
+
     saved_path="/tmp/share/saved_data"
     #move from saved path to svr path the h5 file
     for file_name in os.listdir(saved_path):
@@ -472,7 +472,7 @@ def process_image(images, connection, config, metadata):
     # chmod 1777 /home/data/{date_path}; ' '''
 
     command = f"""bash /home/auto-proc-svrtk/scripts/auto-brain-055t-reconstruction.sh \
-    /tmp/share/debug/{date_path}/dicoms /tmp/share/debug/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
+    /tmp/share/debug/{date_path}/niftis /tmp/share/debug/{date_path}/{date_path}-result 1 4.5 1.0 1 ; \
     chmod 1777 -R /tmp/share/debug/{date_path}/{date_path}-result ; \
     /bin/MIRTK/build/lib/tools/pad-3d /tmp/share/debug/{date_path}/{date_path}-result/reo-SVR-output-brain.nii.gz /home/ref.nii.gz 160 1 ; \
     /bin/MIRTK/build/lib/tools/edit-image /home/ref.nii.gz /home/ref.nii.gz -dx 1 -dy 1 -dz 1 ; \

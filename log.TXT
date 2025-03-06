@@ -1,0 +1,15 @@
+Script started on 2025-03-06 14:36:38+01:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="80" LINES="24"]
+-------- freesurfer-linux-ubuntu22_x86_64-7.4.1-20230614-7eb8460 --------
+Setting up environment for FreeSurfer/FS-FAST (and FSL)
+FREESURFER_HOME   /usr/local/freesurfer/7.4.1
+FSFAST_HOME       /usr/local/freesurfer/7.4.1/fsfast
+FSF_OUTPUT_FORMAT nii.gz
+SUBJECTS_DIR      /usr/local/freesurfer/7.4.1/subjects
+MNI_DIR           /usr/local/freesurfer/7.4.1/mni
+FSL_DIR           /home/mroulet/fsl
+[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ 1ls[K[Kexirt
+[?2004lexirt: command not found
+[?2004h]0;bbulut@mialtron: ~/Documents/Repo/automated-fetal-mri[01;32mbbulut@mialtron[00m:[01;34m~/Documents/Repo/automated-fetal-mri[00m$ exit
+[?2004lexit
+
+Script done on 2025-03-06 14:36:44+01:00 [COMMAND_EXIT_CODE="127"]
