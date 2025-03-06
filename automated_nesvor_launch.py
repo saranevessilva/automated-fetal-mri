@@ -398,7 +398,7 @@ def process_image(images, connection, config, metadata):
     process_mrd_files(svr_path)  # Conversion of MRD to DICOM happens here
 
     # Set the base test folder path
-    output_folder = svr_path + "/nitfis"
+    output_folder = svr_path + "/niftis"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
