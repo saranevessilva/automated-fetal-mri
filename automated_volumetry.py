@@ -439,6 +439,7 @@ def run_volumetry_pipeline(debugFolder):
                          "export nnUNet_results='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_results'; "
                          "--disable_tta "
                          "--save_probabilities False"
+                         "-npp 1 -nps 1 "
                          "nnUNetv2_predict -i ") + os.path.join(volumetry_path, timestamp + "-nnUNet_seg-volumetry") +
                         " -o " + os.path.join(volumetry_path, timestamp + "-nnUNet_pred-volumetry") +
                         " -d 084 -c 3d_fullres -f 1")
