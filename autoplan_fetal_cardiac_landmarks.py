@@ -58,8 +58,8 @@ from src.boundingbox import calculate_expanded_bounding_box, apply_bounding_box
 from numpy.fft import fftshift, ifftshift, fftn, ifftn
 
 # Folder for debug output files
-debugFolder = "/home/data/owl/"
-
+# debugFolder = "/home/data/owl/"
+debugFolder = "/tmp/share/debug"
 
 def adjust_contrast(image_array, mid_intensity, target_y):
     # Calculate the intensity range
@@ -786,7 +786,7 @@ def process_image(images, connection, config, metadata):
 
     # Define the file name with the formatted date and time
     text_file_1 = (fetalbody_path + timestamp + "-com_cardiac.txt")
-    text_file = "/home/data/owl/" + "sara_cardiac.dvs"
+    text_file = debugFolder + "/sara_cardiac.dvs"
 
     # # Get the dimensions of the cropped image
     # fetal_im_sitk = sitk.GetArrayFromImage(fetal_im_sitk)

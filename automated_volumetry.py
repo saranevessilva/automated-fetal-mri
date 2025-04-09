@@ -536,10 +536,13 @@ def process_image(images, connection, config, metadata):
 
     path = "/whole-uterus-segmentation-reporting.py"
 
-    subprocess.Popen([
-        "gnome-terminal", "--", "bash", "-c",
-        f"python3 {path}; exec bash"
-    ])
+    result = subprocess.run(
+        f"python3 {path}",
+        shell=True,
+        executable="/bin/bash",
+        capture_output=True,
+        text=True
+    )
 
     # Re-slice back into 2D images
     imagesOut = [None] * data.shape[-1]
