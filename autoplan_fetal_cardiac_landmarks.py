@@ -467,18 +467,13 @@ def process_image(images, connection, config, metadata):
     srow_y = (srow_y[0], srow_y[1], srow_y[2])
     srow_z = (srow_z[0], srow_z[1], srow_z[2])
 
-    # patient_table_position = (imheader.patient_table_position[0], imheader.patient_table_position[1],
-    #                           imheader.patient_table_position[2])
-    # print("position ", position, "read_dir", read_dir, "phase_dir ", phase_dir, "slice_dir ", slice_dir)
-    # print("patient table position", patient_table_position)
-
     slice = imheader.slice
     repetition = imheader.repetition
     contrast = imheader.contrast
     print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
     # Define the path where the results will be saved
-    fetalbody_path = (debugFolder + date_path)
+    fetalbody_path = (debugFolder + "/" + date_path)
 
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(fetalbody_path):
@@ -635,9 +630,6 @@ def process_image(images, connection, config, metadata):
     sitk.WriteImage(cropped, fetalbody_path + "/" + timestamp
                     + "-nnUNet_seg-landmarks/CardiacLandmarks_001_0000.nii.gz")  # Sara!
 
-    # nib.save(fetalbody_im, fetalbody_path + "/" + timestamp + "-nnUNet_seg-landmarks/"
-    #                                                           "CardiacLandmarks_001_0000.nii.gz")
-
     start_time = time.time()
     # new network
     terminal_command = (("export nnUNet_raw='/opt/code/automated-fetal-mri/owl/FetalCardiacLandmarks/nnUNet_raw'; "
@@ -700,23 +692,6 @@ def process_image(images, connection, config, metadata):
     dao_centre = (dao_centre_x + lower_left_corner[0], dao_centre_y + lower_left_corner[1],
                   dao_centre_z + lower_left_corner[2])
 
-    # Sara!
-    # dao_start_x = 163
-    # dao_start_y = 48
-    # dao_start_z = 3
-    #
-    # dao_end_x = 105
-    # dao_end_y = 181
-    # dao_end_z = 5
-    #
-    # dao_centre_x = (dao_start_x + dao_end_x) // 2
-    # dao_centre_y = (dao_start_y + dao_end_y) // 2
-    # dao_centre_z = (dao_start_z + dao_end_z) // 2
-
-    # dao_start = dao_start_x, dao_start_y, dao_start_z
-    # dao_end = dao_end_x, dao_end_y, dao_end_z
-    # dao_centre = dao_centre_x, dao_centre_y, dao_centre_z
-
     # Print the center y value and its corresponding coordinates
     print("Coordinates of centre y value (x, y, z):", dao_centre)
 
@@ -748,25 +723,6 @@ def process_image(images, connection, config, metadata):
     uv_centre = (uv_centre_x + lower_left_corner[0], uv_centre_y + lower_left_corner[1],
                  uv_centre_z + lower_left_corner[2])
 
-    # Sara!
-    # uv_start_x = 125
-    # uv_start_y = 115
-    # uv_start_z = 3
-    #
-    # uv_end_x = 205
-    # uv_end_y = 115
-    # uv_end_z = 3
-    #
-    # uv_centre_x = (uv_start_x + uv_end_x) // 2
-    # uv_centre_y = (uv_start_y + uv_end_y) // 2
-    # uv_centre_z = (uv_start_z + uv_end_z) // 2
-    #
-    # uv_start = uv_start_x, uv_start_y, uv_start_z
-    # uv_end = uv_end_x, uv_end_y, uv_end_z
-    # uv_centre = uv_centre_x, uv_centre_y, uv_centre_z
-
-    # at this point, we have the landmarks coordinates relative to the original/uncropped image
-
     print("lowerleftcorner", lower_left_corner)
 
     # Print the center y value and its corresponding coordinates
@@ -779,7 +735,7 @@ def process_image(images, connection, config, metadata):
     date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
 
     # Define the file name with the formatted date and time
-    text_file_1 = (fetalbody_path + timestamp + "-com_cardiac.txt")
+    text_file_1 = (fetalbody_path + "/" + timestamp + "-com_cardiac.txt")
     text_file = debugFolder + "/sara_cardiac.dvs"
 
     print("Upper bound", upper_bound, "Lower bound", lower_bound)
@@ -951,10 +907,6 @@ def process_image(images, connection, config, metadata):
     print("UV CENTRE ROT", uv_centre)
     print("POSITION ROT", position)
 
-    # transformation = [(srow_x[0], srow_x[1], srow_x[2], srow_x[3]),
-    #                   (srow_y[0], srow_y[1], srow_y[2], srow_y[3]),
-    #                   (srow_z[0], srow_z[1], srow_z[2], srow_z[3]),
-    #                   (0, 0, 0, 1)]
 
     # Create and write to the text file
     with open(text_file, "w") as file:
@@ -967,10 +919,6 @@ def process_image(images, connection, config, metadata):
         file.write("\n" + "daocentre = " + str(dao_centre))
         file.write("\n" + "uvcentre = " + str(uv_centre))
         file.write("\n" + "position = " + str(position))
-        # file.write("\n" + "centreofimageposition = " + str(centreofimageposition))
-        # file.write("\n" + "srow_x = " + str(srow_x))
-        # file.write("\n" + "srow_y = " + str(srow_y))
-        # file.write("\n" + "srow_z = " + str(srow_z))
 
     with open(text_file_1, "w") as file:
         # file.write("This is a text file created on " + date_time_string)
@@ -982,10 +930,6 @@ def process_image(images, connection, config, metadata):
         file.write("\n" + "daocentre = " + str(dao_centre))
         file.write("\n" + "uvcentre = " + str(uv_centre))
         file.write("\n" + "position = " + str(position))
-        # file.write("\n" + "centreofimageposition = " + str(centreofimageposition))
-        # file.write("\n" + "srow_x = " + str(srow_x))
-        # file.write("\n" + "srow_y = " + str(srow_y))
-        # file.write("\n" + "srow_z = " + str(srow_z))
 
     print(f"Text file '{text_file}' has been created.")
 

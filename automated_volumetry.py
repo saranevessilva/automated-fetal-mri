@@ -536,7 +536,7 @@ def process_image(images, connection, config, metadata):
 
     path = "/opt/code/automated-fetal-mri/whole-uterus-segmentation-reporting.py"
 
-    result = subprocess.run(
+    subprocess.run(
         f"python3 {path}",
         shell=True,
         executable="/bin/bash",
