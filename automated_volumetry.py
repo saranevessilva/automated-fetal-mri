@@ -434,17 +434,14 @@ def run_volumetry_pipeline(debugFolder):
 
     start_time = time.time()
 
-    terminal_command = (
-            "export nnUNet_raw='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_raw'; "
-            "export nnUNet_preprocessed='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_preprocessed'; "
-            "export nnUNet_results='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_results'; "
-            "nnUNetv2_predict "
-            "--num_processes_preprocessing 1 --num_processes_segmentation_export 1 "
-            "--disable_tta "
-            "-i " + volumetry_path + "/" + timestamp + "-nnUNet_seg-volumetry/ "
-                                                       "-o " + volumetry_path + "/" + timestamp + "-nnUNet_pred-volumetry/ "
-                                                                                                  "-d 084 -c 3d_fullres -f 1"
-    )
+    terminal_command = (("export nnUNet_raw='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_raw'; "
+                         "export nnUNet_preprocessed='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_preprocessed'; "
+                         "export nnUNet_results='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_results'; "
+                         "--disable_tta "
+                         "--save_probabilities False"
+                         "nnUNetv2_predict -i ") + os.path.join(volumetry_path, timestamp + "-nnUNet_seg-volumetry") +
+                        " -o " + os.path.join(volumetry_path, timestamp + "-nnUNet_pred-volumetry") +
+                        " -d 084 -c 3d_fullres -f 1")
 
     print("Executing command:", terminal_command)
     subprocess.run(terminal_command, shell=True)
