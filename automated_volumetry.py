@@ -536,13 +536,19 @@ def process_image(images, connection, config, metadata):
 
     path = "/opt/code/automated-fetal-mri/whole-uterus-segmentation-reporting.py"
 
-    subprocess.run(
-        f"python3 {path}",
-        shell=True,
-        executable="/bin/bash",
-        capture_output=True,
-        text=True
-    )
+    try:
+        result = subprocess.run(
+            f"python3 {path}",
+            shell=True,
+            executable="/bin/bash",
+            capture_output=True,
+            text=True,
+            timeout=10  # seconds
+        )
+        print("STDOUT:\n", result.stdout)
+        print("STDERR:\n", result.stderr)
+    except subprocess.TimeoutExpired:
+        print("Script timed out. It's likely waiting for input or hanging.")
 
     # Re-slice back into 2D images
     imagesOut = [None] * data.shape[-1]
