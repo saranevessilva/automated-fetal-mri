@@ -12,6 +12,7 @@ import re
 import mrdhelper
 import constants
 from time import perf_counter
+from multiprocessing import Process
 
 # import numpy as np
 import ismrmrd
@@ -109,26 +110,485 @@ from numpy import pi, sin, cos
 debugFolder = "/tmp/share/debug"
 
 
-def adjust_contrast(image_array, mid_intensity, target_y):
-    # Calculate the intensity range
-    max_intensity = np.abs(np.max(image_array))
-    min_intensity = np.abs(np.min(image_array))
-    intensity_range = max_intensity - min_intensity
+def centile_graphs(roi):
+    a = 0
+    b = 0
+    c = 0
+    a5 = 0
+    b5 = 0
+    c5 = 0
+    title = ""
 
-    # Precompute constant values
-    ratio1 = (target_y - 0) / (mid_intensity - min_intensity)
-    ratio2 = (1 - target_y) / (max_intensity - mid_intensity)
+    roi_cmp = "fetus"
+    if roi == roi_cmp:
+        a = 0.00
+        b = 206.99
+        c = -4785.8
+        a5 = 0.00
+        b5 = -8.597625
+        c5 = 614.8
+        title = "Fetal volume"
 
-    # Apply the transformation to the entire array
-    adjusted_array = np.where(image_array < mid_intensity,
-                              (image_array - min_intensity) * ratio1,
-                              (image_array - mid_intensity) * ratio2 + target_y)
+    roi_cmp = "placenta"
+    if roi == roi_cmp:
+        a = 0.00
+        b = -10.315
+        c = 1246.4
+        a5 = 0.00
+        b5 = 0.157625
+        c5 = 156.25
+        title = "Placenta volume"
 
-    # Adjust the intensity range to match the original range
-    adjusted_array = (adjusted_array - np.min(adjusted_array)) * (
-            intensity_range / (np.max(adjusted_array) - np.min(adjusted_array))) + min_intensity
+    roi_cmp = "amniotic"
+    if roi == roi_cmp:
+        a = 0.00
+        b = -17.068
+        c = 1201
+        a5 = 0.00
+        b5 = -0.807875
+        c5 = 251.25
+        title = "Amniotic fluid volume"
 
-    return adjusted_array
+    roi_cmp = "efw"
+    if roi == roi_cmp:
+        a = 0.0
+        b = 213.41
+        c = -4934
+        a5 = 0.00
+        b5 = -8.878625
+        c5 = 634.4
+        title = "Estimated fetal weight (Baker et al.)"
+
+    x = np.linspace(35, 42, 100)
+    y = a * x * x + b * x + c
+    y_s = a5 * x * x + b5 * x + c5
+
+    y5 = y - 1.645 * y_s
+    y95 = y + 1.645 * y_s
+
+    return x, y, y5, y95, title
+
+
+def plot_centiles4(id, scan_date, ga, fetus, placenta, amniotic, efw, volumetry_path, timestamp):
+
+    fig = make_subplots(rows=2,
+                        cols=2,
+                        vertical_spacing=0.2,
+                        horizontal_spacing=0.2,
+                        subplot_titles=("Fetal volume", "Estimated fetal weight (Baker et al.)", "Placenta volume",
+                                        "Amniotic fluid volume"))
+
+    m_size = 10
+
+    s_r = 1
+    s_c = 1
+    roi = "fetus"
+    vol = fetus
+    x, y, y5, y95, title = centile_graphs(roi)
+    fig.add_trace(go.Scatter(x=x, y=y, mode='lines', line_color='black'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=x, y=y5, mode='lines', line_color='grey'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=x, y=y95, mode='lines', line_color='grey'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=[ga], y=[vol], mode='markers', marker_color='red', marker_size=m_size, opacity=0.8,
+                             marker_symbol='x'), row=s_r, col=s_c)
+    fig.update_xaxes(title_text="GA [weeks]", gridcolor='lightgrey', nticks=10, row=s_r, col=s_c)
+    fig.update_yaxes(title_text="Volume [cc]", gridcolor='lightgrey', nticks=10, row=s_r, col=s_c)
+
+    y_total = y
+    y_total_5 = y5
+    y_total_95 = y95
+    vol_total = vol
+
+    s_r = 2
+    s_c = 1
+    roi = "placenta"
+    vol = placenta
+    x, y, y5, y95, title = centile_graphs(roi)
+    fig.add_trace(go.Scatter(x=x, y=y, mode='lines', line_color='black'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=x, y=y5, mode='lines', line_color='grey'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=x, y=y95, mode='lines', line_color='grey'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=[ga], y=[vol], mode='markers', marker_color='red', marker_size=m_size, opacity=0.8,
+                             marker_symbol='x'), row=s_r, col=s_c)
+    fig.update_xaxes(title_text="GA [weeks]", gridcolor='lightgrey', nticks=10, row=s_r, col=s_c)
+    fig.update_yaxes(title_text="Volume [cc]", gridcolor='lightgrey', nticks=10, row=s_r, col=s_c)
+
+    y_total = y_total + y
+    y_total_5 = y_total_5 + y5
+    y_total_95 = y_total_95 + y95
+    vol_total = vol_total + vol
+
+    s_r = 2
+    s_c = 2
+    roi = "amniotic"
+    vol = amniotic
+    x, y, y5, y95, title = centile_graphs(roi)
+    fig.add_trace(go.Scatter(x=x, y=y, mode='lines', line_color='black'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=x, y=y5, mode='lines', line_color='grey'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=x, y=y95, mode='lines', line_color='grey'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=[ga], y=[vol], mode='markers', marker_color='red', marker_size=m_size, opacity=0.8,
+                             marker_symbol='x'), row=s_r, col=s_c)
+    fig.update_xaxes(title_text="GA [weeks]", gridcolor='lightgrey', nticks=10, row=s_r, col=s_c)
+    fig.update_yaxes(title_text="Volume [cc]", gridcolor='lightgrey', nticks=10, row=s_r, col=s_c)
+
+    y_total = y_total + y
+    y_total_5 = y_total_5 + y5
+    y_total_95 = y_total_95 + y95
+    vol_total = vol_total + vol
+
+    s_r = 1
+    s_c = 2
+    roi = "efw"
+    vol = efw
+    x, y, y5, y95, title = centile_graphs(roi)
+    fig.add_trace(go.Scatter(x=x, y=y, mode='lines', line_color='black'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=x, y=y5, mode='lines', line_color='grey'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=x, y=y95, mode='lines', line_color='grey'), row=s_r, col=s_c)
+    fig.add_trace(go.Scatter(x=[ga], y=[vol], mode='markers', marker_color='red', marker_size=m_size, opacity=0.8,
+                             marker_symbol='x'), row=s_r, col=s_c)
+    fig.update_xaxes(title_text="GA [weeks]", gridcolor='lightgrey', nticks=10, row=s_r, col=s_c)
+    fig.update_yaxes(title_text="Weight [g]", gridcolor='lightgrey', nticks=10, row=s_r, col=s_c)
+
+    # title = "Uterus volumetry: " + id + " / " + str(ga) + " weeks / " + scan_date
+
+    fig.update_layout(height=700,
+                      width=900,
+                      showlegend=False,
+                      plot_bgcolor='white',
+                      # title_text=title,
+                      # title_font_family="Arial Black",
+                      )
+
+    fig.show()
+
+    fig.write_image(volumetry_path + "/" + timestamp + "-graphs.png")
+
+
+def subject_percentile(roi, ga, y_subject):
+    a = 0
+    b = 0
+    c = 0
+    a5 = 0
+    b5 = 0
+    c5 = 0
+    title = ""
+
+    a = 0
+    b = 0
+    c = 0
+    a5 = 0
+    b5 = 0
+    c5 = 0
+    title = ""
+
+    roi_cmp = "fetus"
+    if roi == roi_cmp:
+        a = 0.00
+        b = 206.99
+        c = -4785.8
+        a5 = 0.00
+        b5 = -8.597625
+        c5 = 614.8
+        title = "Fetal volume"
+
+    roi_cmp = "placenta"
+    if roi == roi_cmp:
+        a = 0.00
+        b = -10.315
+        c = 1246.4
+        a5 = 0.00
+        b5 = 0.157625
+        c5 = 156.25
+        title = "Placenta volume"
+
+    roi_cmp = "amniotic"
+    if roi == roi_cmp:
+        a = 0.00
+        b = -17.068
+        c = 1201
+        a5 = 0.00
+        b5 = -0.807875
+        c5 = 251.25
+        title = "Amniotic fluid volume"
+
+    roi_cmp = "efw"
+    if roi == roi_cmp:
+        a = 0.0
+        b = 213.41
+        c = -4934
+        a5 = 0.00
+        b5 = -8.878625
+        c5 = 634.4
+        title = "Estimated fetal weight (Baker et al.)"
+
+    x = ga
+    y_ga = a * x * x + b * x + c
+
+    y5 = y_ga - 1.645 * (a5 * x * x + b5 * x + c5)
+    y95 = y_ga + 1.645 * (a5 * x * x + b5 * x + c5)
+
+    sd_ga = np.polyval([a5, b5, c5], ga)
+
+    z_score = (y_subject - y_ga) / sd_ga
+
+    percentile = norm.cdf(z_score) * 100
+
+    return percentile, z_score
+
+
+def extract_label(lab_nii_raw, l1, l2=1000, l3=1000, l4=1000, l5=1000, l6=1000):
+    x_dim, y_dim, z_dim = lab_nii_raw.shape
+    lab_nii_raw_out = lab_nii_raw
+
+    for x in range(1, x_dim, 1):
+        for y in range(1, y_dim, 1):
+            for z in range(1, z_dim, 1):
+                if lab_nii_raw[x, y, z] == l1 or lab_nii_raw[x, y, z] == l2 or lab_nii_raw[x, y, z] == l3 or \
+                        lab_nii_raw[x, y, z] == l4 or lab_nii_raw[x, y, z] == l5:
+                    lab_nii_raw_out[x, y, z] = 1
+                else:
+                    lab_nii_raw_out[x, y, z] = 0
+
+    return lab_nii_raw_out
+
+
+def resample_to_isotropic(input_filepath, output_filepath, new_resolution=(1.5, 1.5, 1.5)):
+    # Load the image
+    img = nib.load(input_filepath)
+    data = img.get_fdata()
+    affine = img.affine
+
+    # Get the original resolution
+    original_resolution = img.header.get_zooms()
+
+    # Calculate the resampling factor
+    resampling_factors = [orig / new for orig, new in zip(original_resolution, new_resolution)]
+
+    # Calculate the new shape
+    new_shape = np.ceil(np.array(data.shape) * resampling_factors).astype(int)
+
+    # Resample the data
+    resampled_data = zoom(data, resampling_factors, order=0)
+
+    # Adjust the affine transformation
+    new_affine = affine.copy()
+    scale_affine = np.diag(resampling_factors + [1])
+    new_affine[:3, :3] = np.dot(affine[:3, :3], scale_affine[:3, :3])
+
+    # Create a new NIfTI image
+    resampled_img = nib.Nifti1Image(resampled_data, new_affine)
+
+    # Save the resampled image
+    nib.save(resampled_img, output_filepath)
+
+    return resampled_data
+
+
+def compute_label_volume(lab_nii, lab_nii_raw, l_num):
+    x_dim, y_dim, z_dim = lab_nii.shape
+    dx, dy, dz = lab_nii.header.get_zooms()
+    n = 0
+    for x in range(1, x_dim, 1):
+        for y in range(1, y_dim, 1):
+            for z in range(1, z_dim, 1):
+                if lab_nii_raw[x, y, z] == l_num:
+                    n = n + 1
+    vol = n * dx * dy * dz / 1000
+    return vol
+
+
+def compute_btfe_label_volume(lab_nii, lab_nii_raw):
+    fetus = compute_label_volume(lab_nii, lab_nii_raw, 1) + compute_label_volume(lab_nii, lab_nii_raw, 5)
+    placenta = compute_label_volume(lab_nii, lab_nii_raw, 2)
+    amniotic = compute_label_volume(lab_nii, lab_nii_raw, 4)
+    cord = compute_label_volume(lab_nii, lab_nii_raw, 3)
+
+    rr = 4
+    fetus = round(fetus, rr)
+    placenta = round(placenta, rr)
+    amniotic = round(amniotic, rr)
+    cord = round(cord, rr)
+
+    return fetus, placenta, amniotic, cord
+
+
+def compute_fetal_weight(fetus):
+    fetal_body_volume = fetus * 0.001
+    baker = 1.031 * fetal_body_volume + 0.12
+    kacem = 0.989 * fetal_body_volume + 0.147
+
+    return baker, kacem
+
+
+def run_volumetry_pipeline(debugFolder):
+    date_path = datetime.today().strftime("%Y-%m-%d")
+    volumetry_path = os.path.join(debugFolder, date_path)
+
+    files = sorted(glob.glob(os.path.join(volumetry_path, "**/*.nii.gz"), recursive=True),
+                   key=os.path.getmtime, reverse=True)
+    latest = files[0]
+    latest_path = os.path.dirname(latest)
+    timestamp = "-".join(latest_path.split("/")[-1].split("-")[:3])
+
+    # Set display for X11 context if required
+    os.environ['DISPLAY'] = ':0'
+    os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
+
+    start_time = time.time()
+
+    terminal_command = (("export nnUNet_raw='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_raw'; "
+                         "export nnUNet_preprocessed='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_preprocessed'; "
+                         "export nnUNet_results='/opt/code/automated-fetal-mri/volumetry/Volumetry/nnUNet_results'; "
+                         "nnUNetv2_predict -i ") + os.path.join(volumetry_path, timestamp + "-nnUNet_seg-volumetry") +
+                        " -o " + os.path.join(volumetry_path, timestamp + "-nnUNet_pred-volumetry") +
+                        " -d 084 -c 3d_fullres -f 1")
+
+    print("Executing command:", terminal_command)
+    subprocess.run(terminal_command, shell=True)
+
+    print(f"Elapsed time for fetal body localisation: {time.time() - start_time:.2f} seconds")
+
+    segmentation_filename = os.path.join(volumetry_path, f"{timestamp}-nnUNet_pred-volumetry", "Volumetry_001.nii.gz")
+    img_name = os.path.join(volumetry_path, f"{timestamp}-nnUNet_seg-volumetry", "Volumetry_001_0000.nii.gz")
+
+    lab_name = segmentation_filename
+    img_nii = nib.load(img_name)
+    lab_nii = nib.load(lab_name)
+    img_raw = img_nii.get_fdata()
+    lab_raw = lab_nii.get_fdata()
+
+    file_ga = os.path.join(debugFolder, "ga.txt")
+    with open(file_ga, 'r') as file:
+        content = file.read()
+        match = re.search(r'(\d+)\+(\d+)', content)
+        if match:
+            weeks = int(match.group(1))
+            days = int(match.group(2))
+            ga = weeks + days / 7.0
+        else:
+            ga = None
+
+    file_id = os.path.join(debugFolder, "id.txt")
+    with open(file_id, 'r') as file:
+        id = file.read().strip()
+
+    scan_date = date_path
+
+    print("Image: shape =", img_nii.shape, ", voxel spacing =", img_nii.header.get_zooms(), "mm")
+    print("Label: shape =", lab_nii.shape, ", voxel spacing =", lab_nii.header.get_zooms(), "mm")
+
+    fetus, placenta, amniotic, cord = compute_btfe_label_volume(lab_nii, lab_raw)
+
+    efw = compute_fetal_weight(fetus)
+    baker = np.round(efw[0], 4)
+    kacem = np.round(efw[1], 4)
+
+    print("EFW (Baker)", baker, "EFW (Kacem)", kacem)
+
+    f = plt.figure(figsize=(12, 4))
+    plot_roi(img_nii, bg_img=img_nii, dim=0, cmap='gray', vmin=0, figure=f,
+             display_mode='ortho', black_bg=True)
+    plt.savefig(os.path.join(volumetry_path, f"{timestamp}-out-rad-grey.png"))
+
+    f = plt.figure(figsize=(12, 4))
+    plot_roi(lab_nii, bg_img=img_nii, alpha=0.5, dim=-0.5, cmap='jet',
+             resampling_interpolation='nearest', vmin=0, figure=f, display_mode='ortho', black_bg=True)
+    plt.savefig(os.path.join(volumetry_path, f"{timestamp}-out-rad-with-lab.png"))
+
+    f = plt.figure(figsize=(20, 4))
+    plot_roi(lab_nii, bg_img=img_nii, alpha=0.5, cmap='jet', figure=f, display_mode='y', black_bg=True)
+    plt.savefig(os.path.join(volumetry_path, f"{timestamp}-out-rad-with-lab-coronal.png"))
+
+    f = plt.figure(figsize=(12, 4))
+    plot_roi(img_nii, bg_img=img_nii, vmax=img_raw.max() * 0.8, dim=0, cmap='gray', vmin=0,
+             figure=f, display_mode='y', cut_coords=7, black_bg=True)
+
+    res_lab_raw = resample_to_isotropic(lab_name, os.path.join(volumetry_path, f"{timestamp}-res_lab.nii.gz"))
+    lab_fetus = extract_label(res_lab_raw, 1, 5)
+
+    verts_fe, faces_fe, normals_fe, values_fe = measure.marching_cubes(lab_fetus, 0)
+
+    fetus_mesh = go.Mesh3d(
+        x=verts_fe[:, 0], y=verts_fe[:, 1], z=verts_fe[:, 2],
+        intensity=values_fe, i=faces_fe[:, 0], j=faces_fe[:, 1], k=faces_fe[:, 2],
+        name='Fetus', lighting=dict(ambient=0.5, diffuse=0.5, roughness=0.5, specular=0.6, fresnel=0.8),
+        showscale=False, opacity=1.0, colorscale='pinkyl')
+
+    layout = go.Layout(width=900, height=300, margin=dict(t=1, l=1, b=1),
+                       scene_camera=dict(eye=dict(x=1.0, y=1.0, z=1.0)),
+                       scene=dict(xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False)))
+
+    fig = go.Figure(data=[fetus_mesh], layout=layout)
+    fig.write_image(os.path.join(volumetry_path, f"{timestamp}-fetus_3D.png"))
+
+    efw = fetus * 1.031 + 0.12
+
+    plot_centiles4(id, scan_date, ga, fetus, placenta, amniotic, efw, volumetry_path, timestamp)
+
+    percentile_fetus, z_score_fetus = subject_percentile("fetus", ga, fetus)
+    percentile_placenta, z_score_placenta = subject_percentile("placenta", ga, placenta)
+    percentile_amniotic, z_score_amniotic = subject_percentile("amniotic", ga, amniotic)
+    percentile_efw, z_score_efw = subject_percentile("efw", ga, efw)
+
+    def to_img_figure(path):
+        img = io.imread(path)
+        if img.dtype == bool:
+            img = img.astype(np.uint8)
+        return px.imshow(img)
+
+    figm1 = to_img_figure(os.path.join(volumetry_path, f"{timestamp}-out-rad-grey.png"))
+    figm2 = to_img_figure(os.path.join(volumetry_path, f"{timestamp}-out-rad-with-lab.png"))
+    figm3 = to_img_figure(os.path.join(volumetry_path, f"{timestamp}-fetus_3D.png"))
+
+    fig = make_subplots(rows=4, cols=1, specs=[[{"type": "image"}]] * 3 + [[{"type": "table"}]])
+    for i, fimg in enumerate([figm1, figm2, figm3]):
+        fig.add_trace(fimg.data[0], row=i+1, col=1)
+
+    fig.add_trace(
+        go.Table(
+            header=dict(font_size=14, values=['Segmentation ROI', 'Measurement', 'Percentile', 'Z-score']),
+            cells=dict(fill_color='white', font_size=14, line_color='lightgray',
+                       values=[["Fetus", "Placenta", "Amniotic fluid", "EFW (Baker et al.)"],
+                               [(round(fetus, 2), "cc"), (round(placenta, 2), "cc"),
+                                (round(amniotic, 2), "cc"), (round(efw, 2), "g")],
+                               [round(percentile_fetus, 3), round(percentile_placenta, 3),
+                                round(percentile_amniotic, 3), round(percentile_efw, 3)],
+                               [round(z_score_fetus, 3), round(z_score_placenta, 3),
+                                round(z_score_amniotic, 3), round(z_score_efw, 3)]])
+        ), row=4, col=1)
+
+    fig.update_layout(height=1414, width=1000, showlegend=False,
+                      plot_bgcolor='white', title_text=f"Internal uterus volumetry: {id} / {ga:.2f} weeks / {scan_date}")
+    fig.update_xaxes(visible=False)
+    fig.update_yaxes(visible=False)
+    fig.write_image(os.path.join(volumetry_path, f"{timestamp}-report1.png"))
+
+    figm5 = to_img_figure(os.path.join(volumetry_path, f"{timestamp}-graphs.png"))
+
+    fig2 = make_subplots(rows=1, cols=1, specs=[[{"type": "image"}]])
+    fig2.add_trace(figm5.data[0], row=1, col=1)
+    fig2.update_layout(height=1414, width=1000, showlegend=False,
+                       plot_bgcolor='white', title_text=f"Internal uterus volumetry: {id} / {ga:.2f} weeks / {scan_date}")
+    fig2.update_xaxes(visible=False)
+    fig2.update_yaxes(visible=False)
+    fig2.write_image(os.path.join(volumetry_path, f"{timestamp}-report2.png"))
+
+    f_name_summary_intro = os.path.join(volumetry_path, f"{timestamp}-report1.png")
+    f_name_summary_graphs = os.path.join(volumetry_path, f"{timestamp}-report2.png")
+    f_name_summary_intro_pdf = os.path.join(volumetry_path, f"{timestamp}-summary-intro.pdf")
+    f_name_summary_graphs_pdf = os.path.join(volumetry_path, f"{timestamp}-summary-graphs.pdf")
+
+    for image_path, output_pdf in [(f_name_summary_intro, f_name_summary_intro_pdf),
+                                   (f_name_summary_graphs, f_name_summary_graphs_pdf)]:
+        with open(output_pdf, "wb") as f:
+            f.write(img2pdf.convert(Image.open(image_path).filename))
+
+    output_report_name_pdf = os.path.join(volumetry_path, f"{timestamp}-out-report-combined.pdf")
+    pdf_merger = PyPDF2.PdfMerger()
+    pdf_merger.append(f_name_summary_intro_pdf)
+    pdf_merger.append(f_name_summary_graphs_pdf)
+    with open(output_report_name_pdf, 'wb') as f:
+        pdf_merger.write(f)
+
+    print("\n--------------------------------------------------------------\n")
 
 
 def process(connection, config, metadata):
@@ -536,30 +996,8 @@ def process_image(images, connection, config, metadata):
 
     path = "/opt/code/automated-fetal-mri/whole-uterus-segmentation-reporting.py"
 
-    try:
-        result = subprocess.run(
-            f"python3 {path}",
-            shell=True,
-            executable="/bin/bash",
-            capture_output=True,
-            text=True,
-            timeout=10  # seconds
-        )
-        print("STDOUT:\n", result.stdout)
-        print("STDERR:\n", result.stderr)
-    except subprocess.TimeoutExpired:
-        print("Script timed out. It's likely waiting for input or hanging.")
-
-    # args = ["arg1", "123"]
-    #
-    # # Launch detached process
-    # subprocess.Popen(
-    #     [sys.executable, path, *args],
-    #     stdout=subprocess.DEVNULL,
-    #     stderr=subprocess.DEVNULL,
-    #     stdin=subprocess.DEVNULL,
-    #     preexec_fn=os.setpgrp  # Fully detach (Unix/Linux only)
-    # )
+    gpu_proc = Process(target=run_volumetry_pipeline, args=(debugFolder,))
+    gpu_proc.start()
 
     # Re-slice back into 2D images
     imagesOut = [None] * data.shape[-1]
