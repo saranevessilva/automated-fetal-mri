@@ -550,6 +550,17 @@ def process_image(images, connection, config, metadata):
     except subprocess.TimeoutExpired:
         print("Script timed out. It's likely waiting for input or hanging.")
 
+    # args = ["arg1", "123"]
+    #
+    # # Launch detached process
+    # subprocess.Popen(
+    #     [sys.executable, path, *args],
+    #     stdout=subprocess.DEVNULL,
+    #     stderr=subprocess.DEVNULL,
+    #     stdin=subprocess.DEVNULL,
+    #     preexec_fn=os.setpgrp  # Fully detach (Unix/Linux only)
+    # )
+
     # Re-slice back into 2D images
     imagesOut = [None] * data.shape[-1]
 
