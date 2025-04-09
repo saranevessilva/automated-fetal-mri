@@ -996,8 +996,10 @@ def process_image(images, connection, config, metadata):
 
     path = "/opt/code/automated-fetal-mri/whole-uterus-segmentation-reporting.py"
 
-    gpu_proc = Process(target=run_volumetry_pipeline, args=(debugFolder,))
-    gpu_proc.start()
+    # gpu_proc = Process(target=run_volumetry_pipeline, args=(debugFolder,))
+    # gpu_proc.start()
+
+    run_volumetry_pipeline(debugFolder)  # Not in a separate process
 
     # Re-slice back into 2D images
     imagesOut = [None] * data.shape[-1]
