@@ -667,12 +667,6 @@ def process_image(images, connection, config, metadata):
     # Get the image data as a NumPy array
     landmark = landmark.get_fdata()
 
-    # dao = (landmark == 1.0).astype(int)
-    # dao_diaph = (landmark == 2.0).astype(int)
-    # uv = (landmark == 3.0).astype(int)
-    # apices = (landmark == 4.0).astype(int)
-    # heart_liver = (landmark == 5.0).astype(int)
-
     # new network
     uv = (landmark == 1.0).astype(int)
     dao = (landmark == 2.0).astype(int)
@@ -787,10 +781,6 @@ def process_image(images, connection, config, metadata):
     # Define the file name with the formatted date and time
     text_file_1 = (fetalbody_path + timestamp + "-com_cardiac.txt")
     text_file = debugFolder + "/sara_cardiac.dvs"
-
-    # # Get the dimensions of the cropped image
-    # fetal_im_sitk = sitk.GetArrayFromImage(fetal_im_sitk)
-    # cropped = sitk.GetArrayFromImage(cropped)
 
     print("Upper bound", upper_bound, "Lower bound", lower_bound)
 

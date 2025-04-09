@@ -534,7 +534,7 @@ def process_image(images, connection, config, metadata):
     print("The images have been saved!")
     # sitk.WriteImage(im, path)
 
-    path = "/whole-uterus-segmentation-reporting.py"
+    path = "/opt/code/automated-fetal-mri/whole-uterus-segmentation-reporting.py"
 
     result = subprocess.run(
         f"python3 {path}",
