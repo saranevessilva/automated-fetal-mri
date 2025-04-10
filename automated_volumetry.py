@@ -22,6 +22,7 @@ import io
 import os
 from datetime import datetime
 import subprocess
+import torch
 import matplotlib
 #
 from scipy.ndimage import map_coordinates
@@ -994,10 +995,15 @@ def process_image(images, connection, config, metadata):
     print("The images have been saved!")
     # sitk.WriteImage(im, path)
 
+    if torch.cuda.is_available():
+        print("CUDA is available. GPU:", torch.cuda.get_device_name(0))
+    else:
+        print("CUDA is not available. Running on CPU.")
+
     path = "/opt/code/automated-fetal-mri/whole-uterus-segmentation-reporting.py"
 
-    # gpu_proc = Process(target=run_volumetry_pipeline, args=(debugFolder,))
-    # gpu_proc.start()
+    gpu_proc = Process(target=run_volumetry_pipeline, args=(debugFolder,))
+    gpu_proc.start()
 
     run_volumetry_pipeline(debugFolder)  # Not in a separate process
 
