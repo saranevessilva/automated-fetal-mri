@@ -25,7 +25,7 @@ def process(connection, config, metadata):
         # # logging.info("Metadata: \n%s", metadata.toxml('utf-8'))
 
         logging.info("Incoming dataset contains %d encodings", len(metadata.encoding))
-        logging.info("First encoding is of type '%s', with a field of view of (%s x %s x %s)mm^3 and a matrix size of (%s x %s x %s)", 
+        logging.info("First encoding is of type '%s', with a matrix size of (%s x %s x %s) and a field of view of (%s x %s x %s)mm^3", 
             metadata.encoding[0].trajectory, 
             metadata.encoding[0].encodedSpace.matrixSize.x, 
             metadata.encoding[0].encodedSpace.matrixSize.y, 
@@ -79,7 +79,8 @@ def process(connection, config, metadata):
         if len(waveformGroup) > 0:
             waveformGroup.sort(key = lambda item: item.time_stamp)
             ecgData = [item.data for item in waveformGroup if item.waveform_id == 0]
-            ecgData = np.concatenate(ecgData,1)
+            if len(ecgData) > 0:
+                ecgData = np.concatenate(ecgData,1)
 
         # Process any remaining groups of raw or image data.  This can 
         # happen if the trigger condition for these groups are not met.
@@ -165,8 +166,14 @@ def process_image(images, connection, config, metadata):
         data_masked[(data_meandiff > threshold)] = 2048
         np.save(debugFolder + "/" + "data_masked_" + venc_dir + ".npy", data_masked)
 
+        # Determine max value (12 or 16 bit)
+        BitsStored = 12
+        if (mrdhelper.get_userParameterLong_value(metadata, "BitsStored") is not None):
+            BitsStored = mrdhelper.get_userParameterLong_value(metadata, "BitsStored")
+        maxVal = 2**BitsStored - 1
+
         # Normalize and convert to int16
-        data_masked = (data_masked.astype(np.float64) - 2048)*32767/2048
+        data_masked = (data_masked.astype(np.float64) - 2048)*maxVal/2048
         data_masked = np.around(data_masked).astype(np.int16)
 
         # Re-slice back into 2D images
@@ -189,8 +196,8 @@ def process_image(images, connection, config, metadata):
                 tmpMeta = meta[sli][phs]
                 tmpMeta['DataRole']               = 'Image'
                 tmpMeta['ImageProcessingHistory'] = ['FIRE', 'PYTHON']
-                tmpMeta['WindowCenter']           = '16384'
-                tmpMeta['WindowWidth']            = '32768'
+                tmpMeta['WindowCenter']           = str((maxVal+1)/2)
+                tmpMeta['WindowWidth']            = str((maxVal+1))
                 tmpMeta['Keep_image_geometry']    = 1
 
                 # Add image orientation directions to MetaAttributes if not already present

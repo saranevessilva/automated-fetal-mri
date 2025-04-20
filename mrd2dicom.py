@@ -83,7 +83,6 @@ def main(args):
     dset = ismrmrd.Dataset(args.filename, args.in_group, False)
 
     groups = dset.list()
-    print("Groups", groups)
 
     if ('xml' in groups):
         xml_header = dset.read_xml_header()
@@ -116,15 +115,12 @@ def main(args):
                     print("Multi-channel data not yet supported")
                     continue
 
-                # plt.imshow(mrdImg.data[0, 0, :, :])
-                # plt.show()
-
                 # Use previously JSON serialized header as a starting point, if available
                 if meta.get('DicomJson') is not None:
                     dicomDset = pydicom.dataset.Dataset.from_json(base64.b64decode(meta['DicomJson']))
                 else:
                     dicomDset = pydicom.dataset.Dataset()
-                # print("dicomDset", vars(dicomDset))
+                dicomDset = pydicom.dataset.Dataset()
 
                 # Enforce explicit little endian for written DICOM files
                 dicomDset.file_meta                            = pydicom.dataset.FileMetaDataset()
@@ -172,10 +168,10 @@ def main(args):
                         # print("mrdHead.acquisitionSystemInformation.institutionName      : %s" % mrdHead.acquisitionSystemInformation.institutionName       )
                         # print("mrdHead.acquisitionSystemInformation.stationName          : %s" % mrdHead.acquisitionSystemInformation.stationName           )
 
-                        if mrdHead.acquisitionSystemInformation.systemVendor          is not None: dicomDset.Manufacturer          = mrdHead.acquisitionSystemInformation.systemVendor
-                        if mrdHead.acquisitionSystemInformation.systemModel           is not None: dicomDset.ManufacturerModelName = mrdHead.acquisitionSystemInformation.systemModel
+                        if mrdHead.acquisitionSystemInformation.systemVendor          is not None: dicomDset.Manufacturer          = mrdHead.acquisitionSystemInformation.systemVendor         
+                        if mrdHead.acquisitionSystemInformation.systemModel           is not None: dicomDset.ManufacturerModelName = mrdHead.acquisitionSystemInformation.systemModel          
                         if mrdHead.acquisitionSystemInformation.systemFieldStrength_T is not None: dicomDset.MagneticFieldStrength = mrdHead.acquisitionSystemInformation.systemFieldStrength_T
-                        if mrdHead.acquisitionSystemInformation.institutionName       is not None: dicomDset.InstitutionName       = mrdHead.acquisitionSystemInformation.institutionName
+                        if mrdHead.acquisitionSystemInformation.institutionName       is not None: dicomDset.InstitutionName       = mrdHead.acquisitionSystemInformation.institutionName      
                         if mrdHead.acquisitionSystemInformation.stationName           is not None: dicomDset.StationName           = mrdHead.acquisitionSystemInformation.stationName
 
                         # print("---------- New -------------------------")
@@ -188,9 +184,7 @@ def main(args):
                     print("Error setting header information from MRD header's acquisitionSystemInformation section")
 
                 # Set mrdImg pixel data from MRD mrdImg
-                dicomDset.PixelData = np.squeeze(mrdImg.data) # mrdImg.data is [cha z y x] -- squeeze to [y x] for [row col]
-                imag = np.squeeze((mrdImg.data))
-                dicomDset.PixelData = imag.astype(np.uint32)
+                dicomDset.PixelData = np.squeeze(mrdImg.data).tobytes() # mrdImg.data is [cha z y x] -- squeeze to [y x] for [row col]
                 dicomDset.Rows      = mrdImg.data.shape[2]
                 dicomDset.Columns   = mrdImg.data.shape[3]
 
@@ -233,12 +227,11 @@ def main(args):
 
                 if not 'InstanceNumber' in dicomDset:
                     dicomDset.InstanceNumber = 1
-                dicomDset.InstanceNumber = imgNum
 
                 # ----- Update DICOM header from MRD ImageHeader -----
                 dicomDset.ImageType[2]               = imtype_map[mrdImg.image_type]
                 dicomDset.PixelSpacing               = [float(mrdImg.field_of_view[0]) / mrdImg.data.shape[2], float(mrdImg.field_of_view[1]) / mrdImg.data.shape[3]]
-                dicomDset.SliceThickness             = mrdImg.field_of_view[2] / 2
+                dicomDset.SliceThickness             = mrdImg.field_of_view[2]
                 dicomDset.ImagePositionPatient       = [mrdImg.position[0], mrdImg.position[1], mrdImg.position[2]]
                 dicomDset.ImageOrientationPatient    = [mrdImg.read_dir[0], mrdImg.read_dir[1], mrdImg.read_dir[2], mrdImg.phase_dir[0], mrdImg.phase_dir[1], mrdImg.phase_dir[2]]
 
@@ -283,16 +276,14 @@ def main(args):
                 if meta.get('InversionTime') is not None:
                     dicomDset.InversionTime = meta['InversionTime']
 
+                # Unhandled fields:
+                # LUTFileName
+                # ROI
+
                 # Write DICOM files
-
-                series = int(os.path.splitext(args.filename)[0].split('_')[-1])
-                instance = imgNum
-
-                fileName = "%02.0f_%s_%03.0f.dcm" % (series, dicomDset.SeriesDescription, instance)
+                fileName = "%02.0f_%s_%03.0f.dcm" % (dicomDset.SeriesNumber, dicomDset.SeriesDescription, dicomDset.InstanceNumber)
                 print("  Writing file %s" % fileName)
-
-                # Save the DICOM file without the 'enforce_file_format' argument
-                dicomDset.save_as(os.path.join(args.out_folder, fileName))
+                dicomDset.save_as(os.path.join(args.out_folder, fileName), enforce_file_format=True)
                 filesWritten += 1
 
     print("Wrote %d DICOM files to %s" % (filesWritten, args.out_folder))

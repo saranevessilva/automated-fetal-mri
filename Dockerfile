@@ -48,9 +48,6 @@ RUN apk add --no-cache \
 # Enable Docker daemon
 RUN dockerd &
 
-# Pull the image
-RUN docker pull fetalsvrtk/svrtk:general_auto_amd
-
 # Stage 2: Final Image
 FROM python:3.10.2-slim
 LABEL org.opencontainers.image.description="Automated fetal MRI tools"
@@ -84,51 +81,57 @@ COPY requirements.txt /tmp/
 RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
     pip freeze
 
-# Install PyTorch with CUDA support (1.10.0 with CUDA 11.3)
-# RUN pip install torch==2.5.1 && pip install torchvision==0.15.1
-
-# # Install a specific version of nnUNet
-# RUN git clone https://github.com/MIC-DKFZ/nnUNet.git /opt/code/nnUNet && \
-#     cd /opt/code/nnUNet && \
-#     pip install -e .
-
 # Install necessary dependencies
 RUN apt update && apt install -y git git-lfs && git lfs install
 
 # Clone additional repositories
 RUN mkdir -p /opt/code && \
     cd /opt/code && \
-    git clone --branch landmarks https://github.com/saranevessilva/automated-fetal-mri.git && \
-    git clone https://github.com/kspacekelvin/python-ismrmrd-server.git && \
+    git clone --branch python-ismrmrd-server https://github.com/saranevessilva/automated-fetal-mri.git && \
     git clone https://github.com/ismrmrd/ismrmrd-python-tools.git && \
     cd /opt/code/ismrmrd-python-tools && \
-    pip3 install --no-cache-dir . && \
-    pip freeze
+    pip3 install --no-cache-dir .
+    
+# # Set correct permissions to access the file
+RUN chmod 600 /opt/code/python-ismrmrd-server/.Xauthority
 
-# Set correct permissions to access the file
-RUN chmod 600 /opt/code/automated-fetal-mri/.Xauthority
-
-# Optionally, you can set environment variables if required
-ENV XAUTHORITY=/opt/code/automated-fetal-mri/.Xauthority
+# # Optionally, you can set environment variables if required
+ENV XAUTHORITY=/opt/code/python-ismrmrd-server/.Xauthority
 
 ENV DISPLAY=:0
 
+
 # Set environment variables (optional, but helps avoid interactive prompts)
 ENV DEBIAN_FRONTEND=noninteractive
+
+RUN mkdir -p /opt/code/python-ismrmrd-server
+COPY . /opt/code/python-ismrmrd-server
+
 
 # Update package list and install dependencies
 RUN apt-get update && \
     apt-get install -y dcm2niix
 
-# Set working directory
-WORKDIR /opt/code/automated-fetal-mri
+# Throw an explicit error if docker build is run from the folder *containing*
+# python-ismrmrd-server instead of within it (i.e. old method)
+RUN if [ -d /opt/code/python-ismrmrd-server/python-ismrmrd-server ]; then echo "docker build should be run inside of python-ismrmrd-server instead of one directory up"; exit 1; fi
+
+# Ensure startup scripts have Unix (LF) line endings, which may not be true
+# if the git repo is cloned in Windows
+RUN find /opt/code/python-ismrmrd-server -name "*.sh" | xargs dos2unix
+
+# Ensure startup scripts are marked as executable, which may be lost if files
+# are copied in Windows
+RUN find /opt/code/python-ismrmrd-server -name "*.sh" -exec chmod +x {} \;
+
+# Set the starting directory so that code can use relative paths
+WORKDIR /opt/code/python-ismrmrd-server
 RUN git lfs pull
 
 # Entry point
 COPY "entrypoint.sh" /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-ENTRYPOINT ["/bin/bash", "/usr/local/bin/entrypoint.sh"]
 
-CMD ["python3", "main.py", "-v", "-H=0.0.0.0", "-p=9002", "-l=/tmp/python-ismrmrd-server.log"]
+CMD [ "python3", "/opt/code/python-ismrmrd-server/main.py", "-v", "-H=0.0.0.0", "-p=9002", "-l=/tmp/python-ismrmrd-server.log", "--defaultConfig=i2i"]
 

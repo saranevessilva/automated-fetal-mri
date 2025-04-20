@@ -23,7 +23,7 @@ def process(connection, config, metadata):
         # # logging.info("Metadata: \n%s", metadata.toxml('utf-8'))
 
         logging.info("Incoming dataset contains %d encodings", len(metadata.encoding))
-        logging.info("First encoding is of type '%s', with a field of view of (%s x %s x %s)mm^3 and a matrix size of (%s x %s x %s)", 
+        logging.info("First encoding is of type '%s', with a matrix size of (%s x %s x %s) and a field of view of (%s x %s x %s)mm^3", 
             metadata.encoding[0].trajectory, 
             metadata.encoding[0].encodedSpace.matrixSize.x, 
             metadata.encoding[0].encodedSpace.matrixSize.y, 
@@ -148,8 +148,14 @@ def process_raw(group, config, metadata):
     logging.debug("Image data is size %s" % (data.shape,))
     np.save(debugFolder + "/" + "img.npy", data)
 
+    # Determine max value (12 or 16 bit)
+    BitsStored = 12
+    if (mrdhelper.get_userParameterLong_value(metadata, "BitsStored") is not None):
+        BitsStored = mrdhelper.get_userParameterLong_value(metadata, "BitsStored")
+    maxVal = 2**BitsStored - 1
+
     # Normalize and convert to int16
-    data *= 32767/data.max()
+    data *= maxVal/data.max()
     data = np.around(data)
     data = data.astype(np.int16)
 
@@ -184,8 +190,8 @@ def process_raw(group, config, metadata):
         tmpMeta = ismrmrd.Meta()
         tmpMeta['DataRole']               = 'Image'
         tmpMeta['ImageProcessingHistory'] = ['PYTHON', 'BART']
-        tmpMeta['WindowCenter']           = '16384'
-        tmpMeta['WindowWidth']            = '32768'
+        tmpMeta['WindowCenter']           = str((maxVal+1)/2)
+        tmpMeta['WindowWidth']            = str((maxVal+1))
         tmpMeta['Keep_image_geometry']    = 1
 
         # Add image orientation directions to MetaAttributes if not already present

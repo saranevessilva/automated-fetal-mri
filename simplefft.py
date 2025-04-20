@@ -67,18 +67,11 @@ def process_group(group, config, metadata):
     logging.debug("Raw data is size %s" % (data.shape,))
     np.save(debugFolder + "/" + "raw.npy", data)
 
-    # Remove readout oversampling
-    data = fft.ifft(data, axis=1)
-    data = np.delete(data, np.arange(int(data.shape[1]*1/4),int(data.shape[1]*3/4)), 1)
-    data = fft.fft( data, axis=1)
-
-    logging.debug("Raw data is size after readout oversampling removal %s" % (data.shape,))
-    np.save(debugFolder + "/" + "rawNoOS.npy", data)
-
     # Fourier Transform
     data = fft.fftshift( data, axes=(1, 2))
     data = fft.ifft2(    data, axes=(1, 2))
     data = fft.ifftshift(data, axes=(1, 2))
+    data *= np.prod(data.shape) # FFT scaling for consistency with ICE
 
     # Sum of squares coil combination
     data = np.abs(data)
@@ -89,8 +82,14 @@ def process_group(group, config, metadata):
     logging.debug("Image data is size %s" % (data.shape,))
     np.save(debugFolder + "/" + "img.npy", data)
 
+    # Determine max value (12 or 16 bit)
+    BitsStored = 12
+    if (mrdhelper.get_userParameterLong_value(metadata, "BitsStored") is not None):
+        BitsStored = mrdhelper.get_userParameterLong_value(metadata, "BitsStored")
+    maxVal = 2**BitsStored - 1
+
     # Normalize and convert to int16
-    data *= 32767/data.max()
+    data *= maxVal/data.max()
     data = np.around(data)
     data = data.astype(np.int16)
 
@@ -120,8 +119,8 @@ def process_group(group, config, metadata):
     # Set ISMRMRD Meta Attributes
     meta = ismrmrd.Meta({'DataRole':               'Image',
                          'ImageProcessingHistory': ['FIRE', 'PYTHON'],
-                         'WindowCenter':           '16384',
-                         'WindowWidth':            '32768'})
+                         'WindowCenter':           str((maxVal+1)/2),
+                         'WindowWidth':            str((maxVal+1))})
 
     # Add image orientation directions to MetaAttributes if not already present
     if meta.get('ImageRowDir') is None:

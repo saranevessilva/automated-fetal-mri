@@ -8,34 +8,29 @@ import multiprocessing
 import ismrmrd.xsd
 import importlib
 import os
+import json
+import signal
+
 import simplefft
 import invertcontrast
-import autoplan_fetal_cardiac_landmarks
-import automated_volumetry
-import autoplan_fetal_sagittal_landmarks
-import autoplan_fetal_head_landmarks
-import autoplan_fetal_head_landmarks_offline
-import autoplan_fetal_head_landmarks_phantom
-import autoplan_fetal_head_landmarks_phantom_offline
-import automated_svr_launch
-import automated_pull_svr_brain
-import automated_pull_svr_body
-import mrd2dicom
-
+import analyzeflow
 
 class Server:
     """
-    Something docstring.
+    Something something docstring.
     """
 
-    def __init__(self, address, port, savedata, savedataFolder, multiprocessing):
+    def __init__(self, address, port, defaultConfig, savedata, savedataFolder, multiprocessing):
         logging.info("Starting server and listening for data at %s:%d", address, port)
+
+        logging.info("Default config is %s", defaultConfig)
         if (savedata is True):
             logging.debug("Saving incoming data is enabled.")
 
         if (multiprocessing is True):
             logging.debug("Multiprocessing is enabled.")
 
+        self.defaultConfig = defaultConfig
         self.multiprocessing = multiprocessing
         self.savedata = savedata
         self.savedataFolder = savedataFolder
@@ -48,6 +43,13 @@ class Server:
         self.socket.listen(0)
 
         while True:
+            try:
+                signal.siginterrupt(signal.SIGTERM, True)
+                signal.siginterrupt(signal.SIGINT, True)
+            except AttributeError:
+                # signal.siginterrupt is not available in Windows
+                pass
+
             sock, (remote_addr, remote_port) = self.socket.accept()
 
             logging.info("Accepting connection from: %s:%d", remote_addr, remote_port)
@@ -79,55 +81,44 @@ class Server:
             try:
                 metadata = ismrmrd.xsd.CreateFromDocument(metadata_xml)
                 if (metadata.acquisitionSystemInformation.systemFieldStrength_T != None):
-                    logging.info("Data is from a %s %s at %1.1fT", metadata.acquisitionSystemInformation.systemVendor,
-                                 metadata.acquisitionSystemInformation.systemModel,
-                                 metadata.acquisitionSystemInformation.systemFieldStrength_T)
+                    logging.info("Data is from a %s %s at %1.1fT", metadata.acquisitionSystemInformation.systemVendor, metadata.acquisitionSystemInformation.systemModel, metadata.acquisitionSystemInformation.systemFieldStrength_T)
             except:
                 logging.warning("Metadata is not a valid MRD XML structure.  Passing on metadata as text")
                 metadata = metadata_xml
 
+            # Support additional config parameters passed through a JSON text message
+            if connection.peek_mrd_message_identifier() == constants.MRD_MESSAGE_TEXT:
+                configAdditionalText = next(connection)
+                logging.info("Received additional config text: %s", configAdditionalText)
+                connection.save_additional_config(configAdditionalText)
+                try:
+                    configAdditional = json.loads(configAdditionalText)
+
+                    if ('parameters' in configAdditional):
+                        if ('config' in configAdditional['parameters']):
+                            logging.info("Changing config to: %s", configAdditional['parameters']['config'])
+                            config = configAdditional['parameters']['config']
+
+                        if ('customconfig' in configAdditional['parameters']) and (configAdditional['parameters']['customconfig'] != ""):
+                            logging.info("Changing config to: %s", configAdditional['parameters']['customconfig'])
+                            config = configAdditional['parameters']['customconfig']
+                except:
+                    logging.error("Failed to parse as JSON")
+            else:
+                configAdditional = config
+
             # Decide what program to use based on config
             # If not one of these explicit cases, try to load file matching name of config
-            if config == "simplefft":
+            if (config == "simplefft"):
                 logging.info("Starting simplefft processing based on config")
-                simplefft.process(connection, config, metadata)
-            if config == "mrd2dicom":
-                logging.info("Starting mrd2dicom processing based on config")
-                mrd2dicom.process(connection, config, metadata)
-            elif config == "invertcontrast":
+                simplefft.process(connection, configAdditional, metadata)
+            elif (config == "invertcontrast"):
                 logging.info("Starting invertcontrast processing based on config")
-                invertcontrast.process(connection, config, metadata)
-            elif config == "autoplan_fetal_cardiac_landmarks":
-                logging.info("Starting autoplan_fetal_cardiac_landmarks processing based on config")
-                autoplan_fetal_cardiac_landmarks.process(connection, config, metadata)
-            elif config == "automated_volumetry":
-                logging.info("Starting automated_volumetry processing based on config")
-                automated_volumetry.process(connection, config, metadata)
-            elif config == "autoplan_fetal_sagittal_landmarks":
-                logging.info("Starting autoplan_fetal_sagittal_landmarks processing based on config")
-                autoplan_fetal_sagittal_landmarks.process(connection, config, metadata)
-            elif config == "autoplan_fetal_head_landmarks":
-                logging.info("Starting autoplan_fetal_head_landmarks processing based on config")
-                autoplan_fetal_head_landmarks.process(connection, config, metadata)
-            elif config == "autoplan_fetal_head_landmarks_offline":
-                logging.info("Starting autoplan_fetal_head_landmarks_offline processing based on config")
-                autoplan_fetal_head_landmarks_offline.process(connection, config, metadata)
-            elif config == "autoplan_fetal_head_landmarks_phantom":
-                logging.info("Starting autoplan_fetal_head_landmarks_phantom processing based on config")
-                autoplan_fetal_head_landmarks_phantom.process(connection, config, metadata)
-            elif config == "autoplan_fetal_head_landmarks_phantom_offline":
-                logging.info("Starting autoplan_fetal_head_landmarks_phantom_offline processing based on config")
-                autoplan_fetal_head_landmarks_phantom_offline.process(connection, config, metadata)
-            elif config == "automated_svr_launch":
-                logging.info("Starting automated_svr_launch processing based on config")
-                automated_svr_launch.process(connection, config, metadata)
-            elif config == "automated_pull_svr_brain":
-                logging.info("Starting automated_pull_svr_brain processing based on config")
-                automated_pull_svr_brain.process(connection, config, metadata)
-            elif config == "automated_pull_svr_body":
-                logging.info("Starting automated_pull_svr_body processing based on config")
-                automated_pull_svr_body.process(connection, config, metadata)
-            elif config == "null":
+                invertcontrast.process(connection, configAdditional, metadata)
+            elif (config == "analyzeflow"):
+                logging.info("Starting analyzeflow processing based on config")
+                analyzeflow.process(connection, configAdditional, metadata)
+            elif (config == "null"):
                 logging.info("No processing based on config")
                 try:
                     for msg in connection:
@@ -135,7 +126,7 @@ class Server:
                             break
                 finally:
                     connection.send_close()
-            elif config == "savedataonly":
+            elif (config == "savedataonly"):
                 # Dummy loop with no processing
                 try:
                     for msg in connection:
@@ -144,29 +135,32 @@ class Server:
                 finally:
                     connection.send_close()
             else:
+                usedConfig = config
+                if importlib.util.find_spec(config) is None:
+                    logging.error("Could not find config module '%s' -- falling back to default config: %s", config, self.defaultConfig)
+                    usedConfig = self.defaultConfig
+
                 try:
                     # Load module from file having exact name as config
-                    module = importlib.import_module(config)
-                    logging.info("Starting config %s", config)
-                    # module.process(connection, config, metadata)
-                    invertcontrast.process(connection, config, metadata)
-
-                except ImportError:
-                    logging.info("Unknown config '%s'.  Falling back to 'invertcontrast'", config)
-                    invertcontrast.process(connection, config, metadata)
+                    module = importlib.import_module(usedConfig)
+                    logging.info("Starting config %s", usedConfig)
+                    module.process(connection, configAdditional, metadata)
+                except ImportError as e:
+                    logging.error("Failed to load config '%s' with error:\n  %s", usedConfig, e)
+                    if usedConfig != self.defaultConfig:
+                        logging.info("Falling back to default config: '%s'", self.defaultConfig)
+                        try:
+                            module = importlib.import_module(self.defaultConfig)
+                            logging.info("Starting config %s", self.defaultConfig)
+                            module.process(connection, configAdditional, metadata)
+                        except ImportError as e:
+                            logging.error("Failed to load default config '%s' with error:\n  %s", self.defaultConfig, e)
 
         except Exception as e:
             logging.exception(e)
 
         finally:
-            # Encapsulate shutdown in a try block because the socket may have
-            # already been closed on the other side
-            try:
-                sock.shutdown(socket.SHUT_RDWR)
-            except:
-                pass
-            sock.close()
-            logging.info("Socket closed")
+            connection.shutdown_close()
 
             # Dataset may not be closed properly if a close message is not received
             if connection.savedata is True:

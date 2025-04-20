@@ -51,30 +51,34 @@ def update_img_header_from_raw(imgHead, rawHead):
 
 def get_userParameterLong_value(metadata, name):
     """Get a value from MRD Header userParameterLong (returns None if key not found)"""
-    for param in metadata.userParameters.userParameterLong:
-        if param.name == name:
-            return int(param.value)
+    if metadata.userParameters is not None:
+        for param in metadata.userParameters.userParameterLong:
+            if param.name == name:
+                return int(param.value)
     return None
 
 def get_userParameterDouble_value(metadata, name):
     """Get a value from MRD Header userParameterDouble (returns None if key not found)"""
-    for param in metadata.userParameters.userParameterDouble:
-        if param.name == name:
-            return float(param.value)
+    if metadata.userParameters is not None:
+        for param in metadata.userParameters.userParameterDouble:
+            if param.name == name:
+                return float(param.value)
     return None
 
 def get_userParameterString_value(metadata, name):
     """Get a value from MRD Header userParameterDouble (returns None if key not found)"""
-    for param in metadata.userParameters.userParameterDouble:
-        if param.name == name:
-            return float(param.value)
+    if metadata.userParameters is not None:
+        for param in metadata.userParameters.userParameterDouble:
+            if param.name == name:
+                return float(param.value)
     return None
 
 def get_userParameterBase64_value(metadata, name):
     """Get a value from MRD Header userParameterBase64 (returns None if key not found)"""
-    for param in metadata.userParameters.userParameterBase64:
-        if param.name == name:
-            return base64.b64decode(param.value).decode('utf-8')
+    if metadata.userParameters is not None:
+        for param in metadata.userParameters.userParameterBase64:
+            if param.name == name:
+                return base64.b64decode(param.value).decode('utf-8')
     return None
 
 def get_meta_value(meta, key):
@@ -138,7 +142,36 @@ def extract_minihead_param(miniHead, name, strType):
     else:
         return values[0]
 
-def create_roi(x, y, rgb = (1, 0, 0), thickness = 1, style = 0, visibility = 1):
+def get_json_param(config, field, type=None):
+    """Get a field from the JSON additional config with optional type casting"""
+    if not isinstance(config, dict):
+        return None
+
+    if not 'parameters' in config:
+        return None
+
+    if not field in config['parameters']:
+        return None
+
+    value = config['parameters'][field]
+
+    if type is None:
+        return value
+    elif type == 'int':
+        return int(value)
+    elif (type == 'float') or (type == 'double'):
+        return float(value)
+    elif (type == 'string') or (type == 'choice'):
+        return str(value)
+    elif (type == 'bool') or (type == 'boolean'):
+        if isinstance(value, bool):
+            return value
+        else:
+            return ('true' in value.lower())
+    else:
+        raise Exception("'type' must be None (no type conversion), int, float, string, or bool")
+
+def create_roi(x, y, rgb = (1, 0, 0), thickness = 1, style: int = 0, visibility: int = 1):
     """
     Create an MRD-formatted ROI
         Parameters:
@@ -159,11 +192,87 @@ def create_roi(x, y, rgb = (1, 0, 0), thickness = 1, style = 0, visibility = 1):
     roi.append('%f' % rgb[1])
     roi.append('%f' % rgb[2])
     roi.append('%f' % thickness)
-    roi.append('%f' % style)
-    roi.append('%f' % visibility)
+    roi.append('%d' % style)
+    roi.append('%d' % visibility)
 
     for i in range(0, len(xy)):
         roi.append('%f' % xy[i][0])
         roi.append('%f' % xy[i][1])
 
     return roi
+
+def parse_roi(roi):
+    """
+    Parse an MRD-formatted ROI
+        Input:
+            - roi (string list)  : MRD-formatted ROI from a MetaAttribute
+        Output:
+            - x (1D ndarray)     : x coordinates in units of pixels, with (0,0) at the top left
+            - y (1D ndarray)     : y coordinates in units of pixels, matching the length of x
+            - rgb (3 item tuple) : Colour as an (red, green, blue) tuple normalized to 1
+            - thickness (float)  : Line thickness
+            - style (int)        : Line style (0 = solid, 1 = dashed)
+            - visibility (int)   : Line visibility (0 = false, 1 = true)
+    """
+    if (not isinstance(roi, list)) or (len(roi) < 8) or (len(roi) % 2):
+        raise Exception("ROI must be a list, have 6 metadata values, at least one coordinate, and an even number of values (x,y pairs)")
+    
+    fRoi = [float(x) for x in roi]
+
+    rgb = tuple(fRoi[0:3])
+    thickness = fRoi[3]
+    style = int(fRoi[4])
+    visibility = int(fRoi[5])
+
+    x = fRoi[6::2]
+    y = fRoi[7::2]
+
+    return x, y, rgb, thickness, style, visibility
+
+def create_text(x, y, rgb = (1, 0, 0), visibility: int = 1, string = ''):
+    """
+    Create an MRD-formatted text object
+        Parameters:
+            - x (float)          : x coordinate in units of pixels, with (0,0) at the top left
+            - y (float)          : y coordinate in units of pixels
+            - rgb (3 item tuple) : Colour as an (red, green, blue) tuple normalized to 1
+            - visibility (int)   : Line visibility (0 = false, 1 = true)
+            - string (string)    : Text string
+        Returns:
+            - txt (string list)  : MRD-formatted text, intended to be stored as a MetaAttribute
+                                   with field name starting with "Text_"
+    """
+    txt = []
+    txt.append('%f' % rgb[0])
+    txt.append('%f' % rgb[1])
+    txt.append('%f' % rgb[2])
+    txt.append('%f' % x)
+    txt.append('%f' % y)
+    txt.append('%d' % visibility)
+    txt.append('%s' % string)
+
+    return txt
+
+def parse_text(txt):
+    """
+    Parse an MRD-formatted text object
+        Input:
+            - txt (string list)  : MRD-formatted text from a MetaAttribute
+        Output:
+            - x (float)          : x coordinate in units of pixels, with (0,0) at the top left
+            - y (float)          : y coordinate in units of pixels
+            - rgb (3 item tuple) : Colour as an (red, green, blue) tuple normalized to 1
+            - visibility (int)   : Line visibility (0 = false, 1 = true)
+            - string (string)    : Text string
+    """
+    if (not isinstance(txt, list)) or (len(txt) != 7):
+        raise Exception("txt must be a list that has exactly 7 metadata values")
+
+    rgb = tuple([float(x) for x in txt[0:3]])
+    x = float(txt[3])
+    y = float(txt[4])
+    visibility = int(float(txt[5]))
+
+    string = txt[6]
+
+    return x, y, rgb, visibility, string

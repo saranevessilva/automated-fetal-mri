@@ -11,12 +11,13 @@ import signal
 defaults = {
     'host':           '0.0.0.0',
     'port':           9002,
+    'defaultConfig':  'invertcontrast',
     'savedataFolder': '/tmp/share/saved_data'
 }
 
 def main(args):
     # Create a multi-threaded dispatcher to handle incoming connections
-    server = Server(args.host, args.port, args.savedata, args.savedataFolder, args.multiprocessing)
+    server = Server(args.host, args.port, args.defaultConfig, args.savedata, args.savedataFolder, args.multiprocessing)
 
     # Trap signal interrupts (e.g. ctrl+c, SIGTERM) and gracefully stop
     def handle_signals(signum, frame):
@@ -37,6 +38,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-p', '--port',            type=int,            help='Port')
     parser.add_argument('-H', '--host',            type=str,            help='Host')
+    parser.add_argument('-d', '--defaultConfig',   type=str,            help='Default (fallback) config module')
     parser.add_argument('-v', '--verbose',         action='store_true', help='Verbose output.')
     parser.add_argument('-l', '--logfile',         type=str,            help='Path to log file')
     parser.add_argument('-s', '--savedata',        action='store_true', help='Save incoming data')
@@ -54,7 +56,7 @@ if __name__ == '__main__':
         fmt='%(asctime)s - %(message)s'
 
     if args.logfile:
-        print("Logging to file: ", args.logfile)
+        print("Logging to file:", args.logfile)
 
         if not os.path.exists(os.path.dirname(args.logfile)):
             os.makedirs(os.path.dirname(args.logfile))

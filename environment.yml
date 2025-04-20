@@ -1,0 +1,16 @@
+name: mrd
+channels:
+  - ismrmrd
+  - conda-forge
+dependencies:
+  - python=3.10.13
+  - ismrmrd::ismrmrd-python=1.14.1
+  - ismrmrd::siemens_to_ismrmrd=1.2.11
+  - boost=1.76.0         # For ismrmrd
+  - libxml2=2.9.12       # For ismrmrd
+  - h5py=3.7.0           # For ismrmrd
+  - matplotlib=3.8.2     # used by rgb.py and provides various visualization tools including colormaps
+  - pydicom=3.0.1        # used by dicom2mrd.py to parse DICOM data
+  - numpy=1.26.0
+  - git=2.30.2
+  - m2-dos2unix=7.3.3    # For fixing line ending issues from Windows

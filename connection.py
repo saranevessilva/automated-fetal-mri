@@ -1,5 +1,3 @@
-
-
 import constants
 import ismrmrd
 import ctypes
@@ -58,6 +56,15 @@ class Connection:
             self.dset = ismrmrd.Dataset(self.mrdFilePath, self.savedataGroup)
             self.dset._file.require_group(self.savedataGroup)
 
+    def save_additional_config(self, configAdditionalText):
+        if self.savedata is True:
+            if self.dset is None:
+                self.create_save_file()
+
+            self.dset._file.require_group("dataset")
+            dsetConfigAdditional = self.dset._dataset.require_dataset('configAdditional',shape=(1,), dtype=h5py.special_dtype(vlen=bytes))
+            dsetConfigAdditional[0] = bytes(configAdditionalText, 'utf-8')
+
     def send_logging(self, level, contents):
         try:
             formatted_contents = "%s %s" % (level, contents)
@@ -77,6 +84,9 @@ class Connection:
     def read(self, nbytes):
         return self.socket.recv(nbytes, socket.MSG_WAITALL)
 
+    def peek(self, nbytes):
+        return self.socket.recv(nbytes, socket.MSG_PEEK)
+
     def next(self):
         with self.lock:
             id = self.read_mrd_message_identifier()
@@ -87,6 +97,16 @@ class Connection:
             handler = self.handlers.get(id, lambda: Connection.unknown_message_identifier(id))
             return handler()
 
+    def shutdown_close(self):
+        # Encapsulate shutdown in a try block because the socket may have
+        # already been closed on the other side
+        try:
+            self.socket.shutdown(socket.SHUT_RDWR)
+        except:
+            pass
+        self.socket.close()
+        logging.info("Socket closed")
+
     @staticmethod
     def unknown_message_identifier(identifier):
         logging.error("Received unknown message type: %d", identifier)
@@ -95,6 +115,20 @@ class Connection:
     def read_mrd_message_identifier(self):
         try:
             identifier_bytes = self.read(constants.SIZEOF_MRD_MESSAGE_IDENTIFIER)
+        except ConnectionResetError:
+            logging.error("Connection closed unexpectedly")
+            self.is_exhausted = True
+            return
+
+        if (len(identifier_bytes) == 0):
+            self.is_exhausted = True
+            return
+
+        return constants.MrdMessageIdentifier.unpack(identifier_bytes)[0]
+
+    def peek_mrd_message_identifier(self):
+        try:
+            identifier_bytes = self.peek(constants.SIZEOF_MRD_MESSAGE_IDENTIFIER)
         except ConnectionResetError:
             logging.error("Connection closed unexpectedly")
             self.is_exhausted = True
@@ -125,8 +159,8 @@ class Connection:
     def read_config_file(self):
         logging.info("<-- Received MRD_MESSAGE_CONFIG_FILE (1)")
         config_file_bytes = self.read(constants.SIZEOF_MRD_MESSAGE_CONFIGURATION_FILE)
-        config_file = constants.MrdMessageConfigurationFile.unpack(config_file_bytes)[0].decode("utf-8")
-        config_file = config_file.split('\x00',1)[0]  # Strip off null terminators in fixed 1024 size
+        config_file = constants.MrdMessageConfigurationFile.unpack(config_file_bytes)[0]
+        config_file = config_file.split(b'\x00',1)[0].decode('utf-8')  # Strip off null terminators in fixed 1024 size
 
         logging.debug("    " + config_file)
         if (config_file == "savedataonly"):
@@ -166,7 +200,7 @@ class Connection:
         logging.info("<-- Received MRD_MESSAGE_CONFIG_TEXT (2)")
         length = self.read_mrd_message_length()
         config = self.read(length)
-        config = config.decode("utf-8").split('\x00',1)[0]  # Strip off null teminator
+        config = config.split(b'\x00',1)[0].decode('utf-8')  # Strip off null teminator
 
         if self.savedata is True:
             if self.dset is None:
@@ -197,7 +231,7 @@ class Connection:
         logging.info("<-- Received MRD_MESSAGE_METADATA_XML_TEXT (3)")
         length = self.read_mrd_message_length()
         metadata = self.read(length)
-        metadata = metadata.decode("utf-8").split('\x00',1)[0]  # Strip off null teminator
+        metadata = metadata.split(b'\x00',1)[0].decode('utf-8')  # Strip off null teminator
 
         if self.savedata is True:
             if self.dset is None:
@@ -217,6 +251,10 @@ class Connection:
 
     def read_close(self):
         logging.info("<-- Received MRD_MESSAGE_CLOSE (4)")
+        logging.info("    Total received acquisitions: %5d", self.recvAcqs)
+        logging.info("    Total received images:       %5d", self.recvImages)
+        logging.info("    Total received waveforms:    %5d", self.recvWaveforms)
+        logging.info("------------------------------------------")
 
         if self.savedata is True:
             if self.dset is None:
@@ -248,7 +286,7 @@ class Connection:
         logging.info("<-- Received MRD_MESSAGE_TEXT (5)")
         length = self.read_mrd_message_length()
         text = self.read(length)
-        text = text.decode("utf-8").split('\x00',1)[0]  # Strip off null teminator
+        text = text.split(b'\x00',1)[0].decode('utf-8')  # Strip off null teminator
         logging.info("    %s", text)
         return text
 
@@ -288,7 +326,7 @@ class Connection:
     # Message consists of:
     #   ID               (   2 bytes, unsigned short)
     #   Fixed header     ( 198 bytes, mixed         )
-    #   Attribute length (   8 bytes, uint_64       )
+    #   Attribute length (   8 bytes, uint64_t      )
     #   Attribute data   (  variable, char          )
     #   Image data       (  variable, variable      )
     def send_image(self, images):
@@ -298,6 +336,9 @@ class Connection:
 
             logging.info("--> Sending MRD_MESSAGE_ISMRMRD_IMAGE (1022) (%d images)", len(images))
             for image in images:
+                if image is None:
+                    continue
+
                 self.sentImages += 1
                 self.socket.send(constants.MrdMessageIdentifier.pack(constants.MRD_MESSAGE_ISMRMRD_IMAGE))
                 image.serialize_into(self.socket.send)
@@ -327,13 +368,13 @@ class Connection:
         else:
             logging.debug("   Attributes: %s", attribute_bytes.decode('utf-8'))
 
-        image = ismrmrd.Image(header_bytes, attribute_bytes.decode('utf-8').split('\x00',1)[0])  # Strip off null teminator
+        image = ismrmrd.Image(header_bytes, attribute_bytes.split(b'\x00',1)[0].decode('utf-8'))  # Strip off null teminator
 
-        logging.info("    Image is size %d x %d x %d with %d channels of type %s", image.matrix_size[0], image.matrix_size[1], image.matrix_size[2], image.channels, ismrmrd.get_dtype_from_data_type(image.data_type))
+        logging.info("    Image is size %d x %d x %d with %d channels of type %s", image.getHead().matrix_size[0], image.getHead().matrix_size[1], image.getHead().matrix_size[2], image.channels, ismrmrd.get_dtype_from_data_type(image.data_type))
         def calculate_number_of_entries(nchannels, xs, ys, zs):
             return nchannels * xs * ys * zs
 
-        nentries = calculate_number_of_entries(image.channels, *image.matrix_size)
+        nentries = calculate_number_of_entries(image.channels, *image.getHead().matrix_size)
         nbytes = nentries * ismrmrd.get_dtype_from_data_type(image.data_type).itemsize
 
         logging.debug("Reading in %d bytes of image data", nbytes)
@@ -344,7 +385,7 @@ class Connection:
         if self.savedata is True:
             if self.dset is None:
                 self.create_save_file()
-            self.dset.append_image("images_%d" % image.image_series_index, image)
+            self.dset.append_image("image_%d" % image.image_series_index, image)
 
         return image
 
