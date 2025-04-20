@@ -74,64 +74,27 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     git && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements.txt and install Python dependencies
-COPY requirements.txt /tmp/
+# Install necessary dependencies for Git LFS
+RUN apt-get update && apt-get install -y git git-lfs && git lfs install
 
-# Install Python dependencies and check if installation succeeds
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
-    pip freeze
-
-# Install necessary dependencies
-RUN apt update && apt install -y git git-lfs && git lfs install
-
-# Clone additional repositories
-RUN mkdir -p /opt/code && \
-    cd /opt/code && \
-    git clone --branch python-ismrmrd-server https://github.com/saranevessilva/automated-fetal-mri.git && \
-    git clone https://github.com/ismrmrd/ismrmrd-python-tools.git && \
-    cd /opt/code/ismrmrd-python-tools && \
-    pip3 install --no-cache-dir .
-    
-# # Set correct permissions to access the file
-# RUN chmod 600 /opt/code/python-ismrmrd-server/.Xauthority
-
-# # Optionally, you can set environment variables if required
-# ENV XAUTHORITY=/opt/code/python-ismrmrd-server/.Xauthority
-
-# ENV DISPLAY=:0
-
-
-# Set environment variables (optional, but helps avoid interactive prompts)
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN mkdir -p /opt/code/python-ismrmrd-server
-COPY . /opt/code/python-ismrmrd-server
-
-
-# Update package list and install dependencies
-RUN apt-get update && \
-    apt-get install -y dcm2niix
-
-# Throw an explicit error if docker build is run from the folder *containing*
-# python-ismrmrd-server instead of within it (i.e. old method)
-RUN if [ -d /opt/code/python-ismrmrd-server/python-ismrmrd-server ]; then echo "docker build should be run inside of python-ismrmrd-server instead of one directory up"; exit 1; fi
-
-# Ensure startup scripts have Unix (LF) line endings, which may not be true
-# if the git repo is cloned in Windows
-RUN find /opt/code/python-ismrmrd-server -name "*.sh" | xargs dos2unix
-
-# Ensure startup scripts are marked as executable, which may be lost if files
-# are copied in Windows
-RUN find /opt/code/python-ismrmrd-server -name "*.sh" -exec chmod +x {} \;
-
-# Set the starting directory so that code can use relative paths
+# Clone the public repository (automated-fetal-mri)
+RUN git clone --branch python-ismrmrd-server https://github.com/saranevessilva/automated-fetal-mri.git /opt/code/python-ismrmrd-server
 WORKDIR /opt/code/python-ismrmrd-server
+
+# Pull LFS files (since the repository is public, no authentication needed)
 RUN git lfs pull
 
-# Entry point
+# Copy other files and dependencies
+COPY requirements.txt /tmp/
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Copy entry point script
 COPY "entrypoint.sh" /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Set the starting directory so that code can use relative paths
+WORKDIR /opt/code/python-ismrmrd-server
 
-CMD [ "python3", "/opt/code/python-ismrmrd-server/main.py", "-v", "-H=0.0.0.0", "-p=9002", "-l=/tmp/python-ismrmrd-server.log", "--defaultConfig=i2i"]
+# Entry point for the container
+CMD [ "python3", "/opt/code/python-ismrmrd-server/main.py", "-v", "-H=0.0.0.0", "-p=9002", "-l=/tmp/python-ismrmrd-server.log", "--defaultConfig=i2i" ]
 
