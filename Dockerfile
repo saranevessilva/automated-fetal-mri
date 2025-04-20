@@ -93,12 +93,12 @@ RUN mkdir -p /opt/code && \
     pip3 install --no-cache-dir .
     
 # # Set correct permissions to access the file
-RUN chmod 600 /opt/code/python-ismrmrd-server/.Xauthority
+# RUN chmod 600 /opt/code/python-ismrmrd-server/.Xauthority
 
 # # Optionally, you can set environment variables if required
-ENV XAUTHORITY=/opt/code/python-ismrmrd-server/.Xauthority
+# ENV XAUTHORITY=/opt/code/python-ismrmrd-server/.Xauthority
 
-ENV DISPLAY=:0
+# ENV DISPLAY=:0
 
 
 # Set environment variables (optional, but helps avoid interactive prompts)

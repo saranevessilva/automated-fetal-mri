@@ -586,7 +586,7 @@ def process_image(images, connection, config, metadata, state):
         #                                                                        (segmentation_volume,
         #                                                                         image_volume))
 
-        box = im_  # brain segmentation not working
+        # box = im_  # brain segmentation not working
 
         # Define the path you want to create
         new_directory_seg = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_seg/"
@@ -628,8 +628,8 @@ def process_image(images, connection, config, metadata, state):
 
         # Run Prediction with nnUNet
         # Set the DISPLAY and XAUTHORITY environment variables
-        os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
-        os.environ["XAUTHORITY"] = '/opt/code/python-ismrmrd-server/.Xauthority'
+        # os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
+        # os.environ["XAUTHORITY"] = '/opt/code/python-ismrmrd-server/.Xauthority'
 
         # Ensure nnUNet_results is set correctly
         os.environ['nnUNet_results'] = '/opt/code/python-ismrmrd-server/eagle/FetalBrainLandmarks/nnUNet_results'
