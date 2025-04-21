@@ -470,7 +470,7 @@ def process_image(images, connection, config, metadata, im, state):
         im[:, :, slice] = np.squeeze(data)
 
     # Define the paths
-    path = ("/opt/code/automated-fetal-mri/"
+    path = ("/opt/code/python-ismrmrd-server/"
             "13-54-12-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
 
     # Read the NIfTI files
@@ -528,9 +528,9 @@ def process_image(images, connection, config, metadata, im, state):
                                               training=False,
                                               testing=False,
                                               running=True,
-                                              root_dir='/opt/code/automated-fetal-mri/eagle',
-                                              csv_dir='/opt/code/automated-fetal-mri/eagle/files/',
-                                              checkpoint_dir='/opt/code/automated-fetal-mri/eagle/checkpoints',
+                                              root_dir='/opt/code/python-ismrmrd-server/eagle',
+                                              csv_dir='/opt/code/python-ismrmrd-server/eagle/files/',
+                                              checkpoint_dir='/opt/code/python-ismrmrd-server/eagle/checkpoints',
                                               # change to -breech or -young if needed!
                                               train_csv=
                                               'data_localisation_1-label-brain_uterus_train-2022-11-23.csv',
@@ -628,19 +628,19 @@ def process_image(images, connection, config, metadata, im, state):
 
             # Run Prediction with nnUNet
             # Set the DISPLAY and XAUTHORITY environment variables
-            os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
-            os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
+            # os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
+            # os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
 
             # Ensure nnUNet_results is set correctly
-            os.environ['nnUNet_results'] = '/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'
+            os.environ['nnUNet_results'] = '/opt/code/python-ismrmrd-server/eagle/FetalBrainLandmarks/nnUNet_results'
 
             start_time = time.time()
 
             command = (
-                    "export nnUNet_raw='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_raw'; "
-                    "export nnUNet_preprocessed='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks"
+                    "export nnUNet_raw='/opt/code/python-ismrmrd-server/eagle/FetalBrainLandmarks/nnUNet_raw'; "
+                    "export nnUNet_preprocessed='/opt/code/python-ismrmrd-server/eagle/FetalBrainLandmarks"
                     "/nnUNet_preprocessed';"
-                    "export nnUNet_results='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'; "
+                    "export nnUNet_results='/opt/code/python-ismrmrd-server/eagle/FetalBrainLandmarks/nnUNet_results'; "
                     "nnUNetv2_predict -i " + box_path + "/" + timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
                     "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1"
             )
