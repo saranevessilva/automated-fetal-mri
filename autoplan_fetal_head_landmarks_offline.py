@@ -730,7 +730,7 @@ def process_image(images, connection, config, metadata, state):
 
             # Define the file name with the formatted date and time
             text_file_1 = args.results_dir + "/" + date_path + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
-            text_file = "/home/data/eagle/sara.dvs"
+            text_file = "/tmp/share/debug/sara.dvs"
 
             cm_brain = model.x_cm, model.y_cm, model.z_cm
             # print("BRAIN", cm_brain)
