@@ -12,6 +12,7 @@ import re
 import mrdhelper
 import constants
 from time import perf_counter
+from multiprocessing import Process
 
 # import numpy as np
 import ismrmrd
