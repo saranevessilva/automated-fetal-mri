@@ -103,8 +103,13 @@ def run_svr(date_path: str):
     while [ -d "/tmp/share/debug/{date_path}-$suffix" ]; do suffix=$((suffix+1)); done;
     mv /tmp/share/debug/{date_path} /tmp/share/debug/{date_path}-$suffix;
     mkdir /tmp/share/debug/{date_path};
-    chmod 1777 /tmp/share/debug/{date_path}"
-    """
+    chmod 1777 /tmp/share/debug/{date_path}" """
+
+    print("Running SVR command...")
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    print("Finished running SVR command.")
+    print("STDOUT:\n", result.stdout)
+    print("STDERR:\n", result.stderr)
 
 
 def process(connection, config, metadata):
@@ -150,13 +155,6 @@ def process(connection, config, metadata):
                         not item.is_flag_set(ismrmrd.ACQ_IS_PHASECORR_DATA) and
                         not item.is_flag_set(ismrmrd.ACQ_IS_NAVIGATION_DATA)):
                     acqGroup.append(item)
-
-                # data, which returns images that are sent back to the client.
-                if item.is_flag_set(ismrmrd.ACQ_LAST_IN_SLICE):
-                    logging.info("Processing a group of k-space data")
-                    image = process_raw(acqGroup, connection, config, metadata)
-                    connection.send_image(image)
-                    acqGroup = []
 
             # ----------------------------------------------------------
             # Image data messages
@@ -206,11 +204,6 @@ def process(connection, config, metadata):
         # happen if the trigger condition for these groups are not met.
         # This is also a fallback for handling image data, as the last
         # image in a series is typically not separately flagged.
-        if len(acqGroup) > 0:
-            logging.info("Processing a group of k-space data (untriggered)")
-            image = process_raw(acqGroup, connection, config, metadata)
-            connection.send_image(image)
-            acqGroup = []
 
         if len(imgGroup) > 0:
             logging.info("Processing a group of images (untriggered)")
@@ -224,130 +217,6 @@ def process(connection, config, metadata):
 
     finally:
         connection.send_close()
-
-
-def process_raw(group, connection, config, metadata):
-    if len(group) == 0:
-        return []
-
-    # Start timer
-    tic = perf_counter()
-
-    # Create folder, if necessary
-    if not os.path.exists(debugFolder):
-        os.makedirs(debugFolder)
-        logging.debug("Created folder " + debugFolder + " for debug output files")
-
-    # Format data into single [cha PE RO phs] array
-    lin = [acquisition.idx.kspace_encode_step_1 for acquisition in group]
-    phs = [acquisition.idx.phase for acquisition in group]
-
-    # Use the zero-padded matrix size
-    data = np.zeros((group[0].data.shape[0],
-                     metadata.encoding[0].encodedSpace.matrixSize.y,
-                     metadata.encoding[0].encodedSpace.matrixSize.x,
-                     max(phs) + 1),
-                    group[0].data.dtype)
-
-    rawHead = [None] * (max(phs) + 1)
-
-    for acq, lin, phs in zip(group, lin, phs):
-        if (lin < data.shape[1]) and (phs < data.shape[3]):
-            # TODO: Account for asymmetric echo in a better way
-            data[:, lin, -acq.data.shape[1]:, phs] = acq.data
-
-            # center line of k-space is encoded in user[5]
-            if (rawHead[phs] is None) or (
-                    np.abs(acq.getHead().idx.kspace_encode_step_1 - acq.getHead().idx.user[5]) < np.abs(
-                    rawHead[phs].idx.kspace_encode_step_1 - rawHead[phs].idx.user[5])):
-                    rawHead[phs] = acq.getHead()
-
-    # Flip matrix in RO/PE to be consistent with ICE
-    data = np.flip(data, (1, 2))
-
-    logging.debug("Raw data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "raw.npy", data)
-
-    # Remove readout oversampling
-    data = fft.ifft(data, axis=2)
-    data = np.delete(data, np.arange(int(data.shape[2] * 1 / 4), int(data.shape[2] * 3 / 4)), 2)
-    data = fft.fft(data, axis=2)
-
-    logging.debug("Raw data is size after readout oversampling removal %s" % (data.shape,))
-    np.save(debugFolder + "/" + "rawNoOS.npy", data)
-
-    # Fourier Transform
-    data = fft.fftshift(data, axes=(1, 2))
-    data = fft.ifft2(data, axes=(1, 2))
-    data = fft.ifftshift(data, axes=(1, 2))
-
-    # Sum of squares coil combination
-    # Data will be [PE RO phs]
-    data = np.abs(data)
-    data = np.square(data)
-    data = np.sum(data, axis=0)
-    data = np.sqrt(data)
-
-    logging.debug("Image data is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "img.npy", data)
-
-    # Normalize and convert to int16
-    data *= 32767 / data.max()
-    data = np.around(data)
-    data = data.astype(np.int16)
-
-    # Remove readout oversampling
-    offset = int((data.shape[1] - metadata.encoding[0].reconSpace.matrixSize.x) / 2)
-    data = data[:, offset:offset + metadata.encoding[0].reconSpace.matrixSize.x]
-
-    # Remove phase oversampling
-    offset = int((data.shape[0] - metadata.encoding[0].reconSpace.matrixSize.y) / 2)
-    data = data[offset:offset + metadata.encoding[0].reconSpace.matrixSize.y, :]
-
-    logging.debug("Image without oversampling is size %s" % (data.shape,))
-    np.save(debugFolder + "/" + "imgCrop.npy", data)
-
-    # Measure processing time
-    toc = perf_counter()
-    strProcessTime = "Total processing time: %.2f ms" % ((toc - tic) * 1000.0)
-    logging.info(strProcessTime)
-
-    # Send this as a text message back to the client
-    connection.send_logging(constants.MRD_LOGGING_INFO, strProcessTime)
-
-    # Format as ISMRMRD image data
-    imagesOut = []
-    for phs in range(data.shape[2]):
-        # Create new MRD instance for the processed image
-        # data has shape [PE RO phs], i.e. [y x].
-        # from_array() should be called with 'transpose=False' to avoid warnings, and when called
-        # with this option, can take input as: [cha z y x], [z y x], or [y x]
-        tmpImg = ismrmrd.Image.from_array(data[..., phs], transpose=False)
-
-        # Set the header information
-        tmpImg.setHead(mrdhelper.update_img_header_from_raw(tmpImg.getHead(), rawHead[phs]))
-        tmpImg.field_of_view = (ctypes.c_float(metadata.encoding[0].reconSpace.fieldOfView_mm.x),
-                                ctypes.c_float(metadata.encoding[0].reconSpace.fieldOfView_mm.y),
-                                ctypes.c_float(metadata.encoding[0].reconSpace.fieldOfView_mm.z))
-        tmpImg.image_index = phs
-
-        # Set ISMRMRD Meta Attributes
-        tmpMeta = ismrmrd.Meta()
-        tmpMeta['DataRole'] = 'Image'
-        tmpMeta['ImageProcessingHistory'] = ['FIRE', 'PYTHON']
-        tmpMeta['WindowCenter'] = '16384'
-        tmpMeta['WindowWidth'] = '32768'
-        tmpMeta['Keep_image_geometry'] = 1
-
-        xml = tmpMeta.serialize()
-        logging.debug("Image MetaAttributes: %s", xml)
-        tmpImg.attribute_string = xml
-        imagesOut.append(tmpImg)
-
-    # Call process_image() to invert image contrast
-    imagesOut = process_image(imagesOut, connection, config, metadata)
-
-    return imagesOut
 
 
 def process_image(images, connection, config, metadata):
@@ -465,12 +334,11 @@ def process_image(images, connection, config, metadata):
     # gpu_proc = Process(target=run_svr, args=(debugFolder,))
     # gpu_proc.start()
 
-    if __name__ == "__main__":
-        print("Launching docker now...")
-        gpu_proc = Process(target=run_svr, args=(debugFolder,))
-        gpu_proc.start()
-        gpu_proc.join()  # Optional but useful for debugging
-        print("SVR process finished")
+    print("Launching docker now...")
+    gpu_proc = Process(target=run_svr, args=(date_path,))
+    gpu_proc.start()
+    # gpu_proc.join()
+    print("SVR process finished")
 
     # run_volumetry_pipeline(debugFolder)  # Not in a separate process
 
