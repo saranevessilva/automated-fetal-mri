@@ -103,10 +103,11 @@ def run_svr(date_path: str):
     while [ -d "/tmp/share/debug/{date_path}-$suffix" ]; do suffix=$((suffix+1)); done;
     mv /tmp/share/debug/{date_path} /tmp/share/debug/{date_path}-$suffix;
     mkdir /tmp/share/debug/{date_path};
-    chmod 1777 /tmp/share/debug/{date_path}" """
+    chmod 1777 /tmp/share/debug/{date_path}"
+    """
 
     print("Running SVR command...")
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    result = subprocess.run(['bash', '-c', script], capture_output=True, text=True)
     print("Finished running SVR command.")
     print("STDOUT:\n", result.stdout)
     print("STDERR:\n", result.stderr)
@@ -337,7 +338,6 @@ def process_image(images, connection, config, metadata):
     print("Launching docker now...")
     gpu_proc = Process(target=run_svr, args=(date_path,))
     gpu_proc.start()
-    # gpu_proc.join()
     print("SVR process finished")
 
     # run_volumetry_pipeline(debugFolder)  # Not in a separate process
