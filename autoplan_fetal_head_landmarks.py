@@ -15,7 +15,7 @@ from time import perf_counter
 from scipy.ndimage import label, center_of_mass
 from scipy.ndimage import affine_transform
 
-# import gadgetron
+import gadgetron
 import ismrmrd
 import logging
 import time
@@ -48,14 +48,11 @@ from ismrmrd.constants import *
 import matplotlib.image
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
-import torch
-import torchvision
 
 import sys
 
 import nibabel as nib
 import SimpleITK as sitk
-
 
 import src.utils as utils
 from src.utils import ArgumentsTrainTestLocalisation, plot_losses_train
@@ -64,23 +61,29 @@ from src.boundingbox import calculate_expanded_bounding_box, apply_bounding_box
 # import numpy as np
 from numpy.fft import fftshift, ifftshift, fftn, ifftn
 
-# Reset and configure logging
-for handler in logging.root.handlers[:]:
-    logging.root.removeHandler(handler)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
-
-try:
-    from scipy.ndimage import affine_transform
-except ImportError:
-    print("Error: scipy is not installed or affine_transform is not available")
-
 # Folder for debug output files
 debugFolder = "/tmp/share/debug"
+
+
+def append_new_line(file_name, text_to_append):
+    """Append given text as a new line at the end of file"""
+    # Open the file in append & read mode ('a+')
+    with open(file_name, "a+") as file_object:
+        # Move read cursor to the start of file.
+        file_object.seek(0)
+        # If file is not empty then append '\n'
+        data = file_object.read(100)
+        if len(data) > 0:
+            file_object.write("\n")
+        # Append text at the end of file
+        file_object.write(text_to_append)
+
+
+state = {
+    "slice_pos": 0,
+    "min_slice_pos": 0,
+    "first_slice": 1
+}
 
 
 def process(connection, config, metadata):
@@ -110,9 +113,14 @@ def process(connection, config, metadata):
         logging.info("Improperly formatted metadata: \n%s", metadata)
 
     nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
+    ncontrasts = metadata.encoding[0].encodingLimits.contrast.maximum + 1
     dim_x = metadata.encoding[0].encodedSpace.matrixSize.x // 2  # oversampling
     dim_y = metadata.encoding[0].encodedSpace.matrixSize.y
+    # im = np.zeros((dim_x, dim_y, nslices, ncontrasts), dtype=np.int16)
     im = np.zeros((dim_x, dim_y, nslices), dtype=np.int16)
+    # slice_pos = 0
+    # min_slice_pos = 0
+    # first_slice = 1
 
     # Continuously parse incoming data parsed from MRD messages
     currentSeries = 0
@@ -121,13 +129,6 @@ def process(connection, config, metadata):
     waveformGroup = []
     try:
         for item in connection:
-
-            state = {
-                "slice_pos": 0,
-                "min_slice_pos": 0,
-                "first_slice": 1
-            }
-
             # ----------------------------------------------------------
             # Raw k-space data messages
             # ----------------------------------------------------------
@@ -153,10 +154,15 @@ def process(connection, config, metadata):
                     logging.info("Processing a group of images because series index changed to %d",
                                  item.image_series_index)
                     currentSeries = item.image_series_index
+                    # image = process_image(imgGroup, connection, config, metadata, im,
+                    #                       slice_pos, min_slice_pos, first_slice)
                     image = process_image(imgGroup, connection, config, metadata, im, state)
+
                     connection.send_image(image)
                     imgGroup = []
 
+                # Only process magnitude images -- send phase images back without modification (fallback for images
+                # with unknown type)
                 if (item.image_type is ismrmrd.IMTYPE_MAGNITUDE) or (item.image_type == 0):
                     imgGroup.append(item)
                 else:
@@ -199,6 +205,7 @@ def process(connection, config, metadata):
 
         if len(imgGroup) > 0:
             logging.info("Processing a group of images (untriggered)")
+            # image = process_image(imgGroup, connection, config, metadata, im, slice_pos, min_slice_pos, first_slice)
             image = process_image(imgGroup, connection, config, metadata, im, state)
             connection.send_image(image)
             imgGroup = []
@@ -244,7 +251,7 @@ def process_raw(group, connection, config, metadata):
             # center line of k-space is encoded in user[5]
             if (rawHead[phs] is None) or (
                     np.abs(acq.getHead().idx.kspace_encode_step_1 - acq.getHead().idx.user[5]) < np.abs(
-                    rawHead[phs].idx.kspace_encode_step_1 - rawHead[phs].idx.user[5])):
+                rawHead[phs].idx.kspace_encode_step_1 - rawHead[phs].idx.user[5])):
                 rawHead[phs] = acq.getHead()
 
     # Flip matrix in RO/PE to be consistent with ICE
@@ -329,8 +336,8 @@ def process_raw(group, connection, config, metadata):
         tmpImg.attribute_string = xml
         imagesOut.append(tmpImg)
 
-    # # Call process_image() to invert image contrast
-    # imagesOut = process_image(imagesOut, connection, config, metadata)
+    # Call process_image() to invert image contrast
+    imagesOut = process_image(imagesOut, connection, config, metadata)
 
     return imagesOut
 
@@ -386,19 +393,47 @@ def process_image(images, connection, config, metadata, im, state):
     read_dir = read_dir[0], read_dir[1], read_dir[2]
     print("position ", position, "read_dir", read_dir, "phase_dir ", phase_dir, "slice_dir ", slice_dir)
 
-    # Update state variables directly
-    if state["first_slice"] == 1:
-        state["min_slice_pos"] = position[1]
-        state["first_slice"] = 0
-    else:
-        if position[1] < state["min_slice_pos"]:
-            state["min_slice_pos"] = position[1]
+    # # Update state variables directly
+    # if state["first_slice"] == 1:
+    #     state["min_slice_pos"] = position[1]
+    #     state["first_slice"] = 0
+    # else:
+    #     if position[1] < state["min_slice_pos"]:
+    #         state["min_slice_pos"] = position[1]
+    #
+    # state["slice_pos"] += state["min_slice_pos"]
+    # pos_z = position[2]
+    # print("accumulated slice pos", state["slice_pos"])
+    # print("initial position", state["min_slice_pos"])
+    # print("pos_z", pos_z)
 
-    state["slice_pos"] += position[1]
-    pos_z = position[2]
-    print("accumulated slice pos", state["slice_pos"])
-    print("accumulated position", position[1])
-    print("pos_z", pos_z)
+    if state["first_slice"] == 1:
+        # First slice: initialize min and accumulated position
+        current_pos = position[1]
+        state["min_slice_pos"] = current_pos
+        state["slice_pos"] = current_pos
+        state["first_slice"] = 0
+        pos_z = position[2]
+
+        print("accumulated slice pos", state["slice_pos"])
+        print("current slice position", state["min_slice_pos"])
+        print("position_y", position[1])
+        print("pos_z", pos_z)
+
+    else:
+        # All subsequent slices
+        current_pos = position[1]
+        state["slice_pos"] += current_pos
+
+        if current_pos < state["min_slice_pos"]:
+            state["min_slice_pos"] = current_pos
+
+        pos_z = position[2]
+
+        print("accumulated slice pos", state["slice_pos"])
+        print("current slice position", current_pos)
+        print("position_y", position[1])
+        print("pos_z", pos_z)
 
     # Display MetaAttributes for first image
     logging.debug("MetaAttributes[0]: %s", ismrmrd.Meta.serialize(meta[0]))
@@ -438,8 +473,11 @@ def process_image(images, connection, config, metadata, im, state):
     srow_y = (sform_y[0], sform_y[1], sform_y[2])
     srow_z = (sform_z[0], sform_z[1], sform_z[2])
 
-    # position = position[0], slice_pos, pos_z
-    position = position[0], state["slice_pos"], pos_z
+    # im = np.squeeze(data)
+
+    # im[:, :, slice, contrast] = np.squeeze(data)  # slice - 1 because 'slice
+
+    # print("Image shape:", im.shape)
 
     sform_x = imheader.slice_dir
     sform_y = imheader.phase_dir
@@ -453,21 +491,40 @@ def process_image(images, connection, config, metadata, im, state):
     srow_y = (np.round(srow_y, 3))
     srow_z = (np.round(srow_z, 3))
 
+    srow_x = (srow_x[0], srow_x[1], srow_x[2])
+    srow_y = (srow_y[0], srow_y[1], srow_y[2])
+    srow_z = (srow_z[0], srow_z[1], srow_z[2])
+
+    srow_x = (np.round(srow_x, 3))
+    srow_y = (np.round(srow_y, 3))
+    srow_z = (np.round(srow_z, 3))
+
+    srow_x = (srow_x[0], srow_x[1], srow_x[2])
+    srow_y = (srow_y[0], srow_y[1], srow_y[2])
+    srow_z = (srow_z[0], srow_z[1], srow_z[2])
+
     slice = imheader.slice
     repetition = imheader.repetition
     contrast = imheader.contrast
     print("Repetition ", repetition, "Slice ", slice, "Contrast ", contrast)
 
-    fetalbody_path = debugFolder
+    # Define the path where the results will be saved
+    fetalbody_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/"
+                      + date_path)
+
+    file_path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "-"
+                 + timestamp + "-centreofmass.txt")
 
     # Check if the parent directory exists, if not, create it
     if not os.path.exists(fetalbody_path):
         os.makedirs(fetalbody_path)
 
     logging.info("Storing each slice into the 3D data buffer...")
-
     if contrast == 1:
         im[:, :, slice] = np.squeeze(data)
+
+    # im_ = np.flip(im_, axis=1)
+    # im_ = np.flip(im_, axis=0)
 
     if slice == nslices-1 and contrast == 1:
 
@@ -483,25 +540,10 @@ def process_image(images, connection, config, metadata, im, state):
         # Apply the affine transformation
         im_ = affine_transform(im, rotation_matrix, offset=shift)
 
-        im = nib.Nifti1Image(im_, np.eye(4))
-        nib.save(im, debugFolder + "/"
-                + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
-
-        try:
-            print("Checkpoint reached after saving NIfTI file", flush=True)
-            logging.info("Checkpoint reached after saving NIfTI file")
-            sys.stdout.flush()  # Ensure logs are immediately written
-
-        except Exception as e:
-            print(f"ERROR: {e}", flush=True)
-            logging.error(f"Script failed: {e}")
-            sys.stdout.flush()
-
         print("..................................................................................")
         print("This is the echo-time we're looking at: ", 1)
 
         logging.info("Initializing localization network...")
-        sys.stdout.flush()  # Flush again
 
         N_epochs = 100
         I_size = 128
@@ -520,9 +562,12 @@ def process_image(images, connection, config, metadata, im, state):
                                               training=False,
                                               testing=False,
                                               running=True,
-                                              root_dir='/opt/code/automated-fetal-mri/eagle',
-                                              csv_dir='/opt/code/automated-fetal-mri/eagle/files/',
-                                              checkpoint_dir='/opt/code/automated-fetal-mri/eagle/checkpoints',
+                                              root_dir='/home/sn21/miniconda3/envs/gadgetron/share/gadgetron'
+                                                       '/python',
+                                              csv_dir='/home/sn21/miniconda3/envs/gadgetron/share/gadgetron'
+                                                      '/python/files/',
+                                              checkpoint_dir='/home/sn21/miniconda3/envs/gadgetron/share'
+                                                             '/gadgetron/python/checkpoints/2022-12-16-newest/',
                                               # change to -breech or -young if needed!
                                               train_csv=
                                               'data_localisation_1-label-brain_uterus_train-2022-11-23.csv',
@@ -534,19 +579,21 @@ def process_image(images, connection, config, metadata, im, state):
                                               'data_localisation_1-label-brain_uterus_test-2022-11-23.csv',
                                               # run_input=im_corr2ab,
                                               run_input=im_,
-                                              results_dir=debugFolder + '/',
+                                              results_dir='/home/sn21/miniconda3/envs/gadgetron/share'
+                                                          '/gadgetron/python/results/',
                                               exp_name='Loc_3D',
                                               task_net='unet_3D',
                                               n_classes=N_classes)
 
+        # path = "/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/2023-09-25/im.nii.gz"
+        # image = sitk.GetImageFromArray(im)
+        # sitk.WriteImage(image, path)
+
+        # for acquisition in connection:
+
         args.gpu_ids = [0]
 
         # RUN with empty masks - to generate new ones (practical application)
-
-        # print("args.root_dir", args.root_dir)
-        # print("args.csv_dir", args.csv_dir)
-        # print("args.checkpoint_dir", args.checkpoint_dir)
-        # print("args.results_dir", args.results_dir)
 
         if args.running:
             print("Running")
@@ -568,557 +615,579 @@ def process_image(images, connection, config, metadata, im, state):
             zcm = model.z_cm
             logging.info("Motion parameters stored!")
 
-            segmentation_volume = model.seg_pr
-            image_volume = model.img_gt
+            text = str('CoM: ')
+            append_new_line(file_path, text)
+            text = str(xcm)
+            append_new_line(file_path, text)
+            text = str(ycm)
+            append_new_line(file_path, text)
+            text = str(zcm)
+            append_new_line(file_path, text)
+            text = str('---------------------------------------------------')
+            append_new_line(file_path, text)
 
-            segmentation_volume = segmentation_volume.astype(np.float32)
-            image_volume = image_volume.astype(np.float32)
+            print("centre-of-mass coordinates: ", xcm, ycm, zcm)
+            print("Localisation completed.")
 
-            box, expansion_factor, center, offset, side_length, mask, vol, crop = (apply_bounding_box
-                                                                                   (segmentation_volume,
-                                                                                    image_volume))
+        segmentation_volume = model.seg_pr
+        image_volume = model.img_gt
 
-            # box = im_  # brain segmentation not working
+        segmentation_volume = segmentation_volume.astype(np.float32)
+        image_volume = image_volume.astype(np.float32)
 
-            # Define the path you want to create
-            new_directory_seg = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_seg/"
-            new_directory_pred = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_pred/"
+        box, expansion_factor, center, offset, side_length, mask, vol, crop = (apply_bounding_box
+                                                                               (segmentation_volume,
+                                                                                image_volume))
 
-            box_path = args.results_dir + "/" + date_path
-            print("box_path", box_path)
+        # Define the path you want to create
+        new_directory_seg = fetalbody_path + "/" + timestamp + "-nnUNet_seg/"
+        new_directory_pred = fetalbody_path + "/" + timestamp + "-nnUNet_pred/"
 
-            # Check if the directory already exists
-            if not os.path.exists(new_directory_seg):
-                # If it doesn't exist, create it
-                os.mkdir(new_directory_seg)
-            else:
-                # If it already exists, handle it accordingly (maybe log a message or take alternative action)
-                print("Directory already exists:", new_directory_seg)
+        box_path = args.results_dir + date_path
 
-            # Check if the directory already exists
-            if not os.path.exists(new_directory_pred):
-                # If it doesn't exist, create it
-                os.mkdir(new_directory_pred)
-            else:
-                # If it already exists, handle it accordingly (maybe log a message or take alternative action)
-                print("Directory already exists:", new_directory_pred)
+        # Check if the directory already exists
+        if not os.path.exists(new_directory_seg):
+            # If it doesn't exist, create it
+            os.mkdir(new_directory_seg)
+        else:
+            # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+            print("Directory already exists:", new_directory_seg)
 
-            # Check if the directory already exists
-            if not os.path.exists(box_path):
-                # If it doesn't exist, create it
-                os.mkdir(box_path)
-            else:
-                # If it already exists, handle it accordingly (maybe log a message or take alternative action)
-                print("Directory already exists:", new_directory_pred)
+        # Check if the directory already exists
+        if not os.path.exists(new_directory_pred):
+            # If it doesn't exist, create it
+            os.mkdir(new_directory_pred)
+        else:
+            # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+            print("Directory already exists:", new_directory_pred)
 
-            box_im = nib.Nifti1Image(box, np.eye(4))
-            nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
-            path = (fetalbody_path + "/"
-                    + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
-            im_ = nib.Nifti1Image(im_, np.eye(4))
-            nib.save(im_, path)
+        box_im = nib.Nifti1Image(box, np.eye(4))
+        nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
+        path = ("/home/sn21/miniconda3/envs/gadgetron/share/gadgetron/python/results/" + date_path + "/"
+                + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
+        im_ = nib.Nifti1Image(im_, np.eye(4))
+        nib.save(im_, path)
 
-            # Run Prediction with nnUNet
-            # Set the DISPLAY and XAUTHORITY environment variables
-            os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
-            os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
+        # Run Prediction with nnUNet
+        # Set the DISPLAY and XAUTHORITY environment variables
+        os.environ['DISPLAY'] = ':1'  # Replace with your X11 display, e.g., ':1.0'
+        os.environ["XAUTHORITY"] = '/home/sn21/.Xauthority'
 
-            # Ensure nnUNet_results is set correctly
-            os.environ['nnUNet_results'] = '/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'
+        start_time = time.time()
 
-            start_time = time.time()
+        command = (("export nnUNet_raw='/home/sn21/landmark-data/FetalBrainLandmarks/nnUNet_raw'; "
+                    "export"
+                    "nnUNet_preprocessed='/home/sn21/landmark-data/FetalBrainLandmarks"
+                    "/nnUNet_preprocessed' ; export "
+                    "nnUNet_results='/home/sn21/landmark-data/FetalBrainLandmarks/nnUNet_results' ; "
+                    "conda activate gadgetron ; nnUNetv2_predict -i ") + box_path + "/" +
+                   timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
+                   "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1")
 
-            command = (
-                    "export nnUNet_raw='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_raw'; "
-                    "export nnUNet_preprocessed='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks"
-                    "/nnUNet_preprocessed';"
-                    "export nnUNet_results='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'; "
-                    "nnUNetv2_predict -i " + box_path + "/" + timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
-                    "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1"
-            )
+        subprocess.run(command, shell=True)
+        # Record the end time
+        end_time = time.time()
 
-            subprocess.run(command, shell=True)
+        # Calculate the elapsed time
+        elapsed_time = end_time - start_time
+        print(f"Elapsed Time for Landmark Detection: {elapsed_time} seconds")
 
-            # Record the end time
-            end_time = time.time()
+        # Define the path where NIfTI images are located
+        l_path = os.path.join(box_path, timestamp + "-nnUNet_pred")
 
-            # Calculate the elapsed time
-            elapsed_time = end_time - start_time
-            print(f"Elapsed Time for Landmark Detection: {elapsed_time} seconds")
-
-            # Define the path where NIfTI images are located
-            l_path = os.path.join(box_path, timestamp + "-nnUNet_pred")
-
-            # Use glob to find NIfTI files in the directory
-            landmarks_paths = glob.glob(os.path.join(l_path, "*.nii.gz"))
-            print(landmarks_paths)
+        # Use glob to find NIfTI files in the directory
+        landmarks_paths = glob.glob(os.path.join(l_path, "*.nii.gz"))
+        print(landmarks_paths)
 
         for landmarks_path in landmarks_paths:
-                landmark = nib.load(landmarks_path)
-                # Get the image data as a NumPy array
-                landmark = landmark.get_fdata()
-                modified_landmark = np.copy(landmark)
-
-                # Process eyes (label 1)
-                eyes_mask = landmark == 1
-                labeled_eyes, num_eyes = label(eyes_mask)
-                # Assign unique labels for each eye
-                for i in range(1, num_eyes + 1):
-                    modified_landmark[labeled_eyes == i] = 5 + i  # Start new labels for eyes at 5, 6, ...
-
-                # Process lobes (label 4)
-                lobes_mask = landmark == 4
-                labeled_lobes, num_lobes = label(lobes_mask)
-                # Assign unique labels for each lobe
-                for i in range(1, num_lobes + 1):
-                    modified_landmark[
-                        labeled_lobes == i] = 10 + i  # Start new labels for lobes at 10, 11, ...
-
-                mod = nib.Nifti1Image(modified_landmark, np.eye(4))
-                nib.save(mod, box_path + "/" + timestamp + "-nnUNet_pred/FreemaxLandmark_001_mod.nii.gz")
-
-                # Dictionary to store center of mass for each label
-                center_of_mass_dict = {}
-
-                # Find all unique labels in the updated segmentation
-                unique_labels = np.unique(modified_landmark)
-                unique_labels = unique_labels[unique_labels != 0]  # Exclude background (label 0)
-
-                # Calculate the center of mass for each label
-                for label_ in unique_labels:
-                    mask = modified_landmark == label_
-                    cm = center_of_mass(mask)
-                    center_of_mass_dict[label_] = cm
-
-                # Print the centers of mass for each label
-                for label_, cm in center_of_mass_dict.items():
-                    print(f"Label {label}: Center of Mass {cm}")
-
-                nose = (modified_landmark == 2.0).astype(int)
-                cereb = (modified_landmark == 3.0).astype(int)
-                eye_1 = (modified_landmark == 6.0).astype(int)
-                eye_2 = (modified_landmark == 7.0).astype(int)
-                lobe_1 = (modified_landmark == 11.0).astype(int)
-                lobe_2 = (modified_landmark == 12.0).astype(int)
-
-                cm_nose = center_of_mass(nose)
-                cm_cereb = center_of_mass(cereb)
-                cm_eye_1 = center_of_mass(eye_1)
-                cm_eye_2 = center_of_mass(eye_2)
-                cm_lobe_1 = center_of_mass(lobe_1)
-                cm_lobe_2 = center_of_mass(lobe_2)
-
-                print("Landmarks:", cm_eye_1, cm_eye_2, cm_cereb, cm_nose, cm_lobe_1, cm_lobe_2)
-
-                # cm_mid_eyes = tuple((cm_eye_1 + cm_eye_2) / 2.0)  # this is the anterior landmark
-                cm_mid_eyes = tuple((e1 + e2) / 2.0 for e1, e2 in zip(cm_eye_1, cm_eye_2))
-                # cm_mid_eyes = np.dot(rotation_matrix, cm_mid_eyes)
-
-                # Get the current date and time
-                current_datetime = datetime.now()
-
-                # Format the date and time as a string
-                date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
-
-                # Define the file name with the formatted date and time
-                text_file_1 = args.results_dir + "/" + date_path + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
-                text_file = debugFolder + "/" + "sara.dvs"
-
-                cm_brain = model.x_cm, model.y_cm, model.z_cm
-                # print("BRAIN", cm_brain)
-
-                # Calculate the scaling factor
-                scaling_factor = expansion_factor
-                original_dimensions = vol.shape
-                scaled_dimensions = crop.shape
-                print("original_dimensions", original_dimensions, "scaled_dimensions", scaled_dimensions)
-
-                # Calculate the corresponding coordinates in the scaled (34x34x34) image
-                cropped_eye_1_x = cm_eye_1[0] / scaling_factor
-                cropped_eye_1_y = cm_eye_1[1] / scaling_factor
-                cropped_eye_1_z = cm_eye_1[2] / scaling_factor
-
-                cropped_eye_2_x = cm_eye_2[0] / scaling_factor
-                cropped_eye_2_y = cm_eye_2[1] / scaling_factor
-                cropped_eye_2_z = cm_eye_2[2] / scaling_factor
-
-                cropped_cereb_x = cm_cereb[0] / scaling_factor
-                cropped_cereb_y = cm_cereb[1] / scaling_factor
-                cropped_cereb_z = cm_cereb[2] / scaling_factor
-
-                cropped_lobe_1_x = cm_lobe_1[0] / scaling_factor
-                cropped_lobe_1_y = cm_lobe_1[1] / scaling_factor
-                cropped_lobe_1_z = cm_lobe_1[2] / scaling_factor
-
-                cropped_lobe_2_x = cm_lobe_2[0] / scaling_factor
-                cropped_lobe_2_y = cm_lobe_2[1] / scaling_factor
-                cropped_lobe_2_z = cm_lobe_2[2] / scaling_factor
-
-                cropped_nose_x = cm_nose[0] / scaling_factor
-                cropped_nose_y = cm_nose[1] / scaling_factor
-                cropped_nose_z = cm_nose[2] / scaling_factor
-
-                cropped_mid_eyes_x = cm_mid_eyes[0] / scaling_factor
-                cropped_mid_eyes_y = cm_mid_eyes[1] / scaling_factor
-                cropped_mid_eyes_z = cm_mid_eyes[2] / scaling_factor
-
-                print("SCALED EYE 1", cropped_eye_1_x, cropped_eye_1_y, cropped_eye_1_z)
-                print("SCALED EYE 2", cropped_eye_2_x, cropped_eye_2_y, cropped_eye_2_z)
-                print("SCALED CEREB", cropped_cereb_x, cropped_cereb_y, cropped_cereb_z)
-                print("SCALED LOBE 1", cropped_lobe_1_x, cropped_lobe_1_y, cropped_lobe_1_z)
-                print("SCALED LOBE 2", cropped_lobe_2_x, cropped_lobe_2_y, cropped_lobe_2_z)
-                print("SCALED NOSE", cropped_nose_x, cropped_nose_y, cropped_nose_z)
-                print("SCALED MID EYES VOXEL", cropped_mid_eyes_x, cropped_mid_eyes_y, cropped_mid_eyes_z)
-
-                # Calculate the center of mass in the original 128x128x128 matrix
-                cm_eye_1 = (
-                    int(center[0] - side_length // 2) + cropped_eye_1_x,
-                    int(center[1] - side_length // 2) + cropped_eye_1_y,
-                    int(center[2] - side_length // 2) + cropped_eye_1_z
-                )
-                cm_eye_2 = (
-                    int(center[0] - side_length // 2) + cropped_eye_2_x,
-                    int(center[1] - side_length // 2) + cropped_eye_2_y,
-                    int(center[2] - side_length // 2) + cropped_eye_2_z
-                )
-                cm_cereb = (
-                    int(center[0] - side_length // 2) + cropped_cereb_x,
-                    int(center[1] - side_length // 2) + cropped_cereb_y,
-                    int(center[2] - side_length // 2) + cropped_cereb_z
-                )
-
-                cm_lobe_1 = (
-                    int(center[0] - side_length // 2) + cropped_lobe_1_x,
-                    int(center[1] - side_length // 2) + cropped_lobe_1_y,
-                    int(center[2] - side_length // 2) + cropped_lobe_1_z
-                )
-                cm_lobe_2 = (
-                    int(center[0] - side_length // 2) + cropped_lobe_2_x,
-                    int(center[1] - side_length // 2) + cropped_lobe_2_y,
-                    int(center[2] - side_length // 2) + cropped_lobe_2_z
-                )
-                cm_nose = (
-                    int(center[0] - side_length // 2) + cropped_nose_x,
-                    int(center[1] - side_length // 2) + cropped_nose_y,
-                    int(center[2] - side_length // 2) + cropped_nose_z
-                )
-
-                cm_mid_eyes = (
-                    int(center[0] - side_length // 2) + cropped_mid_eyes_x,
-                    int(center[1] - side_length // 2) + cropped_mid_eyes_y,
-                    int(center[2] - side_length // 2) + cropped_mid_eyes_z
-                )
-
-                print("EYE 1", cm_eye_1)
-                print("EYE 2", cm_eye_2)
-                print("CEREB", cm_cereb)
-                print("LOBE 1", cm_lobe_1)
-                print("LOBE 2", cm_lobe_2)
-                print("NOSE", cm_nose)
-                print("BRAIN", cm_brain)
-                print("MID EYES VOXEL", cm_mid_eyes)
-
-                # Dimensions of the padded 128x128x128 image
-                padded_dimensions = vol.shape
-
-                # Original dimensions of the image (128x128x60)
-                original_dimensions = im_.shape
-
-                # Calculate the padding in each dimension
-                padding = ((padded_dimensions[0] - original_dimensions[0]) // 2,
-                           (padded_dimensions[1] - original_dimensions[1]) // 2,
-                           (padded_dimensions[2] - original_dimensions[2]) // 2)
-
-                print("padding", padding)
-                # Calculate equivalent coordinates in the original 128x128x60 image
-                cm_eye_1 = (
-                    cm_eye_1[0] - padding[0],
-                    cm_eye_1[1] - padding[1],
-                    cm_eye_1[2] - padding[2]
-                )
-
-                cm_eye_2 = (
-                    cm_eye_2[0] - padding[0],
-                    cm_eye_2[1] - padding[1],
-                    cm_eye_2[2] - padding[2]
-                )
-
-                cm_cereb = (
-                    cm_cereb[0] - padding[0],
-                    cm_cereb[1] - padding[1],
-                    cm_cereb[2] - padding[2]
-                )
-
-                cm_lobe_1 = (
-                    cm_lobe_1[0] - padding[0],
-                    cm_lobe_1[1] - padding[1],
-                    cm_lobe_1[2] - padding[2]
-                )
-
-                cm_lobe_2 = (
-                    cm_lobe_2[0] - padding[0],
-                    cm_lobe_2[1] - padding[1],
-                    cm_lobe_2[2] - padding[2]
-                )
-
-                cm_nose = (
-                    cm_nose[0] - padding[0],
-                    cm_nose[1] - padding[1],
-                    cm_nose[2] - padding[2]
-                )
-
-                cm_brain = (
-                    cm_brain[0] - padding[0],
-                    cm_brain[1] - padding[1],
-                    cm_brain[2] - padding[2]
-                )
-
-                cm_mid_eyes = (
-                    cm_mid_eyes[0] - padding[0],
-                    cm_mid_eyes[1] - padding[1],
-                    cm_mid_eyes[2] - padding[2]
-                )
-
-                print("EYE 1", cm_eye_1)
-                print("EYE 2", cm_eye_2)
-                print("CEREB", cm_cereb)
-                print("LOBE 1", cm_lobe_1)
-                print("LOBE 2", cm_lobe_2)
-                print("NOSE", cm_nose)
-                print("BRAIN", cm_brain)
-                print("MID EYES VOXEL", cm_mid_eyes)
-
-                # # TESTING
-                # cm_eye_1 = 70, 56, 79
-                # cm_eye_2 = 71, 56, 56
-                # cm_cereb = 56, 56, 67
-                # cm_brain = 63, 56, 67
-                # cm_lobe_1 = 70, 56, 79
-                # cm_lobe_2 = 71, 56, 56
-                # cm_nose = 79, 56, 67
-
-                cm_eye_1 = pixdim_x * cm_eye_1[0], pixdim_y * cm_eye_1[1], pixdim_z * cm_eye_1[2]
-                cm_eye_2 = pixdim_x * cm_eye_2[0], pixdim_y * cm_eye_2[1], pixdim_z * cm_eye_2[2]
-                cm_cereb = pixdim_x * cm_cereb[0], pixdim_y * cm_cereb[1], pixdim_z * cm_cereb[2]
-                cm_brain = pixdim_x * cm_brain[0], pixdim_y * cm_brain[1], pixdim_z * cm_brain[2]
-                cm_mid_eyes = (pixdim_x * cm_mid_eyes[0], pixdim_y * cm_mid_eyes[1],
-                               pixdim_z * cm_mid_eyes[2])
-                cm_lobe_1 = pixdim_x * cm_lobe_1[0], pixdim_y * cm_lobe_1[1], pixdim_z * cm_lobe_1[2]
-                cm_lobe_2 = pixdim_x * cm_lobe_2[0], pixdim_y * cm_lobe_2[1], pixdim_z * cm_lobe_2[2]
-                cm_nose = pixdim_x * cm_nose[0], pixdim_y * cm_nose[1], pixdim_z * cm_nose[2]
-
-                # # # # # # # # # # # # # # # # # # # # # # # # # #
-                # position = np.array(position)
-                # position = [position[0], position[1], position[2]]
-                pos = state["slice_pos"] / (nslices * ncontrasts)  # slice position mid volume
-                print("POS", pos)
-                print("slice_pos", state["slice_pos"])
-                print("nslices", nslices)
-                position = (position[0], pos, position[2])
-
-                # lowerleftcorner = ((np.int(enc.encodedSpace.fieldOfView_mm.x/2),
-                #                     np.int(enc.encodedSpace.fieldOfView_mm.y/2), np.int(min_slice_pos)))
-                centreofimageposition = ((np.float64(metadata.encoding[0].encodedSpace.fieldOfView_mm.x) / 4,
-                                          np.float64(metadata.encoding[0].encodedSpace.fieldOfView_mm.y) / 2,
-                                          np.float64(nslices * pixdim_z) / 2))
-
-                print("centreofimageposition", centreofimageposition)
-
-                # position = np.round(position).astype(int)
-                position = (position[0], position[1], position[2])
-                # position = - position[1], position[2], position[0]
-                cm_eye_1 = np.round(cm_eye_1, 3)
-                cm_eye_2 = np.round(cm_eye_2, 3)
-                cm_cereb = np.round(cm_cereb, 3)
-                cm_brain = np.round(cm_brain, 3)
-                cm_mid_eyes = np.round(cm_mid_eyes, 3)
-                cm_lobe_1 = np.round(cm_lobe_1, 3)
-                cm_lobe_2 = np.round(cm_lobe_2, 3)
-                cm_nose = np.round(cm_nose, 3)
-
-                print("POSITION MM", position)
-                print("EYE 1 MM", cm_eye_1)
-                print("EYE 2 MM", cm_eye_2)
-                print("CEREB MM", cm_cereb)
-                print("BRAIN MM", cm_brain)
-                print("MID EYES MM", cm_mid_eyes)
-                print("LOBE 1 MM", cm_lobe_1)
-                print("LOBE 2 MM", cm_lobe_2)
-                print("NOSE MM", cm_nose)
-
-                cm_brain = (cm_brain[0] - centreofimageposition[0],
-                            cm_brain[1] - centreofimageposition[1],
-                            cm_brain[2] - centreofimageposition[2])
-
-                cm_mid_eyes = (cm_mid_eyes[0] - centreofimageposition[0],
-                               cm_mid_eyes[1] - centreofimageposition[1],
-                               cm_mid_eyes[2] - centreofimageposition[2])
-
-                cm_eye_1 = ((cm_eye_1[0]) - centreofimageposition[0],
-                            (cm_eye_1[1]) - centreofimageposition[1],
-                            cm_eye_1[2] - centreofimageposition[2])
-
-                cm_eye_2 = ((cm_eye_2[0]) - centreofimageposition[0],
-                            (cm_eye_2[1]) - centreofimageposition[1],
-                            cm_eye_2[2] - centreofimageposition[2])
-
-                cm_cereb = ((cm_cereb[0]) - centreofimageposition[0],
-                            cm_cereb[1] - centreofimageposition[1],
-                            cm_cereb[2] - centreofimageposition[2])
-
-                cm_lobe_1 = ((cm_lobe_1[0]) - centreofimageposition[0],
-                             (cm_lobe_1[1]) - centreofimageposition[1],
-                             cm_lobe_1[2] - centreofimageposition[2])
-
-                cm_lobe_2 = ((cm_lobe_2[0]) - centreofimageposition[0],
-                             (cm_lobe_2[1]) - centreofimageposition[1],
-                             cm_lobe_2[2] - centreofimageposition[2])
-
-                cm_nose = ((cm_nose[0]) - centreofimageposition[0],
-                           cm_nose[1] - centreofimageposition[1],
-                           cm_nose[2] - centreofimageposition[2])
-
-                print("centreofimageposition", centreofimageposition)
-                print("EYE 1 OFFSET", cm_eye_1)
-                print("EYE 2 OFFSET", cm_eye_2)
-                print("CEREB OFFSET", cm_cereb)
-                print("BRAIN OFFSET", cm_brain)
-                print("MID EYES OFFSET", cm_mid_eyes)
-                print("LOBE 1 OFFSET", cm_lobe_1)
-                print("LOBE 2 OFFSET", cm_lobe_2)
-                print("NOSE OFFSET", cm_nose)
-
-                # x = -ty  # -ty # seems to work
-                # y = tz  # tz
-                # z = tx  # tx  # seems to work
-
-                cm_eye_1 = (-cm_eye_1[1], cm_eye_1[2], cm_eye_1[0])
-                cm_eye_2 = (-cm_eye_2[1], cm_eye_2[2], cm_eye_2[0])
-                cm_cereb = (-cm_cereb[1], cm_cereb[2], cm_cereb[0])
-                cm_brain = (-cm_brain[1], cm_brain[2], cm_brain[0])
-                cm_mid_eyes = (-cm_mid_eyes[1], cm_mid_eyes[2], cm_mid_eyes[0])
-                cm_lobe_1 = (-cm_lobe_1[1], cm_lobe_1[2], cm_lobe_1[0])
-                cm_lobe_2 = (-cm_lobe_2[1], cm_lobe_2[2], cm_lobe_2[0])
-                cm_nose = (-cm_nose[1], cm_nose[2], cm_nose[0])
-
-                cm_brain = (cm_brain[0] + position[0],
-                            cm_brain[1] + position[1],
-                            cm_brain[2] + position[2])
-
-                cm_mid_eyes = (cm_mid_eyes[0] + position[0],
-                               cm_mid_eyes[1] + position[1],
-                               cm_mid_eyes[2] + position[2])
-
-                cm_eye_1 = ((cm_eye_1[0]) + position[0],
-                            (cm_eye_1[1]) + position[1],
-                            cm_eye_1[2] + position[2])
-
-                cm_eye_2 = ((cm_eye_2[0]) + position[0],
-                            (cm_eye_2[1]) + position[1],
-                            cm_eye_2[2] + position[2])
-
-                cm_cereb = ((cm_cereb[0]) + position[0],
-                            cm_cereb[1] + position[1],
-                            cm_cereb[2] + position[2])
-
-                cm_lobe_1 = ((cm_lobe_1[0]) + position[0],
-                             (cm_lobe_1[1]) + position[1],
-                             cm_lobe_1[2] + position[2])
-
-                cm_lobe_2 = ((cm_lobe_2[0]) + position[0],
-                             (cm_lobe_2[1]) + position[1],
-                             cm_lobe_2[2] + position[2])
-
-                cm_nose = ((cm_nose[0]) + position[0],
-                           cm_nose[1] + position[1],
-                           cm_nose[2] + position[2])
-
-                mid_eyes = ((cm_eye_1[0] + cm_eye_1[0]) / 2,
-                            (cm_eye_1[1] + cm_eye_1[1]) / 2,
-                            (cm_eye_1[2] + cm_eye_1[2]) / 2)
-
-                # print("EYE 1 ROT", cm_eye_1)
-                # print("EYE 2 ROT", cm_eye_2)
-                # print("CEREB ROT", cm_cereb)
-                # print("BRAIN ROT", cm_brain)
-                # print("FURTHEST BRAIN VOXEL ROT", furthest_point)
-
-                idx_nose = np.isnan(cm_nose)
-                # Use numpy.where to replace NaN values with corresponding values from cm_brain
-                cm_nose = np.where(idx_nose, (cm_mid_eyes[0], cm_mid_eyes[1], cm_mid_eyes[2]), cm_nose)
-
-                idx_eye_1 = np.isnan(cm_eye_1)
-                # Use numpy.where to replace NaN values with corresponding values from cm_brain
-                cm_eye_1 = np.where(idx_eye_1, (cm_brain[0], cm_brain[1], cm_brain[2]), cm_eye_1)
-
-                idx_eye_2 = np.isnan(cm_eye_2)
-                # Use numpy.where to replace NaN values with corresponding values from cm_brain
-                cm_eye_2 = np.where(idx_eye_2, (cm_brain[0], cm_brain[1], cm_brain[2]), cm_eye_2)
-
-                idx_cereb = np.isnan(cm_cereb)
-                # Use numpy.where to replace NaN values with corresponding values from cm_brain
-                cm_cereb = np.where(idx_cereb, (cm_brain[0], cm_brain[1], cm_brain[2]), cm_cereb)
-
-                cm_eye_1 = (cm_eye_1[0], cm_eye_1[1], cm_eye_1[2])
-                cm_eye_2 = (cm_eye_2[0], cm_eye_2[1], cm_eye_2[2])
-                cm_cereb = (cm_cereb[0], cm_cereb[1], cm_cereb[2])
-                cm_lobe_1 = (cm_lobe_1[0], cm_lobe_1[1], cm_lobe_1[2])
-                cm_lobe_2 = (cm_lobe_2[0], cm_lobe_2[1], cm_lobe_2[2])
-                cm_nose = (cm_nose[0], cm_nose[1], cm_nose[2])
-                cm_mid_eyes = (cm_mid_eyes[0], cm_mid_eyes[1], cm_mid_eyes[2])
-
-                print("EYE 1 ROT", cm_eye_1)
-                print("EYE 2 ROT", cm_eye_2)
-                print("CEREB ROT", cm_cereb)
-                print("BRAIN ROT", cm_brain)
-                print("MID EYES ROT", cm_mid_eyes)
-                print("LOBE 1 ROT", cm_lobe_1)
-                print("LOBE 2 ROT", cm_lobe_2)
-                print("NOSE ROT", cm_nose)
-
-                with open(text_file, "w") as file:
-                    # file.write("This is a text file created on " + date_time_string)
-                    # file.write("\n" + str('CoM: '))
-                    file.write("eye1 = " + str(cm_eye_1))
-                    file.write("\n" + "eye2 = " + str(cm_eye_2))
-                    file.write("\n" + "mideyes = " + str(cm_mid_eyes))
-                    file.write("\n" + "cere = " + str(cm_cereb))
-                    file.write("\n" + "brain = " + str(cm_brain))
-                    # file.write("\n" + "furthest = " + str(furthest_point))
-                    file.write("\n" + "lobe1 = " + str(cm_lobe_1))
-                    file.write("\n" + "lobe2 = " + str(cm_lobe_2))
-                    file.write("\n" + "nose = " + str(cm_nose))
-                    file.write("\n" + "position = " + str(position))
-                    # file.write("\n" + "centreofimageposition = " + str(centreofimageposition))
-                    file.write("\n" + "srow_x = " + str(srow_x))
-                    file.write("\n" + "srow_y = " + str(srow_y))
-                    file.write("\n" + "srow_z = " + str(srow_z))
-
-                with open(text_file_1, "w") as file:
-                    # file.write("This is a text file created on " + date_time_string)
-                    # file.write("\n" + str('CoM: '))
-                    file.write("eye1 = " + str(cm_eye_1))
-                    file.write("\n" + "eye2 = " + str(cm_eye_2))
-                    file.write("\n" + "mideyes = " + str(cm_mid_eyes))
-                    file.write("\n" + "cere = " + str(cm_cereb))
-                    file.write("\n" + "brain = " + str(cm_brain))
-                    # file.write("\n" + "furthest = " + str(furthest_point))
-                    file.write("\n" + "lobe1 = " + str(cm_lobe_1))
-                    file.write("\n" + "lobe2 = " + str(cm_lobe_2))
-                    file.write("\n" + "nose = " + str(cm_nose))
-                    file.write("\n" + "position = " + str(position))
-                    # file.write("\n" + "centreofimageposition = " + str(centreofimageposition))
-                    file.write("\n" + "srow_x = " + str(srow_x))
-                    file.write("\n" + "srow_y = " + str(srow_y))
-                    file.write("\n" + "srow_z = " + str(srow_z))
-
-                print(f"Text file '{text_file}' has been created.")
-
-    currentSeries = 0
+            # Load the image using sitk.ReadImage
+            landmark = nib.load(landmarks_path)
+            # Get the image data as a NumPy array
+            landmark = landmark.get_fdata()
+            modified_landmark = np.copy(landmark)
+
+            # Process eyes (label 1)
+            eyes_mask = landmark == 1
+            labeled_eyes, num_eyes = label(eyes_mask)
+            # Assign unique labels for each eye
+            for i in range(1, num_eyes + 1):
+                modified_landmark[labeled_eyes == i] = 5 + i  # Start new labels for eyes at 5, 6, ...
+
+            # Process lobes (label 4)
+            lobes_mask = landmark == 4
+            labeled_lobes, num_lobes = label(lobes_mask)
+            # Assign unique labels for each lobe
+            for i in range(1, num_lobes + 1):
+                modified_landmark[
+                    labeled_lobes == i] = 10 + i  # Start new labels for lobes at 10, 11, ...
+
+            mod = nib.Nifti1Image(modified_landmark, np.eye(4))
+            nib.save(mod, box_path + "/" + timestamp + "-nnUNet_pred/FreemaxLandmark_001_mod.nii.gz")
+
+            # Dictionary to store center of mass for each label
+            center_of_mass_dict = {}
+
+            # Find all unique labels in the updated segmentation
+            unique_labels = np.unique(modified_landmark)
+            unique_labels = unique_labels[unique_labels != 0]  # Exclude background (label 0)
+
+            # Calculate the center of mass for each label
+            for label_ in unique_labels:
+                mask = modified_landmark == label_
+                cm = center_of_mass(mask)
+                center_of_mass_dict[label_] = cm
+
+            # Print the centers of mass for each label
+            for label_, cm in center_of_mass_dict.items():
+                print(f"Label {label}: Center of Mass {cm}")
+
+            nose = (modified_landmark == 2.0).astype(int)
+            cereb = (modified_landmark == 3.0).astype(int)
+            eye_1 = (modified_landmark == 6.0).astype(int)
+            eye_2 = (modified_landmark == 7.0).astype(int)
+            lobe_1 = (modified_landmark == 11.0).astype(int)
+            lobe_2 = (modified_landmark == 12.0).astype(int)
+
+            cm_nose = center_of_mass(nose)
+            cm_cereb = center_of_mass(cereb)
+            cm_eye_1 = center_of_mass(eye_1)
+            cm_eye_2 = center_of_mass(eye_2)
+            cm_lobe_1 = center_of_mass(lobe_1)
+            cm_lobe_2 = center_of_mass(lobe_2)
+
+            print("Landmarks:", cm_eye_1, cm_eye_2, cm_cereb, cm_nose, cm_lobe_1, cm_lobe_2)
+
+            # cm_mid_eyes = tuple((cm_eye_1 + cm_eye_2) / 2.0)  # this is the anterior landmark
+            cm_mid_eyes = tuple((e1 + e2) / 2.0 for e1, e2 in zip(cm_eye_1, cm_eye_2))
+            # cm_mid_eyes = np.dot(rotation_matrix, cm_mid_eyes)
+
+            # Get the current date and time
+            current_datetime = datetime.now()
+
+            # Format the date and time as a string
+            date_time_string = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
+
+            # Define the file name with the formatted date and time
+            text_file_1 = args.results_dir + date_path + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
+            text_file = "/home/sn21/freemax-transfer-01/sara/landmarks-interface-autoplan/sara.dvs"
+
+            cm_brain = model.x_cm, model.y_cm, model.z_cm
+            # print("BRAIN", cm_brain)
+
+            # Calculate the scaling factor
+            scaling_factor = expansion_factor
+            original_dimensions = vol.shape
+            scaled_dimensions = crop.shape
+            print("original_dimensions", original_dimensions, "scaled_dimensions", scaled_dimensions)
+
+            # Calculate the corresponding coordinates in the scaled (34x34x34) image
+            cropped_eye_1_x = cm_eye_1[0] / scaling_factor
+            cropped_eye_1_y = cm_eye_1[1] / scaling_factor
+            cropped_eye_1_z = cm_eye_1[2] / scaling_factor
+
+            cropped_eye_2_x = cm_eye_2[0] / scaling_factor
+            cropped_eye_2_y = cm_eye_2[1] / scaling_factor
+            cropped_eye_2_z = cm_eye_2[2] / scaling_factor
+
+            cropped_cereb_x = cm_cereb[0] / scaling_factor
+            cropped_cereb_y = cm_cereb[1] / scaling_factor
+            cropped_cereb_z = cm_cereb[2] / scaling_factor
+
+            cropped_lobe_1_x = cm_lobe_1[0] / scaling_factor
+            cropped_lobe_1_y = cm_lobe_1[1] / scaling_factor
+            cropped_lobe_1_z = cm_lobe_1[2] / scaling_factor
+
+            cropped_lobe_2_x = cm_lobe_2[0] / scaling_factor
+            cropped_lobe_2_y = cm_lobe_2[1] / scaling_factor
+            cropped_lobe_2_z = cm_lobe_2[2] / scaling_factor
+
+            cropped_nose_x = cm_nose[0] / scaling_factor
+            cropped_nose_y = cm_nose[1] / scaling_factor
+            cropped_nose_z = cm_nose[2] / scaling_factor
+
+            cropped_mid_eyes_x = cm_mid_eyes[0] / scaling_factor
+            cropped_mid_eyes_y = cm_mid_eyes[1] / scaling_factor
+            cropped_mid_eyes_z = cm_mid_eyes[2] / scaling_factor
+
+            print("SCALED EYE 1", cropped_eye_1_x, cropped_eye_1_y, cropped_eye_1_z)
+            print("SCALED EYE 2", cropped_eye_2_x, cropped_eye_2_y, cropped_eye_2_z)
+            print("SCALED CEREB", cropped_cereb_x, cropped_cereb_y, cropped_cereb_z)
+            print("SCALED LOBE 1", cropped_lobe_1_x, cropped_lobe_1_y, cropped_lobe_1_z)
+            print("SCALED LOBE 2", cropped_lobe_2_x, cropped_lobe_2_y, cropped_lobe_2_z)
+            print("SCALED NOSE", cropped_nose_x, cropped_nose_y, cropped_nose_z)
+            print("SCALED MID EYES VOXEL", cropped_mid_eyes_x, cropped_mid_eyes_y, cropped_mid_eyes_z)
+
+            # Calculate the center of mass in the original 128x128x128 matrix
+            cm_eye_1 = (
+                int(center[0] - side_length // 2) + cropped_eye_1_x,
+                int(center[1] - side_length // 2) + cropped_eye_1_y,
+                int(center[2] - side_length // 2) + cropped_eye_1_z
+            )
+            cm_eye_2 = (
+                int(center[0] - side_length // 2) + cropped_eye_2_x,
+                int(center[1] - side_length // 2) + cropped_eye_2_y,
+                int(center[2] - side_length // 2) + cropped_eye_2_z
+            )
+            cm_cereb = (
+                int(center[0] - side_length // 2) + cropped_cereb_x,
+                int(center[1] - side_length // 2) + cropped_cereb_y,
+                int(center[2] - side_length // 2) + cropped_cereb_z
+            )
+
+            cm_lobe_1 = (
+                int(center[0] - side_length // 2) + cropped_lobe_1_x,
+                int(center[1] - side_length // 2) + cropped_lobe_1_y,
+                int(center[2] - side_length // 2) + cropped_lobe_1_z
+            )
+            cm_lobe_2 = (
+                int(center[0] - side_length // 2) + cropped_lobe_2_x,
+                int(center[1] - side_length // 2) + cropped_lobe_2_y,
+                int(center[2] - side_length // 2) + cropped_lobe_2_z
+            )
+            cm_nose = (
+                int(center[0] - side_length // 2) + cropped_nose_x,
+                int(center[1] - side_length // 2) + cropped_nose_y,
+                int(center[2] - side_length // 2) + cropped_nose_z
+            )
+
+            cm_mid_eyes = (
+                int(center[0] - side_length // 2) + cropped_mid_eyes_x,
+                int(center[1] - side_length // 2) + cropped_mid_eyes_y,
+                int(center[2] - side_length // 2) + cropped_mid_eyes_z
+            )
+
+            print("EYE 1", cm_eye_1)
+            print("EYE 2", cm_eye_2)
+            print("CEREB", cm_cereb)
+            print("LOBE 1", cm_lobe_1)
+            print("LOBE 2", cm_lobe_2)
+            print("NOSE", cm_nose)
+            print("BRAIN", cm_brain)
+            print("MID EYES VOXEL", cm_mid_eyes)
+
+            # Dimensions of the padded 128x128x128 image
+            padded_dimensions = vol.shape
+
+            # Original dimensions of the image (128x128x60)
+            original_dimensions = im_.shape
+
+            # Calculate the padding in each dimension
+            padding = ((padded_dimensions[0] - original_dimensions[0]) // 2,
+                       (padded_dimensions[1] - original_dimensions[1]) // 2,
+                       (padded_dimensions[2] - original_dimensions[2]) // 2)
+
+            print("padding", padding)
+            # Calculate equivalent coordinates in the original 128x128x60 image
+            cm_eye_1 = (
+                cm_eye_1[0] - padding[0],
+                cm_eye_1[1] - padding[1],
+                cm_eye_1[2] - padding[2]
+            )
+
+            cm_eye_2 = (
+                cm_eye_2[0] - padding[0],
+                cm_eye_2[1] - padding[1],
+                cm_eye_2[2] - padding[2]
+            )
+
+            cm_cereb = (
+                cm_cereb[0] - padding[0],
+                cm_cereb[1] - padding[1],
+                cm_cereb[2] - padding[2]
+            )
+
+            cm_lobe_1 = (
+                cm_lobe_1[0] - padding[0],
+                cm_lobe_1[1] - padding[1],
+                cm_lobe_1[2] - padding[2]
+            )
+
+            cm_lobe_2 = (
+                cm_lobe_2[0] - padding[0],
+                cm_lobe_2[1] - padding[1],
+                cm_lobe_2[2] - padding[2]
+            )
+
+            cm_nose = (
+                cm_nose[0] - padding[0],
+                cm_nose[1] - padding[1],
+                cm_nose[2] - padding[2]
+            )
+
+            cm_brain = (
+                cm_brain[0] - padding[0],
+                cm_brain[1] - padding[1],
+                cm_brain[2] - padding[2]
+            )
+
+            cm_mid_eyes = (
+                cm_mid_eyes[0] - padding[0],
+                cm_mid_eyes[1] - padding[1],
+                cm_mid_eyes[2] - padding[2]
+            )
+
+            print("EYE 1", cm_eye_1)
+            print("EYE 2", cm_eye_2)
+            print("CEREB", cm_cereb)
+            print("LOBE 1", cm_lobe_1)
+            print("LOBE 2", cm_lobe_2)
+            print("NOSE", cm_nose)
+            print("BRAIN", cm_brain)
+            print("MID EYES VOXEL", cm_mid_eyes)
+
+            # # TESTING
+            # cm_eye_1 = 70, 56, 79
+            # cm_eye_2 = 71, 56, 56
+            # cm_cereb = 56, 56, 67
+            # cm_brain = 63, 56, 67
+            # cm_lobe_1 = 70, 56, 79
+            # cm_lobe_2 = 71, 56, 56
+            # cm_nose = 79, 56, 67
+
+            cm_eye_1 = pixdim_x * cm_eye_1[0], pixdim_y * cm_eye_1[1], pixdim_z * cm_eye_1[2]
+            cm_eye_2 = pixdim_x * cm_eye_2[0], pixdim_y * cm_eye_2[1], pixdim_z * cm_eye_2[2]
+            cm_cereb = pixdim_x * cm_cereb[0], pixdim_y * cm_cereb[1], pixdim_z * cm_cereb[2]
+            cm_brain = pixdim_x * cm_brain[0], pixdim_y * cm_brain[1], pixdim_z * cm_brain[2]
+            cm_mid_eyes = (pixdim_x * cm_mid_eyes[0], pixdim_y * cm_mid_eyes[1],
+                           pixdim_z * cm_mid_eyes[2])
+            cm_lobe_1 = pixdim_x * cm_lobe_1[0], pixdim_y * cm_lobe_1[1], pixdim_z * cm_lobe_1[2]
+            cm_lobe_2 = pixdim_x * cm_lobe_2[0], pixdim_y * cm_lobe_2[1], pixdim_z * cm_lobe_2[2]
+            cm_nose = pixdim_x * cm_nose[0], pixdim_y * cm_nose[1], pixdim_z * cm_nose[2]
+
+            # # # # # # # # # # # # # # # # # # # # # # # # # #
+            # position = np.array(position)
+            # position = [position[0], position[1], position[2]]
+            pos = state["slice_pos"] / (nslices * ncontrasts)  # slice position mid volume
+            print("POS", pos)
+            print("slice_pos", state["slice_pos"])
+            print("nslices", nslices)
+            position = (position[0], pos, position[2])
+            print("position", position)
+
+            # lowerleftcorner = ((np.int(enc.encodedSpace.fieldOfView_mm.x/2),
+            #                     np.int(enc.encodedSpace.fieldOfView_mm.y/2), np.int(min_slice_pos)))
+            centreofimageposition = ((np.float64(metadata.encoding[0].encodedSpace.fieldOfView_mm.x) / 4,
+                                      np.float64(metadata.encoding[0].encodedSpace.fieldOfView_mm.y) / 2,
+                                      np.float64(nslices * pixdim_z) / 2))
+
+            print("centreofimageposition", centreofimageposition)
+
+            # position = np.round(position).astype(int)
+            position = (position[0], position[1], position[2])
+            # position = - position[1], position[2], position[0]
+            cm_eye_1 = np.round(cm_eye_1, 3)
+            cm_eye_2 = np.round(cm_eye_2, 3)
+            cm_cereb = np.round(cm_cereb, 3)
+            cm_brain = np.round(cm_brain, 3)
+            cm_mid_eyes = np.round(cm_mid_eyes, 3)
+            cm_lobe_1 = np.round(cm_lobe_1, 3)
+            cm_lobe_2 = np.round(cm_lobe_2, 3)
+            cm_nose = np.round(cm_nose, 3)
+
+            print("POSITION MM", position)
+            print("EYE 1 MM", cm_eye_1)
+            print("EYE 2 MM", cm_eye_2)
+            print("CEREB MM", cm_cereb)
+            print("BRAIN MM", cm_brain)
+            print("MID EYES MM", cm_mid_eyes)
+            print("LOBE 1 MM", cm_lobe_1)
+            print("LOBE 2 MM", cm_lobe_2)
+            print("NOSE MM", cm_nose)
+
+            cm_brain = (cm_brain[0] - centreofimageposition[0],
+                        cm_brain[1] - centreofimageposition[1],
+                        cm_brain[2] - centreofimageposition[2])
+
+            cm_mid_eyes = (cm_mid_eyes[0] - centreofimageposition[0],
+                           cm_mid_eyes[1] - centreofimageposition[1],
+                           cm_mid_eyes[2] - centreofimageposition[2])
+
+            cm_eye_1 = ((cm_eye_1[0]) - centreofimageposition[0],
+                        (cm_eye_1[1]) - centreofimageposition[1],
+                        cm_eye_1[2] - centreofimageposition[2])
+
+            cm_eye_2 = ((cm_eye_2[0]) - centreofimageposition[0],
+                        (cm_eye_2[1]) - centreofimageposition[1],
+                        cm_eye_2[2] - centreofimageposition[2])
+
+            cm_cereb = ((cm_cereb[0]) - centreofimageposition[0],
+                        cm_cereb[1] - centreofimageposition[1],
+                        cm_cereb[2] - centreofimageposition[2])
+
+            cm_lobe_1 = ((cm_lobe_1[0]) - centreofimageposition[0],
+                         (cm_lobe_1[1]) - centreofimageposition[1],
+                         cm_lobe_1[2] - centreofimageposition[2])
+
+            cm_lobe_2 = ((cm_lobe_2[0]) - centreofimageposition[0],
+                         (cm_lobe_2[1]) - centreofimageposition[1],
+                         cm_lobe_2[2] - centreofimageposition[2])
+
+            cm_nose = ((cm_nose[0]) - centreofimageposition[0],
+                       cm_nose[1] - centreofimageposition[1],
+                       cm_nose[2] - centreofimageposition[2])
+
+            print("centreofimageposition", centreofimageposition)
+            print("EYE 1 OFFSET", cm_eye_1)
+            print("EYE 2 OFFSET", cm_eye_2)
+            print("CEREB OFFSET", cm_cereb)
+            print("BRAIN OFFSET", cm_brain)
+            print("MID EYES OFFSET", cm_mid_eyes)
+            print("LOBE 1 OFFSET", cm_lobe_1)
+            print("LOBE 2 OFFSET", cm_lobe_2)
+            print("NOSE OFFSET", cm_nose)
+
+            # x = -ty  # -ty # seems to work
+            # y = tz  # tz
+            # z = tx  # tx  # seems to work
+
+            cm_eye_1 = (-cm_eye_1[1], cm_eye_1[2], cm_eye_1[0])
+            cm_eye_2 = (-cm_eye_2[1], cm_eye_2[2], cm_eye_2[0])
+            cm_cereb = (-cm_cereb[1], cm_cereb[2], cm_cereb[0])
+            cm_brain = (-cm_brain[1], cm_brain[2], cm_brain[0])
+            cm_mid_eyes = (-cm_mid_eyes[1], cm_mid_eyes[2], cm_mid_eyes[0])
+            cm_lobe_1 = (-cm_lobe_1[1], cm_lobe_1[2], cm_lobe_1[0])
+            cm_lobe_2 = (-cm_lobe_2[1], cm_lobe_2[2], cm_lobe_2[0])
+            cm_nose = (-cm_nose[1], cm_nose[2], cm_nose[0])
+
+            cm_brain = (cm_brain[0] + position[0],
+                        cm_brain[1] + position[1],
+                        cm_brain[2] + position[2])
+
+            cm_mid_eyes = (cm_mid_eyes[0] + position[0],
+                           cm_mid_eyes[1] + position[1],
+                           cm_mid_eyes[2] + position[2])
+
+            cm_eye_1 = ((cm_eye_1[0]) + position[0],
+                        (cm_eye_1[1]) + position[1],
+                        cm_eye_1[2] + position[2])
+
+            cm_eye_2 = ((cm_eye_2[0]) + position[0],
+                        (cm_eye_2[1]) + position[1],
+                        cm_eye_2[2] + position[2])
+
+            cm_cereb = ((cm_cereb[0]) + position[0],
+                        cm_cereb[1] + position[1],
+                        cm_cereb[2] + position[2])
+
+            cm_lobe_1 = ((cm_lobe_1[0]) + position[0],
+                         (cm_lobe_1[1]) + position[1],
+                         cm_lobe_1[2] + position[2])
+
+            cm_lobe_2 = ((cm_lobe_2[0]) + position[0],
+                         (cm_lobe_2[1]) + position[1],
+                         cm_lobe_2[2] + position[2])
+
+            cm_nose = ((cm_nose[0]) + position[0],
+                       cm_nose[1] + position[1],
+                       cm_nose[2] + position[2])
+
+            mid_eyes = ((cm_eye_1[0] + cm_eye_1[0]) / 2,
+                        (cm_eye_1[1] + cm_eye_1[1]) / 2,
+                        (cm_eye_1[2] + cm_eye_1[2]) / 2)
+
+            # print("EYE 1 ROT", cm_eye_1)
+            # print("EYE 2 ROT", cm_eye_2)
+            # print("CEREB ROT", cm_cereb)
+            # print("BRAIN ROT", cm_brain)
+            # print("FURTHEST BRAIN VOXEL ROT", furthest_point)
+
+            idx_nose = np.isnan(cm_nose)
+            # Use numpy.where to replace NaN values with corresponding values from cm_brain
+            cm_nose = np.where(idx_nose, (cm_mid_eyes[0], cm_mid_eyes[1], cm_mid_eyes[2]), cm_nose)
+
+            idx_eye_1 = np.isnan(cm_eye_1)
+            # Use numpy.where to replace NaN values with corresponding values from cm_brain
+            cm_eye_1 = np.where(idx_eye_1, (cm_brain[0], cm_brain[1], cm_brain[2]), cm_eye_1)
+
+            idx_eye_2 = np.isnan(cm_eye_2)
+            # Use numpy.where to replace NaN values with corresponding values from cm_brain
+            cm_eye_2 = np.where(idx_eye_2, (cm_brain[0], cm_brain[1], cm_brain[2]), cm_eye_2)
+
+            idx_cereb = np.isnan(cm_cereb)
+            # Use numpy.where to replace NaN values with corresponding values from cm_brain
+            cm_cereb = np.where(idx_cereb, (cm_brain[0], cm_brain[1], cm_brain[2]), cm_cereb)
+
+            cm_eye_1 = (cm_eye_1[0], cm_eye_1[1], cm_eye_1[2])
+            cm_eye_2 = (cm_eye_2[0], cm_eye_2[1], cm_eye_2[2])
+            cm_cereb = (cm_cereb[0], cm_cereb[1], cm_cereb[2])
+            cm_lobe_1 = (cm_lobe_1[0], cm_lobe_1[1], cm_lobe_1[2])
+            cm_lobe_2 = (cm_lobe_2[0], cm_lobe_2[1], cm_lobe_2[2])
+            cm_nose = (cm_nose[0], cm_nose[1], cm_nose[2])
+            cm_mid_eyes = (cm_mid_eyes[0], cm_mid_eyes[1], cm_mid_eyes[2])
+
+            print("EYE 1 ROT", cm_eye_1)
+            print("EYE 2 ROT", cm_eye_2)
+            print("CEREB ROT", cm_cereb)
+            print("BRAIN ROT", cm_brain)
+            print("MID EYES ROT", cm_mid_eyes)
+            print("LOBE 1 ROT", cm_lobe_1)
+            print("LOBE 2 ROT", cm_lobe_2)
+            print("NOSE ROT", cm_nose)
+
+            # transformation = [(srow_x[0], srow_x[1], srow_x[2], srow_x[3]),
+            #                   (srow_y[0], srow_y[1], srow_y[2], srow_y[3]),
+            #                   (srow_z[0], srow_z[1], srow_z[2], srow_z[3]),
+            #                   (0, 0, 0, 1)]
+
+            # Create and write to the text file
+            with open(text_file, "w") as file:
+                # file.write("This is a text file created on " + date_time_string)
+                # file.write("\n" + str('CoM: '))
+                file.write("eye1 = " + str(cm_eye_1))
+                file.write("\n" + "eye2 = " + str(cm_eye_2))
+                file.write("\n" + "mideyes = " + str(cm_mid_eyes))
+                file.write("\n" + "cere = " + str(cm_cereb))
+                file.write("\n" + "brain = " + str(cm_brain))
+                # file.write("\n" + "furthest = " + str(furthest_point))
+                file.write("\n" + "lobe1 = " + str(cm_lobe_1))
+                file.write("\n" + "lobe2 = " + str(cm_lobe_2))
+                file.write("\n" + "nose = " + str(cm_nose))
+                file.write("\n" + "position = " + str(position))
+                # file.write("\n" + "centreofimageposition = " + str(centreofimageposition))
+                file.write("\n" + "srow_x = " + str(srow_x))
+                file.write("\n" + "srow_y = " + str(srow_y))
+                file.write("\n" + "srow_z = " + str(srow_z))
+
+            with open(text_file_1, "w") as file:
+                # file.write("This is a text file created on " + date_time_string)
+                # file.write("\n" + str('CoM: '))
+                file.write("eye1 = " + str(cm_eye_1))
+                file.write("\n" + "eye2 = " + str(cm_eye_2))
+                file.write("\n" + "mideyes = " + str(cm_mid_eyes))
+                file.write("\n" + "cere = " + str(cm_cereb))
+                file.write("\n" + "brain = " + str(cm_brain))
+                # file.write("\n" + "furthest = " + str(furthest_point))
+                file.write("\n" + "lobe1 = " + str(cm_lobe_1))
+                file.write("\n" + "lobe2 = " + str(cm_lobe_2))
+                file.write("\n" + "nose = " + str(cm_nose))
+                file.write("\n" + "position = " + str(position))
+                # file.write("\n" + "centreofimageposition = " + str(centreofimageposition))
+                file.write("\n" + "srow_x = " + str(srow_x))
+                file.write("\n" + "srow_y = " + str(srow_y))
+                file.write("\n" + "srow_z = " + str(srow_z))
+
+            print(f"Text file '{text_file}' has been created.")
+
+            # Convert the modified NumPy array back to a SimpleITK image
+            # modified_image = sitk.GetImageFromArray(labelled_segmentation)
+            # modified_image = labelled_segmentation
+
+            # # Save the modified image with the same file path
+            # output_image_path = landmarks_path.replace(".nii.gz", "_3-labels.nii.gz")
+            #
+            # # sitk.WriteImage(modified_image, output_image_path)
+            # modified_image = nib.Nifti1Image(labelled_segmentation, np.eye(4))
+            # nib.save(modified_image, output_image_path)
+
+        else:
+            print("This is slice ", slice)
 
     # Re-slice back into 2D images
     imagesOut = [None] * data.shape[-1]
+
     for iImg in range(data.shape[-1]):
+        # print("iImg", iImg)
+        # print("range", data.shape[-1])
 
         # Create new MRD instance for the inverted image
         # Transpose from convenience shape of [y x z cha] to MRD Image shape of [cha z y x]
