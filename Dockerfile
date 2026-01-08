@@ -72,7 +72,7 @@ RUN mkdir -p /opt/code && cd /opt/code && \
     git clone https://github.com/ismrmrd/ismrmrd-python-tools.git && \
     cd /opt/code/ismrmrd-python-tools && pip install --no-cache-dir .
 
-COPY /home/sn21/automated-fetal-mri-eagle/FetalBrainLandmarks/Dataset088_FetalBrainLandmarks \
+COPY /home/sn21/automated-fetal-mri-eagle/FetalBrainLandmarks/nnUNet_results/Dataset088_FetalBrainLandmarks \
      /opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results/Dataset088_FetalBrainLandmarks
 
 # Set working directory
