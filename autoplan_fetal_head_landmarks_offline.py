@@ -656,21 +656,6 @@ def process_image(images, connection, config, metadata, im, state):
                 xcm = model.x_cm
                 ycm = model.y_cm
                 zcm = model.z_cm
-                logging.info("Motion parameters stored!")
-
-                text = str('CoM: ')
-                append_new_line(file_path, text)
-                text = str(xcm)
-                append_new_line(file_path, text)
-                text = str(ycm)
-                append_new_line(file_path, text)
-                text = str(zcm)
-                append_new_line(file_path, text)
-                text = str('---------------------------------------------------')
-                append_new_line(file_path, text)
-
-                print("centre-of-mass coordinates: ", xcm, ycm, zcm)
-                print("Localisation completed.")
 
             segmentation_volume = model.seg_pr
             image_volume = model.img_gt
