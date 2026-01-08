@@ -45,12 +45,6 @@ RUN apk add --no-cache \
     lsb-release \
     sudo
 
-# Enable Docker daemon
-RUN dockerd &
-
-# Pull the image
-RUN docker pull fetalsvrtk/svrtk:general_auto_amd
-
 # Stage 2: Final Image
 FROM python:3.10.2-slim
 LABEL org.opencontainers.image.description="Automated fetal MRI tools"
