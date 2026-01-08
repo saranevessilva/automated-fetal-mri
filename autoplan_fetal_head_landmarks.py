@@ -386,7 +386,7 @@ def process_image(images, connection, config, metadata, im, state):
     print("Number of echoes =", ncontrasts)
     print("Number of instances =", ninstances)
 
-    logging.info("H", metadata.userParameters.userParameterLong)
+    print("H", metadata.userParameters.userParameterLong)
 
     hf = None  # head-foot value
     for p in metadata.userParameters.userParameterLong:
@@ -400,7 +400,7 @@ def process_image(images, connection, config, metadata, im, state):
     else:
         hf = np.float32(hf)
 
-    logging.info("lGlobalTablePosTra:", hf)
+    print("lGlobalTablePosTra:", hf)
 
     pixdim_x = (metadata.encoding[0].encodedSpace.fieldOfView_mm.x / metadata.encoding[0].encodedSpace.matrixSize.x)
     pixdim_y = metadata.encoding[0].encodedSpace.fieldOfView_mm.y / metadata.encoding[0].encodedSpace.matrixSize.y
@@ -444,10 +444,10 @@ def process_image(images, connection, config, metadata, im, state):
         # pos_z = position[2]
         pos_z = float(hf)
 
-        logging.info("accumulated slice pos", state["slice_pos"])
-        logging.info("current slice position", state["min_slice_pos"])
-        logging.info("position_y", position[1])
-        logging.info("pos_z", pos_z)
+        print("accumulated slice pos", state["slice_pos"])
+        print("current slice position", state["min_slice_pos"])
+        print("position_y", position[1])
+        print("pos_z", pos_z)
 
     else:
         # All subsequent slices
@@ -460,10 +460,10 @@ def process_image(images, connection, config, metadata, im, state):
         # pos_z = position[2]
         pos_z = float(hf)
 
-        logging.info("accumulated slice pos", state["slice_pos"])
-        logging.info("current slice position", current_pos)
-        logging.info("position_y", position[1])
-        logging.info("pos_z", pos_z)
+        print("accumulated slice pos", state["slice_pos"])
+        print("current slice position", current_pos)
+        print("position_y", position[1])
+        print("pos_z", pos_z)
 
     # Display MetaAttributes for first image
     logging.debug("MetaAttributes[0]: %s", ismrmrd.Meta.serialize(meta[0]))
@@ -525,6 +525,14 @@ def process_image(images, connection, config, metadata, im, state):
     srow_y = (srow_y[0], srow_y[1], srow_y[2])
     srow_z = (srow_z[0], srow_z[1], srow_z[2])
 
+    srow_x = (np.round(srow_x, 3))
+    srow_y = (np.round(srow_y, 3))
+    srow_z = (np.round(srow_z, 3))
+
+    srow_x = (srow_x[0], srow_x[1], srow_x[2])
+    srow_y = (srow_y[0], srow_y[1], srow_y[2])
+    srow_z = (srow_z[0], srow_z[1], srow_z[2])
+
     slice = imheader.slice
     repetition = imheader.repetition
     contrast = imheader.contrast
@@ -554,25 +562,14 @@ def process_image(images, connection, config, metadata, im, state):
         # Apply the affine transformation
         im_ = affine_transform(im, rotation_matrix, offset=shift)
 
-        im = nib.Nifti1Image(im_, np.eye(4))
-        nib.save(im, debugFolder + "/"
-                 + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
-
-        try:
-            print("Checkpoint reached after saving NIfTI file", flush=True)
-            logging.info("Checkpoint reached after saving NIfTI file")
-            sys.stdout.flush()  # Ensure logs are immediately written
-
-        except Exception as e:
-            print(f"ERROR: {e}", flush=True)
-            logging.error(f"Script failed: {e}")
-            sys.stdout.flush()
+        # im = nib.Nifti1Image(im_, np.eye(4))
+        # nib.save(im, debugFolder + "/"
+        #          + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
 
         print("..................................................................................")
         print("This is the echo-time we're looking at: ", 1)
 
         logging.info("Initializing localization network...")
-        sys.stdout.flush()  # Flush again
 
         N_epochs = 100
         I_size = 128
@@ -632,92 +629,90 @@ def process_image(images, connection, config, metadata, im, state):
             xcm = model.x_cm
             ycm = model.y_cm
             zcm = model.z_cm
-            logging.info("Motion parameters stored!")
 
             segmentation_volume = model.seg_pr
-            image_volume = model.img_gt
+        image_volume = model.img_gt
 
-            segmentation_volume = segmentation_volume.astype(np.float32)
-            image_volume = image_volume.astype(np.float32)
+        segmentation_volume = segmentation_volume.astype(np.float32)
+        image_volume = image_volume.astype(np.float32)
 
-            box, expansion_factor, center, offset, side_length, mask, vol, crop = (apply_bounding_box
-                                                                                   (segmentation_volume,
-                                                                                    image_volume))
+        box, expansion_factor, center, offset, side_length, mask, vol, crop = (apply_bounding_box
+                                                                               (segmentation_volume,
+                                                                                image_volume))
 
-            # box = im_  # brain segmentation not working
+        # box = im_  # brain segmentation not working
 
-            # Define the path you want to create
-            new_directory_seg = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_seg/"
-            new_directory_pred = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_pred/"
+        # Define the path you want to create
+        new_directory_seg = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_seg/"
+        new_directory_pred = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_pred/"
 
-            box_path = args.results_dir + "/" + date_path
-            print("box_path", box_path)
+        box_path = args.results_dir + "/" + date_path
+        print("box_path", box_path)
 
-            # Check if the directory already exists
-            if not os.path.exists(new_directory_seg):
-                # If it doesn't exist, create it
-                os.mkdir(new_directory_seg)
-            else:
-                # If it already exists, handle it accordingly (maybe log a message or take alternative action)
-                print("Directory already exists:", new_directory_seg)
+        # Check if the directory already exists
+        if not os.path.exists(new_directory_seg):
+            # If it doesn't exist, create it
+            os.mkdir(new_directory_seg)
+        else:
+            # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+            print("Directory already exists:", new_directory_seg)
 
-            # Check if the directory already exists
-            if not os.path.exists(new_directory_pred):
-                # If it doesn't exist, create it
-                os.mkdir(new_directory_pred)
-            else:
-                # If it already exists, handle it accordingly (maybe log a message or take alternative action)
-                print("Directory already exists:", new_directory_pred)
+        # Check if the directory already exists
+        if not os.path.exists(new_directory_pred):
+            # If it doesn't exist, create it
+            os.mkdir(new_directory_pred)
+        else:
+            # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+            print("Directory already exists:", new_directory_pred)
 
-            # Check if the directory already exists
-            if not os.path.exists(box_path):
-                # If it doesn't exist, create it
-                os.mkdir(box_path)
-            else:
-                # If it already exists, handle it accordingly (maybe log a message or take alternative action)
-                print("Directory already exists:", new_directory_pred)
+        # Check if the directory already exists
+        if not os.path.exists(box_path):
+            # If it doesn't exist, create it
+            os.mkdir(box_path)
+        else:
+            # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+            print("Directory already exists:", new_directory_pred)
 
-            box_im = nib.Nifti1Image(box, np.eye(4))
-            nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
-            path = (fetalbody_path + "/"
-                    + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
-            im_ = nib.Nifti1Image(im_, np.eye(4))
-            nib.save(im_, path)
+        box_im = nib.Nifti1Image(box, np.eye(4))
+        nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
+        path = (fetalbody_path + "/"
+                + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
+        im_ = nib.Nifti1Image(im_, np.eye(4))
+        nib.save(im_, path)
 
-            # Run Prediction with nnUNet
-            # Set the DISPLAY and XAUTHORITY environment variables
-            os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
-            os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
+        # Run Prediction with nnUNet
+        # Set the DISPLAY and XAUTHORITY environment variables
+        os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'
+        os.environ["XAUTHORITY"] = '/opt/code/automated-fetal-mri/.Xauthority'
 
-            # Ensure nnUNet_results is set correctly
-            os.environ['nnUNet_results'] = '/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'
+        # Ensure nnUNet_results is set correctly
+        os.environ['nnUNet_results'] = '/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'
 
-            start_time = time.time()
+        start_time = time.time()
 
-            command = (
-                    "export nnUNet_raw='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_raw'; "
-                    "export nnUNet_preprocessed='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks"
-                    "/nnUNet_preprocessed';"
-                    "export nnUNet_results='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'; "
-                    "nnUNetv2_predict -i " + box_path + "/" + timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
-                    "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1"
+        command = (
+                "export nnUNet_raw='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_raw'; "
+                "export nnUNet_preprocessed='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks"
+                "/nnUNet_preprocessed';"
+                "export nnUNet_results='/opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results'; "
+                "nnUNetv2_predict -i " + box_path + "/" + timestamp + "-nnUNet_seg/ -o " + box_path + "/" + timestamp +
+                "-nnUNet_pred/ -d 088 -c 3d_fullres -f 1"
             )
 
-            subprocess.run(command, shell=True)
+        subprocess.run(command, shell=True)
+        # Record the end time
+        end_time = time.time()
 
-            # Record the end time
-            end_time = time.time()
+        # Calculate the elapsed time
+        elapsed_time = end_time - start_time
+        print(f"Elapsed Time for Landmark Detection: {elapsed_time} seconds")
 
-            # Calculate the elapsed time
-            elapsed_time = end_time - start_time
-            print(f"Elapsed Time for Landmark Detection: {elapsed_time} seconds")
+        # Define the path where NIfTI images are located
+        l_path = os.path.join(box_path, timestamp + "-nnUNet_pred")
 
-            # Define the path where NIfTI images are located
-            l_path = os.path.join(box_path, timestamp + "-nnUNet_pred")
-
-            # Use glob to find NIfTI files in the directory
-            landmarks_paths = glob.glob(os.path.join(l_path, "*.nii.gz"))
-            print(landmarks_paths)
+        # Use glob to find NIfTI files in the directory
+        landmarks_paths = glob.glob(os.path.join(l_path, "*.nii.gz"))
+        print(landmarks_paths)
 
         for landmarks_path in landmarks_paths:
             landmark = nib.load(landmarks_path)

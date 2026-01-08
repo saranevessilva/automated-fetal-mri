@@ -714,7 +714,7 @@ def process_image(images, connection, config, metadata, im, state):
                     + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
             im_ = nib.Nifti1Image(im_, np.eye(4))
             nib.save(im_, path)
-            
+
             # Run Prediction with nnUNet
             # Set the DISPLAY and XAUTHORITY environment variables
             os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'

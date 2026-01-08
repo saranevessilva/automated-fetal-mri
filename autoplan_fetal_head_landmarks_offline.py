@@ -742,7 +742,6 @@ def process_image(images, connection, config, metadata, im, state):
             print(landmarks_paths)
 
             for landmarks_path in landmarks_paths:
-                # Load the image using sitk.ReadImage
                 landmark = nib.load(landmarks_path)
                 # Get the image data as a NumPy array
                 landmark = landmark.get_fdata()
