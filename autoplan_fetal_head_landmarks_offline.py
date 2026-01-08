@@ -667,19 +667,31 @@ def process_image(images, connection, config, metadata, im, state):
                                                                                    (segmentation_volume,
                                                                                     image_volume))
 
-            print("center", center)
+            # Define the path you want to create
+            new_directory_seg = fetalbody_path + "/" + timestamp + "-nnUNet_seg/"
+            new_directory_pred = fetalbody_path + "/" + timestamp + "-nnUNet_pred/"
 
-            # Define directories
-            new_directory_pred = os.path.join(debugFolder, date_path, f"{timestamp}-nnUNet_pred")
-            box_path = os.path.join(args.results_dir, date_path, f"{timestamp}-nnUNet_seg")
+            box_path = args.results_dir + date_path
 
-            # Create directories recursively if they don't exist
-            os.makedirs(new_directory_pred, exist_ok=True)
-            os.makedirs(box_path, exist_ok=True)
+            # Check if the directory already exists
+            if not os.path.exists(new_directory_seg):
+                # If it doesn't exist, create it
+                os.mkdir(new_directory_seg)
+            else:
+                # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+                print("Directory already exists:", new_directory_seg)
 
-            # Save segmentation NIfTI
+            # Check if the directory already exists
+            if not os.path.exists(new_directory_pred):
+                # If it doesn't exist, create it
+                os.mkdir(new_directory_pred)
+            else:
+                # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+                print("Directory already exists:", new_directory_pred)
+
             box_im = nib.Nifti1Image(box, np.eye(4))
-            nib.save(box_im, os.path.join(box_path, "FreemaxLandmark_001_0000.nii.gz"))
+            nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
+            im_ = nib.Nifti1Image(im, np.eye(4))
 
             # Run Prediction with nnUNet
             # Set the DISPLAY and XAUTHORITY environment variables
