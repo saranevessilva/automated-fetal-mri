@@ -66,13 +66,14 @@ RUN git lfs install --system
 COPY requirements.txt /tmp/
 RUN pip install --no-cache-dir -r /tmp/requirements.txt && pip freeze
 
-# Clone additional repos
 RUN mkdir -p /opt/code && cd /opt/code && \
     git clone https://github.com/kspacekelvin/python-ismrmrd-server.git && \
-    git clone --branch landmarks-eagle --single-branch https://github.com/saranevessilva/automated-fetal-mri.git && \
+    GIT_LFS_SKIP_SMUDGE=1 git clone --branch landmarks-eagle --single-branch https://github.com/saranevessilva/automated-fetal-mri.git && \
     git clone https://github.com/ismrmrd/ismrmrd-python-tools.git && \
-    cd /opt/code/ismrmrd-python-tools && pip install --no-cache-dir . && pip freeze
+    cd /opt/code/ismrmrd-python-tools && pip install --no-cache-dir .
 
+COPY /home/sn21/automated-fetal-mri-eagle/checkpoints/Dataset088_FetalBrainLandmarks \
+     /opt/code/automated-fetal-mri/eagle/FetalBrainLandmarks/nnUNet_results/Dataset088_FetalBrainLandmarks
 
 # Set working directory
 WORKDIR /opt/code/automated-fetal-mri
