@@ -669,26 +669,18 @@ def process_image(images, connection, config, metadata, im, state):
 
             print("center", center)
 
-            # Directories
-            new_directory_seg = os.path.join(fetalbody_path, f"{timestamp}-nnUNet_seg")
-            new_directory_pred = os.path.join(fetalbody_path, f"{timestamp}-nnUNet_pred")
-            box_path = os.path.join(args.results_dir, date_path)
+            # Define directories
+            new_directory_pred = os.path.join(debugFolder, date_path, f"{timestamp}-nnUNet_pred")
+            box_path_dir = os.path.join(args.results_dir, date_path, f"{timestamp}-nnUNet_seg")
 
             # Create directories recursively if they don't exist
-            os.makedirs(new_directory_seg, exist_ok=True)
             os.makedirs(new_directory_pred, exist_ok=True)
-            os.makedirs(box_path, exist_ok=True)
+            os.makedirs(box_path_dir, exist_ok=True)
 
             # Save segmentation NIfTI
             box_im = nib.Nifti1Image(box, np.eye(4))
-            nib.save(box_im, os.path.join(new_directory_seg, "FreemaxLandmark_001_0000.nii.gz"))
+            nib.save(box_im, os.path.join(box_path_dir, "FreemaxLandmark_001_0000.nii.gz"))
 
-            # Save initial image
-            path = os.path.join(fetalbody_path, f"{timestamp}-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
-            im_ = nib.Nifti1Image(im_, np.eye(4))
-            nib.save(im_, path)
-
-            # Run Prediction with nnUNet
             # Run Prediction with nnUNet
             # Set the DISPLAY and XAUTHORITY environment variables
             os.environ['DISPLAY'] = ':0'  # Replace with your X11 display, e.g., ':1.0'

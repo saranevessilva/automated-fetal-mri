@@ -647,12 +647,10 @@ def process_image(images, connection, config, metadata, im, state):
             # box = im_  # brain segmentation not working
 
             # Define directories
-            new_directory_seg = os.path.join(debugFolder, date_path, f"{timestamp}-nnUNet_seg")
             new_directory_pred = os.path.join(debugFolder, date_path, f"{timestamp}-nnUNet_pred")
             box_path_dir = os.path.join(args.results_dir, date_path, f"{timestamp}-nnUNet_seg")
 
             # Create directories recursively if they don't exist
-            os.makedirs(new_directory_seg, exist_ok=True)
             os.makedirs(new_directory_pred, exist_ok=True)
             os.makedirs(box_path_dir, exist_ok=True)
 
