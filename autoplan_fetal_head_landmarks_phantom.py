@@ -656,15 +656,15 @@ def process_image(images, connection, config, metadata, im, state):
 
             # Define directories
             new_directory_pred = os.path.join(debugFolder, date_path, f"{timestamp}-nnUNet_pred")
-            box_path_dir = os.path.join(args.results_dir, date_path, f"{timestamp}-nnUNet_seg")
+            box_path = os.path.join(args.results_dir, date_path, f"{timestamp}-nnUNet_seg")
 
             # Create directories recursively if they don't exist
             os.makedirs(new_directory_pred, exist_ok=True)
-            os.makedirs(box_path_dir, exist_ok=True)
+            os.makedirs(box_path, exist_ok=True)
 
             # Save segmentation NIfTI
             box_im = nib.Nifti1Image(box, np.eye(4))
-            nib.save(box_im, os.path.join(box_path_dir, "FreemaxLandmark_001_0000.nii.gz"))
+            nib.save(box_im, os.path.join(box_path, "FreemaxLandmark_001_0000.nii.gz"))
 
             # Run Prediction with nnUNet
             # Set the DISPLAY and XAUTHORITY environment variables
