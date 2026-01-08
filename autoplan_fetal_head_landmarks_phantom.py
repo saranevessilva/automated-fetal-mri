@@ -56,7 +56,6 @@ import sys
 import nibabel as nib
 import SimpleITK as sitk
 
-
 import src.utils as utils
 from src.utils import ArgumentsTrainTestLocalisation, plot_losses_train
 from src import networks as md
@@ -81,6 +80,27 @@ except ImportError:
 
 # Folder for debug output files
 debugFolder = "/tmp/share/debug"
+
+
+def append_new_line(file_name, text_to_append):
+    """Append given text as a new line at the end of file"""
+    # Open the file in append & read mode ('a+')
+    with open(file_name, "a+") as file_object:
+        # Move read cursor to the start of file.
+        file_object.seek(0)
+        # If file is not empty then append '\n'
+        data = file_object.read(100)
+        if len(data) > 0:
+            file_object.write("\n")
+        # Append text at the end of file
+        file_object.write(text_to_append)
+
+
+state = {
+    "slice_pos": 0,
+    "min_slice_pos": 0,
+    "first_slice": 1
+}
 
 
 def process(connection, config, metadata):
@@ -110,8 +130,10 @@ def process(connection, config, metadata):
         logging.info("Improperly formatted metadata: \n%s", metadata)
 
     nslices = metadata.encoding[0].encodingLimits.slice.maximum + 1
+    ncontrasts = metadata.encoding[0].encodingLimits.contrast.maximum + 1
     dim_x = metadata.encoding[0].encodedSpace.matrixSize.x // 2  # oversampling
     dim_y = metadata.encoding[0].encodedSpace.matrixSize.y
+    # im = np.zeros((dim_x, dim_y, nslices, ncontrasts), dtype=np.int16)
     im = np.zeros((dim_x, dim_y, nslices), dtype=np.int16)
 
     # Continuously parse incoming data parsed from MRD messages
@@ -121,13 +143,6 @@ def process(connection, config, metadata):
     waveformGroup = []
     try:
         for item in connection:
-
-            state = {
-                "slice_pos": 0,
-                "min_slice_pos": 0,
-                "first_slice": 1
-            }
-
             # ----------------------------------------------------------
             # Raw k-space data messages
             # ----------------------------------------------------------
@@ -153,7 +168,10 @@ def process(connection, config, metadata):
                     logging.info("Processing a group of images because series index changed to %d",
                                  item.image_series_index)
                     currentSeries = item.image_series_index
+                    # image = process_image(imgGroup, connection, config, metadata, im,
+                    #                       slice_pos, min_slice_pos, first_slice)
                     image = process_image(imgGroup, connection, config, metadata, im, state)
+
                     connection.send_image(image)
                     imgGroup = []
 
@@ -199,6 +217,7 @@ def process(connection, config, metadata):
 
         if len(imgGroup) > 0:
             logging.info("Processing a group of images (untriggered)")
+            # image = process_image(imgGroup, connection, config, metadata, im, slice_pos, min_slice_pos, first_slice)
             image = process_image(imgGroup, connection, config, metadata, im, state)
             connection.send_image(image)
             imgGroup = []
@@ -329,8 +348,8 @@ def process_raw(group, connection, config, metadata):
         tmpImg.attribute_string = xml
         imagesOut.append(tmpImg)
 
-    # # Call process_image() to invert image contrast
-    # imagesOut = process_image(imagesOut, connection, config, metadata)
+    # Call process_image() to invert image contrast
+    imagesOut = process_image(imagesOut, connection, config, metadata)
 
     return imagesOut
 
@@ -367,6 +386,22 @@ def process_image(images, connection, config, metadata, im, state):
     print("Number of echoes =", ncontrasts)
     print("Number of instances =", ninstances)
 
+    logging.info("H", metadata.userParameters.userParameterLong)
+
+    hf = None  # head-foot value
+    for p in metadata.userParameters.userParameterLong:
+        if p.name == 'lGlobalTablePosTra':
+            hf = p.value
+            break
+
+    # If value was not found or is None, set to 0.0 as numpy float
+    if hf is None:
+        hf = np.float32(0.0)
+    else:
+        hf = np.float32(hf)
+
+    logging.info("lGlobalTablePosTra:", hf)
+
     pixdim_x = (metadata.encoding[0].encodedSpace.fieldOfView_mm.x / metadata.encoding[0].encodedSpace.matrixSize.x)
     pixdim_y = metadata.encoding[0].encodedSpace.fieldOfView_mm.y / metadata.encoding[0].encodedSpace.matrixSize.y
     pixdim_z = metadata.encoding[0].encodedSpace.fieldOfView_mm.z
@@ -386,19 +421,49 @@ def process_image(images, connection, config, metadata, im, state):
     read_dir = read_dir[0], read_dir[1], read_dir[2]
     print("position ", position, "read_dir", read_dir, "phase_dir ", phase_dir, "slice_dir ", slice_dir)
 
-    # Update state variables directly
-    if state["first_slice"] == 1:
-        state["min_slice_pos"] = position[1]
-        state["first_slice"] = 0
-    else:
-        if position[1] < state["min_slice_pos"]:
-            state["min_slice_pos"] = position[1]
+    # # Update state variables directly
+    # if state["first_slice"] == 1:
+    #     state["min_slice_pos"] = position[1]
+    #     state["first_slice"] = 0
+    # else:
+    #     if position[1] < state["min_slice_pos"]:
+    #         state["min_slice_pos"] = position[1]
+    #
+    # state["slice_pos"] += state["min_slice_pos"]
+    # pos_z = position[2]
+    # print("accumulated slice pos", state["slice_pos"])
+    # print("initial position", state["min_slice_pos"])
+    # print("pos_z", pos_z)
 
-    state["slice_pos"] += position[1]
-    pos_z = position[2]
-    print("accumulated slice pos", state["slice_pos"])
-    print("accumulated position", position[1])
-    print("pos_z", pos_z)
+    if state["first_slice"] == 1:
+        # First slice: initialize min and accumulated position
+        current_pos = position[1]
+        state["min_slice_pos"] = current_pos
+        state["slice_pos"] = current_pos
+        state["first_slice"] = 0
+        # pos_z = position[2]
+        pos_z = float(hf)
+
+        logging.info("accumulated slice pos", state["slice_pos"])
+        logging.info("current slice position", state["min_slice_pos"])
+        logging.info("position_y", position[1])
+        logging.info("pos_z", pos_z)
+
+    else:
+        # All subsequent slices
+        current_pos = position[1]
+        state["slice_pos"] += current_pos
+
+        if current_pos < state["min_slice_pos"]:
+            state["min_slice_pos"] = current_pos
+
+        # pos_z = position[2]
+        pos_z = float(hf)
+
+        logging.info("accumulated slice pos", state["slice_pos"])
+        logging.info("current slice position", current_pos)
+        logging.info("position_y", position[1])
+        logging.info("pos_z", pos_z)
 
     # Display MetaAttributes for first image
     logging.debug("MetaAttributes[0]: %s", ismrmrd.Meta.serialize(meta[0]))
@@ -432,14 +497,17 @@ def process_image(images, connection, config, metadata, im, state):
     sform_x = imheader.read_dir
     sform_y = imheader.phase_dir
     sform_z = imheader.slice_dir
-    position = imheader.position
+    # position = imheader.position
 
     srow_x = (sform_x[0], sform_x[1], sform_x[2])
     srow_y = (sform_y[0], sform_y[1], sform_y[2])
     srow_z = (sform_z[0], sform_z[1], sform_z[2])
 
-    # position = position[0], slice_pos, pos_z
-    position = position[0], state["slice_pos"], pos_z
+    # im = np.squeeze(data)
+
+    # im[:, :, slice, contrast] = np.squeeze(data)  # slice - 1 because 'slice
+
+    # print("Image shape:", im.shape)
 
     sform_x = imheader.slice_dir
     sform_y = imheader.phase_dir
@@ -453,6 +521,10 @@ def process_image(images, connection, config, metadata, im, state):
     srow_y = (np.round(srow_y, 3))
     srow_z = (np.round(srow_z, 3))
 
+    srow_x = (srow_x[0], srow_x[1], srow_x[2])
+    srow_y = (srow_y[0], srow_y[1], srow_y[2])
+    srow_z = (srow_z[0], srow_z[1], srow_z[2])
+
     slice = imheader.slice
     repetition = imheader.repetition
     contrast = imheader.contrast
@@ -465,7 +537,6 @@ def process_image(images, connection, config, metadata, im, state):
         os.makedirs(fetalbody_path)
 
     logging.info("Storing each slice into the 3D data buffer...")
-
     if contrast == 1:
         im[:, :, slice] = np.squeeze(data)
 
@@ -550,11 +621,6 @@ def process_image(images, connection, config, metadata, im, state):
         args.gpu_ids = [0]
 
         # RUN with empty masks - to generate new ones (practical application)
-
-        # print("args.root_dir", args.root_dir)
-        # print("args.csv_dir", args.csv_dir)
-        # print("args.checkpoint_dir", args.checkpoint_dir)
-        # print("args.results_dir", args.results_dir)
 
         if args.running:
             print("Running")
@@ -730,7 +796,7 @@ def process_image(images, connection, config, metadata, im, state):
 
                 # Define the file name with the formatted date and time
                 text_file_1 = args.results_dir + "/" + date_path + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
-                text_file = debugFolder + "/" + "sara.dvs"
+                text_file = "/tomp/share/debug" + "/" + "sara.dvs"
 
                 cm_brain = model.x_cm, model.y_cm, model.z_cm
                 # print("BRAIN", cm_brain)
@@ -922,7 +988,12 @@ def process_image(images, connection, config, metadata, im, state):
                 print("POS", pos)
                 print("slice_pos", state["slice_pos"])
                 print("nslices", nslices)
-                position = (position[0], pos, position[2])
+
+                # position = (position[0], pos, position[2])
+                position = (position[0], pos, float(hf))
+
+                # position = (position[0], pos, position[2])
+                print("position", position)
 
                 # lowerleftcorner = ((np.int(enc.encodedSpace.fieldOfView_mm.x/2),
                 #                     np.int(enc.encodedSpace.fieldOfView_mm.y/2), np.int(min_slice_pos)))

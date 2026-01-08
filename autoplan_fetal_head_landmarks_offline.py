@@ -378,7 +378,7 @@ def process_image(images, connection, config, metadata, im, state):
     print("Number of echoes =", ncontrasts)
     print("Number of instances =", ninstances)
 
-    print("H", metadata.userParameters.userParameterLong)
+    logging.info("H", metadata.userParameters.userParameterLong)
 
     hf = None  # head-foot value
     for p in metadata.userParameters.userParameterLong:
@@ -392,7 +392,7 @@ def process_image(images, connection, config, metadata, im, state):
     else:
         hf = np.float32(hf)
 
-    print("lGlobalTablePosTra:", hf)
+    logging.info("lGlobalTablePosTra:", hf)
 
     pixdim_x = (metadata.encoding[0].encodedSpace.fieldOfView_mm.x / metadata.encoding[0].encodedSpace.matrixSize.x)
     pixdim_y = metadata.encoding[0].encodedSpace.fieldOfView_mm.y / metadata.encoding[0].encodedSpace.matrixSize.y
@@ -532,9 +532,9 @@ def process_image(images, connection, config, metadata, im, state):
             # pos_z = position[2]
             pos_z = float(hf)
 
-            print("accumulated slice pos", state["slice_pos"])
-            print("current slice position", state["min_slice_pos"])
-            print("pos_z", pos_z)
+            logging.info("accumulated slice pos", state["slice_pos"])
+            logging.info("current slice position", state["min_slice_pos"])
+            logging.info("pos_z", pos_z)
 
         else:
             # All subsequent slices
@@ -547,9 +547,9 @@ def process_image(images, connection, config, metadata, im, state):
             # pos_z = position[2]
             pos_z = float(hf)
 
-            print("accumulated slice pos", state["slice_pos"])
-            print("current slice position", current_pos)
-            print("pos_z", pos_z)
+            logging.info("accumulated slice pos", state["slice_pos"])
+            logging.info("current slice position", current_pos)
+            logging.info("pos_z", pos_z)
 
         # Define the path where the results will be saved
         fetalbody_path = debugFolder
@@ -817,7 +817,7 @@ def process_image(images, connection, config, metadata, im, state):
 
                 # Define the file name with the formatted date and time
                 text_file_1 = args.results_dir + date_path + "/" + timestamp + "-nnUNet_pred/" + "com.txt"
-                text_file = debugFolder + "/" + "sara.dvs"
+                text_file = "/tmp/share/debug" + "/" + "sara.dvs"
 
                 cm_brain = model.x_cm, model.y_cm, model.z_cm
                 # cm_brain = np.dot(rotation_matrix, cm_brain)
