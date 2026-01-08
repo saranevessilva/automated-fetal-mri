@@ -667,11 +667,14 @@ def process_image(images, connection, config, metadata, im, state):
                                                                                    (segmentation_volume,
                                                                                     image_volume))
 
-            # Define the path you want to create
-            new_directory_seg = fetalbody_path + "/" + timestamp + "-nnUNet_seg/"
-            new_directory_pred = fetalbody_path + "/" + timestamp + "-nnUNet_pred/"
+            # box = im_  # brain segmentation not working
 
-            box_path = args.results_dir + date_path
+            # Define the path you want to create
+            new_directory_seg = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_seg/"
+            new_directory_pred = debugFolder + "/" + date_path + "/" + timestamp + "-nnUNet_pred/"
+
+            box_path = args.results_dir + "/" + date_path
+            print("box_path", box_path)
 
             # Check if the directory already exists
             if not os.path.exists(new_directory_seg):
@@ -689,9 +692,20 @@ def process_image(images, connection, config, metadata, im, state):
                 # If it already exists, handle it accordingly (maybe log a message or take alternative action)
                 print("Directory already exists:", new_directory_pred)
 
+            # Check if the directory already exists
+            if not os.path.exists(box_path):
+                # If it doesn't exist, create it
+                os.mkdir(box_path)
+            else:
+                # If it already exists, handle it accordingly (maybe log a message or take alternative action)
+                print("Directory already exists:", new_directory_pred)
+
             box_im = nib.Nifti1Image(box, np.eye(4))
             nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
-            im_ = nib.Nifti1Image(im, np.eye(4))
+            path = (fetalbody_path + "/"
+                    + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
+            im_ = nib.Nifti1Image(im_, np.eye(4))
+            nib.save(im_, path)
 
             # Run Prediction with nnUNet
             # Set the DISPLAY and XAUTHORITY environment variables
