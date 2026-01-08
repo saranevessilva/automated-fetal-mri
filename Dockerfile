@@ -69,9 +69,10 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt && pip freeze
 # Clone additional repos
 RUN mkdir -p /opt/code && cd /opt/code && \
     git clone https://github.com/kspacekelvin/python-ismrmrd-server.git && \
-    git clone https://github.com/saranevessilva/automated-fetal-mri.git && \
+    git clone --branch landmarks-eagle --single-branch https://github.com/saranevessilva/automated-fetal-mri.git && \
     git clone https://github.com/ismrmrd/ismrmrd-python-tools.git && \
     cd /opt/code/ismrmrd-python-tools && pip install --no-cache-dir . && pip freeze
+
 
 # Set working directory
 WORKDIR /opt/code/automated-fetal-mri
