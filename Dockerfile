@@ -81,7 +81,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 RUN mkdir -p /opt/code
 
 # 🔴 IMPORTANT: copy LOCAL automated-fetal-mri repo
-COPY automated-fetal-mri /opt/code/automated-fetal-mri
+COPY /home/sn21/automated-fetal-mri /opt/code/automated-fetal-mri
 
 # Clone lightweight external repos
 RUN cd /opt/code && \
