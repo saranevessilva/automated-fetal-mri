@@ -676,32 +676,23 @@ def process_image(images, connection, config, metadata, im, state):
                                                                                     image_volume))
 
             print("center", center)
-            # Define the path you want to create
-            new_directory_seg = fetalbody_path + "/" + timestamp + "-nnUNet_seg/"
-            new_directory_pred = fetalbody_path + "/" + timestamp + "-nnUNet_pred/"
 
-            box_path = args.results_dir + date_path
+            # Directories
+            new_directory_seg = os.path.join(fetalbody_path, f"{timestamp}-nnUNet_seg")
+            new_directory_pred = os.path.join(fetalbody_path, f"{timestamp}-nnUNet_pred")
+            box_path = os.path.join(args.results_dir, date_path)
 
-            # Check if the directory already exists
-            if not os.path.exists(new_directory_seg):
-                # If it doesn't exist, create it
-                os.mkdir(new_directory_seg)
-            else:
-                # If it already exists, handle it accordingly (maybe log a message or take alternative action)
-                print("Directory already exists:", new_directory_seg)
+            # Create directories recursively if they don't exist
+            os.makedirs(new_directory_seg, exist_ok=True)
+            os.makedirs(new_directory_pred, exist_ok=True)
+            os.makedirs(box_path, exist_ok=True)
 
-            # Check if the directory already exists
-            if not os.path.exists(new_directory_pred):
-                # If it doesn't exist, create it
-                os.mkdir(new_directory_pred)
-            else:
-                # If it already exists, handle it accordingly (maybe log a message or take alternative action)
-                print("Directory already exists:", new_directory_pred)
-
+            # Save segmentation NIfTI
             box_im = nib.Nifti1Image(box, np.eye(4))
-            nib.save(box_im, box_path + "/" + timestamp + "-nnUNet_seg/FreemaxLandmark_001_0000.nii.gz")
-            path = (fetalbody_path + "/"
-                    + timestamp + "-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
+            nib.save(box_im, os.path.join(new_directory_seg, "FreemaxLandmark_001_0000.nii.gz"))
+
+            # Save initial image
+            path = os.path.join(fetalbody_path, f"{timestamp}-gadgetron-fetal-brain-localisation-img_initial.nii.gz")
             im_ = nib.Nifti1Image(im_, np.eye(4))
             nib.save(im_, path)
 
